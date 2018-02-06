@@ -20,7 +20,6 @@ package server
 import (
 	"math/big"
 
-	"github.com/xlab-si/emmy/config"
 	"github.com/xlab-si/emmy/crypto/zkp/schemes/pseudonymsys"
 	pb "github.com/xlab-si/emmy/protobuf"
 )
@@ -31,9 +30,7 @@ func (s *Server) GenerateCertificate_EC(stream pb.PseudonymSystemCA_GenerateCert
 		return err
 	}
 
-	d := config.LoadPseudonymsysCASecret()
-	pubKeyX, pubKeyY := config.LoadPseudonymsysCAPubKey()
-	ca := pseudonymsys.NewCAEC(d, pubKeyX, pubKeyY, curve)
+	ca := pseudonymsys.NewCAEC(s.caSecKey, s.caPubKey, curve)
 
 	sProofRandData := req.GetSchnorrEcProofRandomData()
 	x := sProofRandData.X.GetNativeType()

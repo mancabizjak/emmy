@@ -37,7 +37,10 @@ type PseudonymsysCAClient struct {
 }
 
 func NewPseudonymsysCAClient(conn *grpc.ClientConn) (*PseudonymsysCAClient, error) {
-	group := config.LoadSchnorrGroup()
+	group, err := config.LoadSchnorrGroup()
+	if err != nil {
+		return nil, err
+	}
 
 	return &PseudonymsysCAClient{
 		genericClient: newGenericClient(),

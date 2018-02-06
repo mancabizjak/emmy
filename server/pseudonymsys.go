@@ -34,9 +34,7 @@ func (s *Server) GenerateNym(stream pb.PseudonymSystem_GenerateNymServer) error 
 		return err
 	}
 
-	group := config.LoadSchnorrGroup()
-	caPubKeyX, caPubKeyY := config.LoadPseudonymsysCAPubKey()
-	org := pseudonymsys.NewOrgNymGen(group, caPubKeyX, caPubKeyY)
+	org := pseudonymsys.NewOrgNymGen(s.group, s.caPubKey)
 
 	proofRandData := req.GetPseudonymsysNymGenProofRandomData()
 	x1 := new(big.Int).SetBytes(proofRandData.X1)
@@ -110,9 +108,7 @@ func (s *Server) ObtainCredential(stream pb.PseudonymSystem_ObtainCredentialServ
 		return err
 	}
 
-	group := config.LoadSchnorrGroup()
-	s1, s2, _ := config.LoadPseudonymsysOrgSecrets("org1")
-	org := pseudonymsys.NewOrgCredentialIssuer(group, s1, s2)
+	org := pseudonymsys.NewOrgCredentialIssuer(s.group, s.secKey)
 
 	sProofRandData := req.GetSchnorrProofRandomData()
 	x := new(big.Int).SetBytes(sProofRandData.X)
@@ -197,9 +193,7 @@ func (s *Server) TransferCredential(stream pb.PseudonymSystem_TransferCredential
 		return err
 	}
 
-	group := config.LoadSchnorrGroup()
-	s1, s2, _ := config.LoadPseudonymsysOrgSecrets("org1")
-	org := pseudonymsys.NewOrgCredentialVerifier(group, s1, s2)
+	org := pseudonymsys.NewOrgCredentialVerifier(s.group, s.secKey)
 
 	data := req.GetPseudonymsysTransferCredentialData()
 

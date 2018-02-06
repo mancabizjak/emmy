@@ -27,7 +27,7 @@ import (
 )
 
 func testPedersen(n *big.Int) error {
-	group := config.LoadSchnorrGroup()
+	group, _ := config.LoadSchnorrGroup()
 	c, err := NewPedersenClient(testGrpcClientConn, pb.SchemaVariant_SIGMA, group, n)
 	if err != nil {
 		return err

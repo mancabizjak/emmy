@@ -34,8 +34,7 @@ func (s *Server) GenerateNym_EC(stream pb.PseudonymSystem_GenerateNym_ECServer) 
 		return err
 	}
 
-	caPubKeyX, caPubKeyY := config.LoadPseudonymsysCAPubKey()
-	org := pseudonymsys.NewOrgNymGenEC(caPubKeyX, caPubKeyY, curve)
+	org := pseudonymsys.NewOrgNymGenEC(s.caPubKey, curve)
 
 	proofRandData := req.GetPseudonymsysNymGenProofRandomDataEc()
 	x1 := proofRandData.X1.GetNativeType()
@@ -114,8 +113,7 @@ func (s *Server) ObtainCredential_EC(stream pb.PseudonymSystem_ObtainCredential_
 	a := proofRandData.A.GetNativeType()
 	b := proofRandData.B.GetNativeType()
 
-	s1, s2, _ := config.LoadPseudonymsysOrgSecretsEC("org1")
-	org := pseudonymsys.NewOrgCredentialIssuerEC(s1, s2, curve)
+	org := pseudonymsys.NewOrgCredentialIssuerEC(s.secKeyEC, curve)
 	challenge := org.GetAuthenticationChallenge(a, b, x)
 
 	resp := &pb.Message{
@@ -196,8 +194,7 @@ func (s *Server) TransferCredential_EC(stream pb.PseudonymSystem_TransferCredent
 		return err
 	}
 
-	s1, s2, _ := config.LoadPseudonymsysOrgSecretsEC("org1")
-	org := pseudonymsys.NewOrgCredentialVerifierEC(s1, s2, curve)
+	org := pseudonymsys.NewOrgCredentialVerifierEC(s.secKey, curve)
 
 	data := req.GetPseudonymsysTransferCredentialDataEc()
 	orgName := data.OrgName

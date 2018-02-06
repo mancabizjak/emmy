@@ -58,6 +58,7 @@ type Server struct {
 	logger     log.Logger
 	*sessionManager
 	*registrationManager
+	*cryptoConfig
 }
 
 // NewServer initializes an instance of the Server struct and returns a pointer.
@@ -86,6 +87,12 @@ func NewServer(certFile, keyFile, dbAddress string, logger log.Logger) (*Server,
 		return nil, err
 	}
 
+	cryptoConfig, err := newCryptoConfig("org1")
+	if err != nil {
+		logger.Critical(err)
+		return nil, err
+	}
+
 	// Allow as much concurrent streams as possible and register a gRPC stream interceptor
 	// for logging and monitoring purposes.
 	server := &Server{
@@ -97,6 +104,7 @@ func NewServer(certFile, keyFile, dbAddress string, logger log.Logger) (*Server,
 		logger:              logger,
 		sessionManager:      sessionManager,
 		registrationManager: registrationManager,
+		cryptoConfig:        cryptoConfig,
 	}
 
 	// Disable tracing by default, as is used for debugging purposes.
@@ -221,22 +229,18 @@ func (s *Server) Run(stream pb.Protocol_RunServer) error {
 	case pb.SchemaType_PEDERSEN_EC:
 		err = s.PedersenEC(curve, stream)
 	case pb.SchemaType_PEDERSEN:
-		group := config.LoadSchnorrGroup()
-		err = s.Pedersen(group, stream)
+		err = s.Pedersen(s.group, stream)
 	case pb.SchemaType_SCHNORR:
-		group := config.LoadSchnorrGroup()
-		err = s.Schnorr(req, group, protocolType, stream)
+		err = s.Schnorr(req, s.group, protocolType, stream)
 	case pb.SchemaType_SCHNORR_EC:
 		err = s.SchnorrEC(req, protocolType, stream, curve)
 	case pb.SchemaType_CSPAILLIER:
 		secKeyPath := filepath.Join(config.LoadTestdataDir(), "cspaillierseckey.txt")
 		err = s.CSPaillier(req, secKeyPath, stream)
 	case pb.SchemaType_QR:
-		group := config.LoadSchnorrGroup()
-		err = s.QR(req, group, stream)
+		err = s.QR(req, s.group, stream)
 	case pb.SchemaType_QNR:
-		qr := config.LoadQRRSA() // only for testing
-		err = s.QNR(req, qr, stream)
+		err = s.QNR(req, s.qrRSA, stream)
 	}
 
 	if err != nil {

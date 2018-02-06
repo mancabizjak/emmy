@@ -20,7 +20,6 @@ package server
 import (
 	"math/big"
 
-	"github.com/xlab-si/emmy/config"
 	"github.com/xlab-si/emmy/crypto/zkp/schemes/pseudonymsys"
 	pb "github.com/xlab-si/emmy/protobuf"
 )
@@ -33,10 +32,7 @@ func (s *Server) GenerateCertificate(stream pb.PseudonymSystemCA_GenerateCertifi
 		return err
 	}
 
-	group := config.LoadSchnorrGroup()
-	d := config.LoadPseudonymsysCASecret()
-	pubKeyX, pubKeyY := config.LoadPseudonymsysCAPubKey()
-	ca := pseudonymsys.NewCA(group, d, pubKeyX, pubKeyY)
+	ca := pseudonymsys.NewCA(s.group, s.caSecKey, s.caPubKey)
 
 	sProofRandData := req.GetSchnorrProofRandomData()
 	x := new(big.Int).SetBytes(sProofRandData.X)

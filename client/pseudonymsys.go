@@ -38,7 +38,10 @@ type PseudonymsysClient struct {
 }
 
 func NewPseudonymsysClient(conn *grpc.ClientConn) (*PseudonymsysClient, error) {
-	group := config.LoadSchnorrGroup()
+	group, err := config.LoadSchnorrGroup()
+	if err != nil {
+		return nil, err
+	}
 
 	return &PseudonymsysClient{
 		group:         group,
@@ -131,7 +134,7 @@ func (c *PseudonymsysClient) GenerateNym(userSecret *big.Int,
 
 // ObtainCredential returns anonymous credential.
 func (c *PseudonymsysClient) ObtainCredential(userSecret *big.Int,
-	nym *pseudonymsys.Pseudonym, orgPubKeys *pseudonymsys.OrgPubKeys) (
+	nym *pseudonymsys.Pseudonym, orgPubKeys *pseudonymsys.Key) (
 	*pseudonymsys.Credential, error) {
 	if err := c.openStream(c.grpcClient, "ObtainCredential"); err != nil {
 		return nil, err

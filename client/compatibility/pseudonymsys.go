@@ -87,14 +87,14 @@ func NewOrgPubKeys(h1, h2 string) *OrgPubKeys {
 }
 
 // getNativeType translates compatibility OrgPubKeys to emmy's native pseudonymsys.OrgPubKeys.
-func (k *OrgPubKeys) getNativeType() (*pseudonymsys.OrgPubKeys, error) {
+func (k *OrgPubKeys) getNativeType() (*pseudonymsys.Key, error) {
 	h1, h1Ok := new(big.Int).SetString(k.H1, 10)
 	h2, h2Ok := new(big.Int).SetString(k.H2, 10)
 	if !h1Ok || !h2Ok {
 		return nil, fmt.Errorf("pubKeys.h1 or pubKeys.h2: %s", ArgsConversionError)
 	}
 
-	orgPubKeys := pseudonymsys.NewOrgPubKeys(h1, h2)
+	orgPubKeys := pseudonymsys.NewKey(h1, h2)
 	return orgPubKeys, nil
 }
 
