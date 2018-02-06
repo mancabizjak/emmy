@@ -24,7 +24,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/xlab-si/emmy/config"
-	"github.com/xlab-si/emmy/crypto/zkp/schemes/pseudonymsys"
 	"github.com/xlab-si/emmy/server"
 )
 
@@ -64,8 +63,7 @@ func TestPseudonymsys(t *testing.T) {
 	assert.NotNil(t, err, "Should produce an error")
 
 	orgName := "org1"
-	h1, h2 := config.LoadPseudonymsysOrgPubKeys(orgName)
-	orgPubKeys := pseudonymsys.NewOrgPubKeys(h1, h2)
+	orgPubKeys, _ := config.LoadPseudonymsysOrgPubKeys(orgName)
 	credential, err := c1.ObtainCredential(userSecret, nym1, orgPubKeys)
 	if err != nil {
 		t.Errorf(err.Error())
@@ -92,6 +90,10 @@ func TestPseudonymsys(t *testing.T) {
 	sessionKey1, err := c2.TransferCredential(orgName, userSecret, nym2, credential)
 	assert.NotNil(t, sessionKey1, "Should authenticate and obtain a valid (non-nil) session key")
 	assert.Nil(t, err, "Should not produce an error")
+
+	// Authentication should fail because of unknown organization name
+	_, err = c2.TransferCredential("nonexistingOrg", userSecret, nym2, credential)
+	assert.NotNil(t, err, "Should produce an error because of unknown organization name")
 
 	// Authentication should fail because the user doesn't have the right secret
 	wrongUserSecret := big.NewInt(3952123123)

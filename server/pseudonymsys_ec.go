@@ -20,8 +20,9 @@ package server
 import (
 	"math/big"
 
+	"fmt"
+
 	"github.com/xlab-si/emmy/config"
-	"github.com/xlab-si/emmy/crypto/groups"
 	"github.com/xlab-si/emmy/crypto/zkp/primitives/dlogproofs"
 	"github.com/xlab-si/emmy/crypto/zkp/schemes/pseudonymsys"
 	pb "github.com/xlab-si/emmy/protobuf"
@@ -113,7 +114,7 @@ func (s *Server) ObtainCredential_EC(stream pb.PseudonymSystem_ObtainCredential_
 	a := proofRandData.A.GetNativeType()
 	b := proofRandData.B.GetNativeType()
 
-	s1, s2 := config.LoadPseudonymsysOrgSecrets("org1", "ecdlog")
+	s1, s2, _ := config.LoadPseudonymsysOrgSecretsEC("org1")
 	org := pseudonymsys.NewOrgCredentialIssuerEC(s1, s2, curve)
 	challenge := org.GetAuthenticationChallenge(a, b, x)
 
@@ -195,7 +196,7 @@ func (s *Server) TransferCredential_EC(stream pb.PseudonymSystem_TransferCredent
 		return err
 	}
 
-	s1, s2 := config.LoadPseudonymsysOrgSecrets("org1", "ecdlog")
+	s1, s2, _ := config.LoadPseudonymsysOrgSecretsEC("org1")
 	org := pseudonymsys.NewOrgCredentialVerifierEC(s1, s2, curve)
 
 	data := req.GetPseudonymsysTransferCredentialDataEc()
@@ -250,10 +251,17 @@ func (s *Server) TransferCredential_EC(stream pb.PseudonymSystem_TransferCredent
 	}
 
 	// PubKeys of the organization that issue a credential:
-	h1X, h1Y, h2X, h2Y := config.LoadPseudonymsysOrgPubKeysEC(orgName)
-	h1 := groups.NewECGroupElement(h1X, h1Y)
-	h2 := groups.NewECGroupElement(h2X, h2Y)
-	orgPubKeys := pseudonymsys.NewOrgPubKeysEC(h1, h2)
+	orgPubKeys, err := config.LoadPseudonymsysOrgPubKeysEC(orgName)
+	if err != nil {
+		s.logger.Debug(err)
+		resp := &pb.Message{
+			ProtocolError: fmt.Sprintf("unknown organization: %s", orgName),
+		}
+		if err = s.send(resp, stream); err != nil {
+			return err
+		}
+		return err
+	}
 
 	proofData := req.GetBigint()
 	z := new(big.Int).SetBytes(proofData.X1)
