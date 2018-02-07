@@ -49,21 +49,20 @@ func NewCredentialEC(aToGamma, bToGamma, AToGamma, BToGamma *groups.ECGroupEleme
 	return credential
 }
 
-type OrgPubKeysEC struct {
+type PubKeyEC struct {
 	H1 *groups.ECGroupElement
 	H2 *groups.ECGroupElement
 }
 
-func NewOrgPubKeysEC(h1, h2 *groups.ECGroupElement) *OrgPubKeysEC {
-	return &OrgPubKeysEC{
+func NewOrgPubKeysEC(h1, h2 *groups.ECGroupElement) *PubKeyEC {
+	return &PubKeyEC{
 		H1: h1,
 		H2: h2,
 	}
 }
 
 type OrgCredentialIssuerEC struct {
-	s1 *big.Int
-	s2 *big.Int
+	SecKey *Key
 
 	// the following fields are needed for issuing a credential
 	SchnorrVerifier *dlogproofs.SchnorrECVerifier
@@ -73,15 +72,14 @@ type OrgCredentialIssuerEC struct {
 	b               *groups.ECGroupElement
 }
 
-func NewOrgCredentialIssuerEC(s1, s2 *big.Int, curveType groups.ECurve) *OrgCredentialIssuerEC {
+func NewOrgCredentialIssuerEC(secKey *Key, curveType groups.ECurve) *OrgCredentialIssuerEC {
 	// g1 = a_tilde, t1 = b_tilde,
 	// g2 = a, t2 = b
 	schnorrVerifier := dlogproofs.NewSchnorrECVerifier(curveType, protocoltypes.Sigma)
 	equalityProver1 := dlogproofs.NewECDLogEqualityBTranscriptProver(curveType)
 	equalityProver2 := dlogproofs.NewECDLogEqualityBTranscriptProver(curveType)
 	org := OrgCredentialIssuerEC{
-		s1:              s1,
-		s2:              s2,
+		SecKey:          secKey,
 		SchnorrVerifier: schnorrVerifier,
 		EqualityProver1: equalityProver1,
 		EqualityProver2: equalityProver2,
@@ -106,16 +104,16 @@ func (org *OrgCredentialIssuerEC) VerifyAuthentication(z *big.Int) (
 	*groups.ECGroupElement, *groups.ECGroupElement, *groups.ECGroupElement, error) {
 	verified := org.SchnorrVerifier.Verify(z, nil)
 	if verified {
-		A := org.SchnorrVerifier.Group.Exp(org.b, org.s2)
+		A := org.SchnorrVerifier.Group.Exp(org.b, org.SecKey.H2)
 		aA := org.SchnorrVerifier.Group.Mul(org.a, A)
-		B := org.SchnorrVerifier.Group.Exp(aA, org.s1)
+		B := org.SchnorrVerifier.Group.Exp(aA, org.SecKey.H1)
 
 		g1 := groups.NewECGroupElement(org.SchnorrVerifier.Group.Curve.Params().Gx,
 			org.SchnorrVerifier.Group.Curve.Params().Gy)
 		g2 := groups.NewECGroupElement(org.b.X, org.b.Y)
 
-		x11, x12 := org.EqualityProver1.GetProofRandomData(org.s2, g1, g2)
-		x21, x22 := org.EqualityProver2.GetProofRandomData(org.s1, g1, aA)
+		x11, x12 := org.EqualityProver1.GetProofRandomData(org.SecKey.H2, g1, g2)
+		x21, x22 := org.EqualityProver2.GetProofRandomData(org.SecKey.H1, g1, aA)
 
 		return x11, x12, x21, x22, A, B, nil
 	} else {

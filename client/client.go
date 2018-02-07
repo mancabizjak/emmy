@@ -26,7 +26,6 @@ import (
 
 	"reflect"
 
-	"github.com/xlab-si/emmy/config"
 	"github.com/xlab-si/emmy/log"
 	pb "github.com/xlab-si/emmy/protobuf"
 	"google.golang.org/grpc"
@@ -62,13 +61,16 @@ type ConnectionConfig struct {
 	// server cert's CN will be compared with the provided ServerNameOverride instead of server's
 	// hostname
 	CACertificate []byte // CA certificate for validating the server
+	Timeout       float64
 }
 
-func NewConnectionConfig(endpoint, serverNameOverride string, certificate []byte) *ConnectionConfig {
+func NewConnectionConfig(endpoint, serverNameOverride string, certificate []byte,
+	timeoutSec float64) *ConnectionConfig {
 	return &ConnectionConfig{
 		Endpoint:           endpoint,
 		ServerNameOverride: serverNameOverride,
 		CACertificate:      certificate,
+		Timeout:            timeoutSec,
 	}
 }
 
@@ -78,8 +80,6 @@ func NewConnectionConfig(endpoint, serverNameOverride string, certificate []byte
 // thus reducing the overhead.
 func GetConnection(connConfig *ConnectionConfig) (*grpc.ClientConn, error) {
 	logger.Info("Getting the connection")
-
-	timeoutSec := config.LoadTimeout()
 
 	var creds credentials.TransportCredentials
 	var err error
@@ -109,7 +109,7 @@ func GetConnection(connConfig *ConnectionConfig) (*grpc.ClientConn, error) {
 	dialOptions := []grpc.DialOption{
 		grpc.WithTransportCredentials(creds),
 		grpc.WithBlock(),
-		grpc.WithTimeout(time.Duration(timeoutSec) * time.Second),
+		grpc.WithTimeout(time.Duration(connConfig.Timeout) * time.Second),
 	}
 	conn, err := grpc.Dial(connConfig.Endpoint, dialOptions...)
 	if err != nil {

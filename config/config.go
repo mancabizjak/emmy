@@ -42,12 +42,13 @@ func init() {
 	}
 }
 
-// setDefaults sets default values for various parts of emmy library.
+// setDefaults sets default values for various public cryptographic parameters that need to be
+// consistent between a given emmy client and emmy server.
 func setDefaults() {
-	viper.SetDefault("ip", "localhost")
+	/*viper.SetDefault("ip", "localhost")
 	viper.SetDefault("port", 7007)
 	viper.SetDefault("timeout", 5)
-	viper.SetDefault("key_folder", "/tmp")
+	viper.SetDefault("key_folder", "/tmp")*/
 
 	viper.SetDefault("schnorr_group", map[string]string{
 		"p": "16714772973240639959372252262788596420406994288943442724185217359247384753656472309049760952976644136858333233015922583099687128195321947212684779063190875332970679291085543110146729439665070418750765330192961290161474133279960593149307037455272278582955789954847238104228800942225108143276152223829168166008095539967222363070565697796008563529948374781419181195126018918350805639881625937503224895840081959848677868603567824611344898153185576740445411565094067875133968946677861528581074542082733743513314354002186235230287355796577107626422168586230066573268163712626444511811717579062108697723640288393001520781671",
@@ -56,7 +57,6 @@ func setDefaults() {
 	})
 
 	viper.SetDefault("pseudonymsys_ca", map[string]string{
-		"d": "16249832937458088685598605121372353939294367897674422016342660883663371677076",
 		"x": "65326558506481070730591115387915499623679021660430456972125964980023301473231",
 		"y": "37526396936964061204061100652712760357856013823850948443144488667237183893571",
 	})
@@ -64,8 +64,6 @@ func setDefaults() {
 	viper.SetDefault("pseudonymsys.org1", map[string]string{
 		"h1": "11253748020267515701977135421640400742511414782332660443524776235731592618314865082641495270379529602832564697632543178140373575666207325449816651443326295587329200580969897900340682863137274403743213121482058992744156278265298975875832815615008349379091580640663544863825594755871212120449589876097254391036951735135790415340694042060640287135597503154554767593490141558733646631257590898412097094878970047567251318564175378758713497120310233239160479122314980866111775954564694480706227862890375180173977176588970220883117212300621045744043530072238840577201003052170999723878986905807102656657527667244456412473985",
 		"h2": "76168773256070905782197510623595125058465077612447809025568517977679494145178174622864958684725961070073576803345724904501942931513809178875449022568661712955904784104680061168715431907736821341951579763867969478146743783132963349845621343504647834967006527983684679901491401571352045358450346417143743546169924539113192750473927517206655311791719866371386836092309758541857984471638917674114075906273800379335165008797874367104743232737728633294061064784890416168238586934819945486226202990710177343797354424869474259809902990704930592533690341526792158132580375587182781640673464871125845158432761445006356929132",
-		"s1": "12506074624757438676805734108203754691894440935285828326752482161724637860737614838944853691950924021955680525939780169779888653151633785040698255721224889673095292103687696155341406413918220576785413168329472933244872017244493792250782071009945084029853097333491235700618768793380791519193695496653451014859995982030252835982728985237780700293860028372794252498821615457701308171489000104682637461824347934289263165371702030406332522768141151117618446117035451332086067049461921041400592944133730824346746397649572514314171499080783864209863802530233234409464167893803459953492866757869441725196031561816682693694247",
-		"s2": "130203329326872103700165538490407573774885754016819320468128775954825516",
 	})
 
 	viper.SetDefault("pseudonymsys_ec.org1", map[string]string{
@@ -73,8 +71,6 @@ func setDefaults() {
 		"h1y": "63726701293868334061084235330967878003056898720773299094696019482924813137111",
 		"h2x": "3836882559946612606724713122432195411371871189052450829349314418954131635804",
 		"h2y": "87187568403836989661029612226711448246955830180833597642485083706252921915098",
-		"s1":  "85369301669043405794894191118963507033301833314658560277996781350824394686629",
-		"s2":  "79942512571124714726300495419426903043602652515054079118036368924839252829692",
 	})
 }
 
@@ -122,34 +118,32 @@ func LoadTestKeyDirFromConfig() string {
 	return key_path
 }
 
-// LoadSchnorrGroup attempts to create schnorr group from the parameters given in config file,
-// panicking if parameter conversion cannot be done.
-func LoadSchnorrGroup() *groups.SchnorrGroup {
+// LoadSchnorrGroup attempts to create schnorr group from the parameters given in config file.
+func LoadSchnorrGroup() (*groups.SchnorrGroup, error) {
 	group := viper.GetStringMapString("schnorr_group")
 	p, pOk := new(big.Int).SetString(group["p"], 10)
 	g, gOk := new(big.Int).SetString(group["g"], 10)
 	q, qOk := new(big.Int).SetString(group["q"], 10)
 	if !pOk || !gOk || !qOk {
-		panic("Cannot convert schnorr group params to big integers")
+		return nil, fmt.Errorf("Cannot convert schnorr group params to big integers")
 	}
-	return groups.NewSchnorrGroupFromParams(p, g, q)
+	return groups.NewSchnorrGroupFromParams(p, g, q), nil
 }
 
-// LoadQRRSA attempts to construct QRRSA from the parameters given in config file,
-// panicking in case of errors.
-func LoadQRRSA() *groups.QRRSA {
+// LoadQRRSA attempts to construct QRRSA from the parameters given in config file.
+func LoadQRRSA() (*groups.QRRSA, error) {
 	qr := viper.GetStringMapString("qr")
 	p, pOk := new(big.Int).SetString(qr["p"], 10)
 	q, qOk := new(big.Int).SetString(qr["q"], 10)
 	if !pOk || !qOk {
-		panic("Cannot convert QRRSA params to big integers")
+		return nil, fmt.Errorf("Cannot convert QRRSA params to big integers")
 	}
 
 	qrRSA, err := groups.NewQRRSA(p, q)
 	if err != nil {
-		panic(fmt.Errorf("error loading QRRSA RSA group: %s", err))
+		return nil, fmt.Errorf("error loading QRRSA RSA group: %s", err)
 	}
-	return qrRSA
+	return qrRSA, nil
 }
 
 // orgHasConfigData checks for presence of a given organization's configuration for pseudonymsys
@@ -163,37 +157,37 @@ func orgHasConfigData(orgName string, ec bool) bool {
 
 // LoadPseudonymsysOrgSecrets attempts to read a given organization's secret parameters provided in
 // config file.
-func LoadPseudonymsysOrgSecrets(orgName string) (*big.Int, *big.Int, error) {
+func LoadPseudonymsysOrgSecrets(orgName string) (*pseudonymsys.Key, error) {
 	if !orgHasConfigData(orgName, false) {
-		return nil, nil, fmt.Errorf("mising configuration for organization %s", orgName)
+		return nil, fmt.Errorf("mising configuration for organization %s", orgName)
 	}
 	org := viper.GetStringMapString(fmt.Sprintf("pseudonymsys.%s", orgName))
 	s1, s1Ok := new(big.Int).SetString(org["s1"], 10)
 	s2, s2Ok := new(big.Int).SetString(org["s2"], 10)
 	if !s1Ok || !s2Ok {
-		return nil, nil, fmt.Errorf("Cannot convert organization's secret params to big integers")
+		return nil, fmt.Errorf("Cannot convert organization's secret params to big integers")
 	}
-	return s1, s2, nil
+	return pseudonymsys.NewKey(s1, s2), nil
 }
 
 // LoadPseudonymsysOrgSecretsEC attempts to read a given organization's secret parameters provided
 // in config file.
-func LoadPseudonymsysOrgSecretsEC(orgName string) (*big.Int, *big.Int, error) {
+func LoadPseudonymsysOrgSecretsEC(orgName string) (*pseudonymsys.Key, error) {
 	if !orgHasConfigData(orgName, true) {
-		return nil, nil, fmt.Errorf("mising configuration for organization %s", orgName)
+		return nil, fmt.Errorf("mising configuration for organization %s", orgName)
 	}
 	org := viper.GetStringMapString(fmt.Sprintf("pseudonymsys_ec.%s", orgName))
 	s1, s1Ok := new(big.Int).SetString(org["s1"], 10)
 	s2, s2Ok := new(big.Int).SetString(org["s2"], 10)
 	if !s1Ok || !s2Ok {
-		return nil, nil, fmt.Errorf("Cannot convert organization's secret params to big integers")
+		return nil, fmt.Errorf("Cannot convert organization's secret params to big integers")
 	}
-	return s1, s2, nil
+	return pseudonymsys.NewKey(s1, s2), nil
 }
 
 // LoadPseudonymsysOrgPubKeys attempts to create organization's public key from the
 // parameters given in config file.
-func LoadPseudonymsysOrgPubKeys(orgName string) (*pseudonymsys.OrgPubKeys, error) {
+func LoadPseudonymsysOrgPubKeys(orgName string) (*pseudonymsys.Key, error) {
 	if !orgHasConfigData(orgName, false) {
 		return nil, fmt.Errorf("mising configuration for organization %s", orgName)
 	}
@@ -205,12 +199,12 @@ func LoadPseudonymsysOrgPubKeys(orgName string) (*pseudonymsys.OrgPubKeys, error
 		return nil, fmt.Errorf("Cannot convert org pub keys params to big integers")
 	}
 
-	return pseudonymsys.NewOrgPubKeys(h1, h2), nil
+	return pseudonymsys.NewKey(h1, h2), nil
 }
 
 // LoadPseudonymsysOrgPubKeysEC attempts to create organization's EC public key from the
 // parameters given in config file.
-func LoadPseudonymsysOrgPubKeysEC(orgName string) (*pseudonymsys.OrgPubKeysEC, error) {
+func LoadPseudonymsysOrgPubKeysEC(orgName string) (*pseudonymsys.PubKeyEC, error) {
 	if !orgHasConfigData(orgName, true) {
 		return nil, fmt.Errorf(fmt.Sprintf("mising configuration for organization %s", orgName))
 	}
@@ -230,26 +224,26 @@ func LoadPseudonymsysOrgPubKeysEC(orgName string) (*pseudonymsys.OrgPubKeysEC, e
 }
 
 // LoadPseudonymsysCASecret attempts to read CA's secret parameters provided
-// in config file, panicking in case of errors.
-func LoadPseudonymsysCASecret() *big.Int {
+// in config file
+func LoadPseudonymsysCASecret() (*big.Int, error) {
 	caSecret := viper.GetString("pseudonymsys_ca.s")
 	s, sOk := new(big.Int).SetString(caSecret, 10)
 	if !sOk {
-		panic("Cannot convert CA secret key to big integer")
+		return nil, fmt.Errorf("Cannot convert CA secret key to big integer")
 	}
-	return s
+	return s, nil
 }
 
 // LoadPseudonymsysCAPubKey attempts to create CA's public key from the
-// parameters given in config file, panicking in case of errors.
-func LoadPseudonymsysCAPubKey() (*big.Int, *big.Int) {
+// parameters given in config file.
+func LoadPseudonymsysCAPubKey() (*pseudonymsys.Key, error) {
 	ca := viper.GetStringMapString("pseudonymsys_ca")
 	h1, h1Ok := new(big.Int).SetString(ca["h1"], 10)
 	h2, h2Ok := new(big.Int).SetString(ca["h2"], 10)
 	if !h1Ok || !h2Ok {
-		panic("Cannot convert CA pub key params to big integers")
+		return nil, fmt.Errorf("Cannot convert CA pub key params to big integers")
 	}
-	return h1, h2
+	return pseudonymsys.NewKey(h1, h2), nil
 }
 
 func LoadServiceInfo() (string, string, string) {

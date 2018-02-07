@@ -52,10 +52,10 @@ func NewCACertificate(blindedA, blindedB, r, s *big.Int) *CACertificate {
 	}
 }
 
-func NewCA(group *groups.SchnorrGroup, d, x, y *big.Int) *CA {
+func NewCA(group *groups.SchnorrGroup, d *big.Int, pubKey *Key) *CA {
 	c := groups.GetEllipticCurve(groups.P256)
-	pubKey := ecdsa.PublicKey{Curve: c, X: x, Y: y}
-	privateKey := ecdsa.PrivateKey{PublicKey: pubKey, D: d}
+	publicKey := ecdsa.PublicKey{Curve: c, X: pubKey.H1, Y: pubKey.H2}
+	privateKey := ecdsa.PrivateKey{PublicKey: publicKey, D: d}
 
 	schnorrVerifier := dlogproofs.NewSchnorrVerifier(group, protocoltypes.Sigma)
 	ca := CA{

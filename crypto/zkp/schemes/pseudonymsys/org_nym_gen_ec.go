@@ -46,12 +46,12 @@ type OrgNymGenEC struct {
 	curveType        groups.ECurve
 }
 
-func NewOrgNymGenEC(x, y *big.Int, curveType groups.ECurve) *OrgNymGenEC {
+func NewOrgNymGenEC(caPubKey *Key, curveType groups.ECurve) *OrgNymGenEC {
 	verifier := dlogproofs.NewECDLogEqualityVerifier(curveType)
 	org := OrgNymGenEC{
 		EqualityVerifier: verifier,
-		x:                x,
-		y:                y,
+		x:                caPubKey.H1,
+		y:                caPubKey.H2,
 		curveType:        curveType,
 	}
 	return &org

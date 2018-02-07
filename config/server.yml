@@ -1,0 +1,2 @@
+# Port where emmy server will listen for client connection
+port: 7007

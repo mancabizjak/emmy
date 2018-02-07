@@ -41,16 +41,14 @@ func NewPseudonym(a, b *big.Int) *Pseudonym {
 
 type OrgNymGen struct {
 	EqualityVerifier *dlogproofs.DLogEqualityVerifier
-	x                *big.Int
-	y                *big.Int
+	CAPubKey         *Key
 }
 
-func NewOrgNymGen(group *groups.SchnorrGroup, x, y *big.Int) *OrgNymGen {
+func NewOrgNymGen(group *groups.SchnorrGroup, caPubKey *Key) *OrgNymGen {
 	verifier := dlogproofs.NewDLogEqualityVerifier(group)
 	org := OrgNymGen{
 		EqualityVerifier: verifier,
-		x:                x,
-		y:                y,
+		CAPubKey:         caPubKey,
 	}
 	return &org
 }
@@ -58,7 +56,7 @@ func NewOrgNymGen(group *groups.SchnorrGroup, x, y *big.Int) *OrgNymGen {
 func (org *OrgNymGen) GetChallenge(nymA, blindedA, nymB, blindedB, x1, x2,
 	r, s *big.Int) (*big.Int, error) {
 	c := groups.GetEllipticCurve(groups.P256)
-	pubKey := ecdsa.PublicKey{Curve: c, X: org.x, Y: org.y}
+	pubKey := ecdsa.PublicKey{Curve: c, X: org.CAPubKey.H1, Y: org.CAPubKey.H2}
 
 	hashed := common.HashIntoBytes(blindedA, blindedB)
 	verified := ecdsa.Verify(&pubKey, hashed, r, s)

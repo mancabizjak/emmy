@@ -1,0 +1,5 @@
+# Address of emmy server
+server: localhost:7007
+
+# Timeout (in seconds) for connections to emmy server
+timeout: 5
