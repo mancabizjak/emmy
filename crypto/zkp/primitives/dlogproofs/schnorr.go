@@ -20,174 +20,143 @@ package dlogproofs
 import (
 	"math/big"
 
+	"fmt"
+
 	"github.com/xlab-si/emmy/crypto/commitments"
 	"github.com/xlab-si/emmy/crypto/common"
 	"github.com/xlab-si/emmy/crypto/groups"
-	"github.com/xlab-si/emmy/crypto/zkp/protocoltypes"
 )
 
-// ProveDLogKnowledge demonstrates how prover can prove the knowledge of log_g1(t1) - that
-// means g1^secret = t1.
-func ProveDLogKnowledge(secret, g1, t1 *big.Int, group *groups.SchnorrGroup) bool {
-	prover := NewSchnorrProver(group, protocoltypes.Sigma)
-	verifier := NewSchnorrVerifier(group, protocoltypes.Sigma)
-
-	x := prover.GetProofRandomData(secret, g1)
-	verifier.SetProofRandomData(x, g1, t1)
-
-	challenge, _ := verifier.GetChallenge()
-	z, _ := prover.GetProofData(challenge)
-	verified := verifier.Verify(z, nil)
-	return verified
-}
-
-// TODO: demonstrator for ZKP and ZKPOK
-
-// Proving that it knows w such that g^w = h (mod p).
+// Proving that it knows secret such that g^secret = h (mod p).
 type SchnorrProver struct {
-	Group            *groups.SchnorrGroup
-	secret           *big.Int
-	a                *big.Int
-	r                *big.Int
-	PedersenReceiver *commitments.PedersenReceiver // only needed for ZKP and ZKPOK, not for sigma
-	protocolType     protocoltypes.ProtocolType
+	Group  *groups.SchnorrGroup
+	secret *big.Int // secret
+	a      *big.Int
+	r      *big.Int // random data
+	//pedersenCommitter *commitments.PedersenCommitter // only needed for ZKP mode
+	//mode              zkp.Mode
 }
 
-func NewSchnorrProver(group *groups.SchnorrGroup, protocolType protocoltypes.ProtocolType) *SchnorrProver {
-	var prover SchnorrProver
-	prover = SchnorrProver{
-		Group:        group,
-		protocolType: protocolType,
+func NewSchnorrProver(group *groups.SchnorrGroup) *SchnorrProver {
+	return &SchnorrProver{
+		Group: group,
 	}
-
-	if protocolType != protocoltypes.Sigma {
-		// TODO: currently Pedersen is using the same dlog as SchnorrProver, this
-		// is because SchnorrVerifier for ZKP/ZKPOK needs to know Pedersen's dlog
-		// to generate a challenge and create a commitment
-		prover.PedersenReceiver = commitments.NewPedersenReceiverFromExistingDLog(group)
-	}
-
-	return &prover
 }
 
-// Returns pedersenReceiver's h. Verifier needs h to prepare a commitment.
-func (prover *SchnorrProver) GetOpeningMsg() *big.Int {
-	h := prover.PedersenReceiver.GetH()
-	return h
+func (p *SchnorrProver) setParams(secret, a, r *big.Int) {
+	p.a = a
+	p.secret = secret
+	p.r = r
 }
 
-// GetProofRandomData sets prover.secret and prover.a, and returns a^r % p where r is random.
-func (prover *SchnorrProver) GetProofRandomData(secret, a *big.Int) *big.Int {
-	// TODO: name GetProofRandomData is not ok, but I am not sure what would be the best way
-	// to fix it.
-	// It might be replaced with something that
-	// would reflect setting of parameters secret and a. Splitting into two functions is
-	// another option, but it would add complexity of the API (for example SetParams necessary to
-	// be called before GetProofRandomData). Possible solution would also be to push secret and a
-	// into SchnorrProver constructor, but then if SchnorrProver used for two different proofs
-	// (two different (secret, a) pairs), its params would need to be reset before proof execution.
-	// Thinking of it, this last option might be the one to go, because usually Schnorr is
-	// executed once.
-	// The problem is the same for all proofs.
+// GenerateCommitment sets prover's secret and a, and returns x =  a^r % p, where r is random
+func (p *SchnorrProver) GenerateRandomData(secret, a *big.Int) *big.Int {
+	r := common.GetRandomInt(p.Group.Q)
+	p.setParams(secret, a, r)
 
-	// x = a^r % p, where r is random
-	prover.a = a
-	prover.secret = secret
-	r := common.GetRandomInt(prover.Group.Q)
-	prover.r = r
-	x := prover.Group.Exp(a, r)
-
+	x := p.Group.Exp(a, r)
 	return x
 }
 
-// It receives challenge defined by a verifier, and returns z = r + challenge * w
-// and trapdoor in ZKPOK.
-func (prover *SchnorrProver) GetProofData(challenge *big.Int) (*big.Int, *big.Int) {
-	// z = r + challenge * w
+// GenerateProofData receives challenge c (as defined by the verifier) and
+// returns z = r + c*secret
+func (p *SchnorrProver) GenerateProofData(c *big.Int) *big.Int {
 	z := new(big.Int)
-	z.Mul(challenge, prover.secret)
-	z.Add(z, prover.r)
-	z.Mod(z, prover.Group.Q)
+	z.Mul(c, p.secret)
+	z.Add(z, p.r)
+	z.Mod(z, p.Group.Q)
 
-	if prover.protocolType != protocoltypes.ZKPOK {
-		return z, nil
-	} else {
-		trapdoor := prover.PedersenReceiver.GetTrapdoor()
-		return z, trapdoor
+	return z
+}
+
+type SchnorrZKPProver struct {
+	*SchnorrProver
+	pedersenCommitter *commitments.PedersenCommitter
+}
+
+func NewSchnorrZKPProver(group *groups.SchnorrGroup) *SchnorrZKPProver {
+	return &SchnorrZKPProver{
+		SchnorrProver:     NewSchnorrProver(group),
+		pedersenCommitter: commitments.NewPedersenCommitter(group),
 	}
+}
+
+func (p *SchnorrZKPProver) GenerateCommitment(secret, a, h *big.Int) *big.Int {
+	p.pedersenCommitter.SetH(h)
+	r := p.SchnorrProver.GenerateRandomData(secret, a)
+	commitment, err := p.pedersenCommitter.GetCommitMsg(r) // TODO check secodnd param
+	if err != nil {
+		fmt.Println("error in kmrtrtm", err)
+	}
+	p.r = r
+
+	return commitment
 }
 
 type SchnorrVerifier struct {
-	Group             *groups.SchnorrGroup
-	x                 *big.Int
-	a                 *big.Int
-	b                 *big.Int
-	challenge         *big.Int
-	pedersenCommitter *commitments.PedersenCommitter // not needed in sigma protocol, only in ZKP and ZKPOK
-	protocolType      protocoltypes.ProtocolType
+	Group     *groups.SchnorrGroup
+	x         *big.Int
+	a         *big.Int
+	b         *big.Int
+	challenge *big.Int
+	//PedersenReceiver *commitments.PedersenReceiver // only needed for ZKP mode
+	//mode             zkp.Mode
 }
 
-func NewSchnorrVerifier(group *groups.SchnorrGroup, protocolType protocoltypes.ProtocolType) *SchnorrVerifier {
-	verifier := SchnorrVerifier{
-		Group:        group,
-		protocolType: protocolType,
+func NewSchnorrVerifier(group *groups.SchnorrGroup) *SchnorrVerifier {
+	return &SchnorrVerifier{
+		Group: group,
 	}
-	if protocolType != protocoltypes.Sigma {
-		verifier.pedersenCommitter = commitments.NewPedersenCommitter(group)
-	}
-	return &verifier
+}
+
+func (v *SchnorrVerifier) SetParams(x, a, b *big.Int) {
+	v.x = x
+	v.a = a
+	v.b = b
 }
 
 // GenerateChallenge is used in ZKP where challenge needs to be
 // chosen (and committed to) before sigma protocol starts.
-func (verifier *SchnorrVerifier) GenerateChallenge() *big.Int {
-	challenge := common.GetRandomInt(verifier.Group.Q)
-	verifier.challenge = challenge
-	return challenge
+func (v *SchnorrVerifier) GenerateChallenge() *big.Int {
+	c := common.GetRandomInt(v.Group.Q)
+	v.challenge = c
+	return c
 }
 
-func (verifier *SchnorrVerifier) GetOpeningMsgReply(h *big.Int) *big.Int {
-	verifier.pedersenCommitter.SetH(h) // h = g^a where a is a trapdoor
-	challenge := verifier.GenerateChallenge()
-	commitment, _ := verifier.pedersenCommitter.GetCommitMsg(challenge)
-	return commitment
+// It receives z = r + c*secret. It returns true if a^z = a^r * (a^secret) ^ challenge,
+// otherwise false.
+func (v *SchnorrVerifier) Verify(z *big.Int) bool {
+	left := v.Group.Exp(v.a, z)
+	r1 := v.Group.Exp(v.b, v.challenge)
+	fmt.Println("r1", r1)
+	fmt.Println("v.x", v.x)
+	right := v.Group.Mul(r1, v.x)
+
+	return left.Cmp(right) == 0
 }
 
-// TODO: similar as described above for GetProofRandomData - this one is not setting
-// only proofRandomData, thus it might be split (a, b for example set in SchnorrVerifier constructor).
-func (verifier *SchnorrVerifier) SetProofRandomData(x, a, b *big.Int) {
-	verifier.x = x
-	verifier.a = a
-	verifier.b = b
+type SchnorrZKPVerifier struct {
+	*SchnorrVerifier
+	pedersenReceiver *commitments.PedersenReceiver
 }
 
-// It returns a challenge and commitment to challenge (this latter only for ZKP and ZKPOK).
-func (verifier *SchnorrVerifier) GetChallenge() (*big.Int, *big.Int) {
-	if verifier.protocolType == protocoltypes.Sigma {
-		challenge := verifier.GenerateChallenge()
-		return challenge, nil
-	} else {
-		challenge, r2 := verifier.pedersenCommitter.GetDecommitMsg()
-		return challenge, r2
+func NewSchnorrZKPVerifier(group *groups.SchnorrGroup) *SchnorrZKPVerifier {
+	return &SchnorrZKPVerifier{
+		SchnorrVerifier:  NewSchnorrVerifier(group),
+		pedersenReceiver: commitments.NewPedersenReceiver(group),
 	}
 }
 
-// It receives y = r + w * challenge. It returns true if a^y = a^r * (a^secret) ^ challenge, otherwise false.
-func (verifier *SchnorrVerifier) Verify(z *big.Int, trapdoor *big.Int) bool {
-	if verifier.protocolType == protocoltypes.ZKPOK {
-		valid := verifier.pedersenCommitter.VerifyTrapdoor(trapdoor)
-		if !valid {
-			return false
-		}
-	}
+func (v *SchnorrZKPVerifier) Verify(z, randData, r *big.Int) bool {
+	proofOk := v.SchnorrVerifier.Verify(z)
+	decomitmentOk := v.pedersenReceiver.CheckDecommitment(randData, r)
+	return proofOk && decomitmentOk
+}
 
-	left := verifier.Group.Exp(verifier.a, z)
-	r1 := verifier.Group.Exp(verifier.b, verifier.challenge)
-	right := verifier.Group.Mul(r1, verifier.x)
+func (v *SchnorrZKPVerifier) GetH() *big.Int {
+	return v.pedersenReceiver.GetH()
+}
 
-	if left.Cmp(right) == 0 {
-		return true
-	} else {
-		return false
-	}
+func (v *SchnorrZKPVerifier) GetChallenge() *big.Int {
+	return v.pedersenReceiver.GetH()
 }

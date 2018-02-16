@@ -97,7 +97,7 @@ func (org *OrgCredentialIssuer) GetAuthenticationChallenge(a, b, x *big.Int) *bi
 
 	org.a = a
 	org.b = b
-	org.SchnorrVerifier.SetProofRandomData(x, a, b)
+	org.SchnorrVerifier.SetParams(x, a, b)
 	challenge, _ := org.SchnorrVerifier.GetChallenge()
 	return challenge
 }

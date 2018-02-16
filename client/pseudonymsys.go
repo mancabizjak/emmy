@@ -167,7 +167,7 @@ func (c *PseudonymsysClient) ObtainCredential(userSecret *big.Int,
 	ch := resp.GetBigint()
 	challenge := new(big.Int).SetBytes(ch.X1)
 
-	z, _ := schnorrProver.GetProofData(challenge)
+	z, _ := schnorrProver.GenerateProofData(challenge)
 	msg := &pb.Message{
 		Content: &pb.Message_Bigint{
 			&pb.BigInt{

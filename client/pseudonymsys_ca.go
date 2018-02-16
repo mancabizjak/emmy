@@ -86,7 +86,7 @@ func (c *PseudonymsysCAClient) GenerateCertificate(userSecret *big.Int, nym *pse
 	ch := resp.GetBigint()
 	challenge := new(big.Int).SetBytes(ch.X1)
 
-	z, _ := c.prover.GetProofData(challenge)
+	z, _ := c.prover.GenerateProofData(challenge)
 	trapdoor := new(big.Int)
 	msg := &pb.Message{
 		Content: &pb.Message_SchnorrProofData{

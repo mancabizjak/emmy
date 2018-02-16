@@ -98,7 +98,7 @@ func (c *SchnorrClient) runZeroKnowledge() error {
 	if err != nil {
 		return err
 	}
-	c.prover.PedersenReceiver.SetCommitment(commitment)
+	c.prover.pedersenCommitter.SetCommitment(commitment)
 
 	pedersenDecommitment, err := c.getProofRandomData(false, &pb.Message{})
 	if err != nil {
@@ -108,7 +108,7 @@ func (c *SchnorrClient) runZeroKnowledge() error {
 	challenge := new(big.Int).SetBytes(pedersenDecommitment.X)
 	r := new(big.Int).SetBytes(pedersenDecommitment.R)
 
-	if success := c.prover.PedersenReceiver.CheckDecommitment(r, challenge); success {
+	if success := c.prover.pedersenCommitter.CheckDecommitment(r, challenge); success {
 		proved, err := c.getProofData(challenge)
 		logger.Noticef("decommitment successful, proved: %v", proved)
 		if err != nil {
@@ -161,7 +161,7 @@ func (c *SchnorrClient) getProofRandomData(isFirstMsg bool, msg *pb.Message) (*p
 }
 
 func (c *SchnorrClient) getProofData(challenge *big.Int) (bool, error) {
-	z, trapdoor := c.prover.GetProofData(challenge)
+	z, trapdoor := c.prover.GenerateProofData(challenge)
 	if trapdoor == nil { // sigma protocol and ZKP
 		trapdoor = new(big.Int)
 	}

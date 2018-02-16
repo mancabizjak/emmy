@@ -21,19 +21,51 @@ import (
 	"math/big"
 	"testing"
 
+	"fmt"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/xlab-si/emmy/crypto/common"
 	"github.com/xlab-si/emmy/crypto/groups"
 )
 
-func TestDLogKnowledge(t *testing.T) {
-	group, _ := groups.NewSchnorrGroup(256)
+var group *groups.SchnorrGroup
+var groupOrder, secret, a, b *big.Int
 
-	secret := common.GetRandomInt(group.Q)
-	groupOrder := new(big.Int).Sub(group.P, big.NewInt(1))
-	g1, _ := common.GetGeneratorOfZnSubgroup(group.P, groupOrder, group.Q)
-	t1 := group.Exp(g1, secret)
-	proved := ProveDLogKnowledge(secret, g1, t1, group)
+func TestMain(m *testing.M) {
+	group, _ = groups.NewSchnorrGroup(256)
+	groupOrder = new(big.Int).Sub(group.P, big.NewInt(1))
+	secret = common.GetRandomInt(group.Q)
+	a, _ = common.GetGeneratorOfZnSubgroup(group.P, groupOrder, group.Q)
+	b = group.Exp(a, secret)
 
-	assert.Equal(t, proved, true, "DLogKnowledge does not work correctly")
+	m.Run()
+}
+
+func TestSchnorrSigma(t *testing.T) {
+	prover := NewSchnorrProver(group)
+	verifier := NewSchnorrVerifier(group)
+
+	x := prover.GenerateRandomData(secret, a)
+	verifier.SetParams(x, a, b)
+	c := verifier.GenerateChallenge()
+	z := prover.GenerateProofData(c)
+	proved := verifier.Verify(z)
+
+	assert.Equal(t, proved, true, "schnorr sigma proof does not work")
+}
+
+func TestSchnorrZKP(t *testing.T) {
+	prover := NewSchnorrZKPProver(group)
+	verifier := NewSchnorrZKPVerifier(group)
+
+	h := verifier.GetH()
+	commitment := prover.GenerateCommitment(secret, a, h)
+	fmt.Println("commitment", commitment)
+	verifier.SetParams(commitment, a, b)
+	c := verifier.GenerateChallenge()
+	z := prover.GenerateProofData(c)
+	randData, r := prover.pedersenCommitter.GetDecommitMsg()
+	proved := verifier.Verify(z, randData, r)
+
+	assert.Equal(t, proved, true, "schnorr ZKP does not work")
 }

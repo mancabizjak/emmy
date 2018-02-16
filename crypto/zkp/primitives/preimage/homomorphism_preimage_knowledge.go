@@ -81,7 +81,7 @@ func (prover *HomomorphismPreimageProver) GetProofRandomData() *big.Int {
 	return x
 }
 
-// GetProofData receives challenge defined by a verifier, and returns z = r * v^challenge.
+// GenerateProofData receives challenge defined by a verifier, and returns z = r * v^challenge.
 func (prover *HomomorphismPreimageProver) GetProofData(challenge *big.Int) *big.Int {
 	// z = r * v^challenge
 	z := prover.H.Exp(prover.v, challenge)

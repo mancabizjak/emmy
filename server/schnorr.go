@@ -58,7 +58,7 @@ func (s *Server) Schnorr(req *pb.Message, group *groups.SchnorrGroup,
 	x := new(big.Int).SetBytes(sProofRandData.X)
 	a := new(big.Int).SetBytes(sProofRandData.A)
 	b := new(big.Int).SetBytes(sProofRandData.B)
-	verifier.SetProofRandomData(x, a, b)
+	verifier.SetParams(x, a, b)
 
 	challenge, r2 := verifier.GetChallenge() // r2 is nil in sigma protocol
 	if r2 == nil {

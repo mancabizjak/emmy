@@ -71,7 +71,7 @@ func (ca *CA) GetChallenge(a, b, x *big.Int) *big.Int {
 
 	ca.a = a
 	ca.b = b
-	ca.SchnorrVerifier.SetProofRandomData(x, a, b)
+	ca.SchnorrVerifier.SetParams(x, a, b)
 	challenge, _ := ca.SchnorrVerifier.GetChallenge()
 	return challenge
 }

@@ -86,7 +86,7 @@ func NewSchnorrECProver(curveType groups.ECurve, protocolType protocoltypes.Prot
 	return &prover, nil
 }
 
-// Returns pedersenReceiver's h. Verifier needs h to prepare a commitment.
+// Returns PedersenReceiver's h. Verifier needs h to prepare a commitment.
 func (prover *SchnorrECProver) GetOpeningMsg() *groups.ECGroupElement {
 	return prover.PedersenReceiver.GetH()
 }
@@ -102,7 +102,7 @@ func (prover *SchnorrECProver) GetProofRandomData(secret *big.Int,
 	return x
 }
 
-// It receives challenge defined by a verifier, and returns z = r + challenge * w
+// It receives challenge defined by a verifier, and returns z = r + challenge * secret
 // and trapdoor in ZKPOK.
 func (prover *SchnorrECProver) GetProofData(challenge *big.Int) (*big.Int, *big.Int) {
 	// z = r + challenge * secret
