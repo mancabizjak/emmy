@@ -19,8 +19,11 @@ package cli
 
 import (
 	"github.com/urfave/cli"
+	"github.com/xlab-si/emmy/crypto/groups"
 	"github.com/xlab-si/emmy/log"
 	"github.com/xlab-si/emmy/server"
+	"github.com/xlab-si/emmy/server/ec"
+	"github.com/xlab-si/emmy/server/mod"
 )
 
 var ServerCmd = cli.Command{
@@ -38,7 +41,8 @@ var ServerCmd = cli.Command{
 					ctx.String("key"),
 					ctx.String("db"),
 					ctx.String("logfile"),
-					ctx.String("loglevel"))
+					ctx.String("loglevel"),
+					ctx.Bool("ec"))
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}
@@ -49,7 +53,8 @@ var ServerCmd = cli.Command{
 }
 
 // startEmmyServer configures and starts the gRPC server at the desired port
-func startEmmyServer(port int, certPath, keyPath, dbAddress, logFilePath, logLevel string) error {
+func startEmmyServer(port int, certPath, keyPath, dbAddress, logFilePath, logLevel string,
+	ecMode bool) error {
 	var err error
 	var logger log.Logger
 
@@ -68,6 +73,15 @@ func startEmmyServer(port int, certPath, keyPath, dbAddress, logFilePath, logLev
 		return err
 	}
 
-	srv.EnableTracing()
-	return srv.Start(port)
+	// configure emmy server to run in either EC or modular mode
+	var emmyServer server.EmmyServer
+	if ecMode {
+		emmyServer = ec.NewServer(groups.P256, srv)
+	} else {
+		emmyServer = mod.NewServer(srv)
+	}
+	logger.Noticef("EC mode on: %v", ecMode)
+
+	emmyServer.EnableTracing()
+	return emmyServer.Start(port)
 }

@@ -88,6 +88,13 @@ var portFlag = cli.IntFlag{
 	Usage: "`PORT` where emmy server will listen for client connections",
 }
 
+// ecModeFlag instructs the server to run anonymous authentication schemes in EC
+// arithmetic rather than modular arithmetic.
+var ecModeFlag = cli.BoolFlag{
+	Name:  "ec",
+	Usage: "Enable EC mode of operation for interactive protocols and schemes",
+}
+
 // serverEndpointFlag points to the endpoint at which emmy clients will contact emmy server.
 var serverEndpointFlag = cli.StringFlag{
 	Name:  "server",
@@ -153,6 +160,7 @@ var protocolPubKeyFlag = cli.StringFlag{
 // serverFlags are the flags used by the server CLI commands.
 var serverFlags = []cli.Flag{
 	portFlag,
+	ecModeFlag,
 	certFlag,
 	keyFlag,
 	dbEndpointFlag,

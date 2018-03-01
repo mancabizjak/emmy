@@ -111,13 +111,12 @@ var clientSubcommands = []cli.Command{
 		Flags:    []cli.Flag{protocolSecretFlag, protocolVariantFlag},
 		Action: func(ctx *cli.Context) error {
 			return run(ctx.Parent(), ctx, func(ctx *cli.Context, conn *grpc.ClientConn) error {
-				group := config.LoadSchnorrGroup()
 				pbVariant, err := parseSchema(ctx.String("variant"))
 				if err != nil {
 					return err
 				}
 				secret := big.NewInt(ctx.Int64("secret"))
-				client, err := client.NewSchnorrClient(conn, pbVariant, group, secret)
+				client, err := client.NewSchnorrECClient(conn, pbVariant, groups.P256, secret)
 				if err != nil {
 					return fmt.Errorf("error creating client: %v", err)
 				}
