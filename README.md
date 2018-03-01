@@ -120,18 +120,33 @@ Alternatively, you can control emmy server's behavior with the following options
 5. **Address of the redis database**: flag *--db* of the form *redisHost:redisPort*, which points
  to a running instance of redis database that holds [registration keys](#registration-keys). 
  Defaults to *localhost:6379*.
+ 
+6. **EC mode switch**: flag *--ec*. If this flag is omitted, the server supports only the 
+interactive protocols and schemes using modular arithmetic. The presence of this flag instructs the
+server to support protocols and schemes implemented with EC arithmetic, while disabling the 
+modular ones.
+    > Note that if a client tries to run a protocol that is unsupported in server's mode of operation,
+ he can expect to see a message like *An error occurred: rpc error: code = Unimplemented desc = 
+ unknown service <protobuf.SomeServiceUnsupportedByServer>* 
+
 
 Starting the server should produce an output similar to the one below:
 
 ```
-(1) [server][Mon 25.Sep 2017,14:11:041] NewProtocolServer ▶ INFO  Instantiating new protocol server
-(2) [server][Mon 25.Sep 2017,14:11:041] NewProtocolServer ▶ INFO  Successfully read certificate [test/testdata/server.pem] and key [test/testdata/server.key]
-(3) [server][Mon 25.Sep 2017,14:11:041] NewProtocolServer ▶ NOTI  gRPC Services registered
-(4) [server][Mon 25.Sep 2017,14:11:041] EnableTracing ▶ NOTI  Enabled gRPC tracing
-(5) [server][Mon 25.Sep 2017,14:11:041] Start ▶ NOTI  Emmy server listening for connections on port 7007
+(1) [server][Thu  1.Mar 2018,08:01:008] NewServer ▶ INFO  Instantiating new server
+(2) [server][Thu  1.Mar 2018,08:01:008] NewServer ▶ INFO  Successfully read certificate [/path/to/server.pem] and key [/path/to/server.key]
+(3) [server][Thu  1.Mar 2018,08:01:008] RegisterServices ▶ NOTICE  Registered gRPC Services
+(4) [server][Thu  1.Mar 2018,08:01:008] startEmmyServer ▶ NOTICE  EC mode on: false
+(5) [server][Thu  1.Mar 2018,08:01:008] EnableTracing ▶ NOTICE  Enabled gRPC tracing
+(6) [server][Thu  1.Mar 2018,08:01:008] Start ▶ NOTICE  Emmy server listening for connections on 
+port 7007
 ```
 
-Line 1 indicates that the emmy server is being instantiated. Line 2 informs us about the server's certificate and private key paths to be used for secure communication with clients. Line 3 indicates that gRPC service for execution of crypto protocols is ready, and Line 4 tells us that gRPC tracing (used to oversee RPC calls) has been enabled. Finaly, line 5 indicates that emmy server is ready to serve clients.
+Line 1 indicates that the emmy server is being instantiated. Line 2 informs us about the server's
+ certificate and private key paths to be used for secure communication with clients. Line 3 
+ indicates that gRPC service for execution of crypto protocols is ready, and Line 4 gives us 
+ feedback about server's mode of operation. Line 5 tells us that gRPC tracing (used to oversee RPC 
+ calls) has been enabled. Finaly, line 5 indicates that emmy server is ready to serve clients.
 
 When a client establishes a connection to emmy server and starts communicating with it, the server will log additional information. How much gets logged depends on the desired log level. 
 
