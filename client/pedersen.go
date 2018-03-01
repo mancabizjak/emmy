@@ -28,8 +28,9 @@ import (
 
 type PedersenClient struct {
 	pedersenCommonClient
-	committer *commitments.PedersenCommitter
-	val       *big.Int
+	grpcClient pb.ProtocolClient
+	committer  *commitments.PedersenCommitter
+	val        *big.Int
 }
 
 // NewPedersenClient returns an initialized struct of type PedersenClient.
@@ -40,10 +41,10 @@ func NewPedersenClient(conn *grpc.ClientConn, variant pb.SchemaVariant, dlog *gr
 	return &PedersenClient{
 		pedersenCommonClient: pedersenCommonClient{
 			genericClient: newGenericClient(),
-			grpcClient:    pb.NewProtocolClient(conn),
 		},
-		committer: commitments.NewPedersenCommitter(dlog),
-		val:       val,
+		grpcClient: pb.NewProtocolClient(conn),
+		committer:  commitments.NewPedersenCommitter(dlog),
+		val:        val,
 	}, nil
 }
 

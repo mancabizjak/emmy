@@ -29,7 +29,7 @@ import (
 
 type SchnorrECClient struct {
 	genericClient
-	grpcClient pb.ProtocolClient
+	grpcClient pb.Protocol_ECClient
 	prover     *dlogproofs.SchnorrECProver
 	secret     *big.Int
 	a          *groups.ECGroupElement
@@ -46,7 +46,7 @@ func NewSchnorrECClient(conn *grpc.ClientConn, variant pb.SchemaVariant, curve g
 
 	return &SchnorrECClient{
 		genericClient: newGenericClient(),
-		grpcClient:    pb.NewProtocolClient(conn),
+		grpcClient:    pb.NewProtocol_ECClient(conn),
 		prover:        prover,
 		variant:       variant,
 		secret:        s,

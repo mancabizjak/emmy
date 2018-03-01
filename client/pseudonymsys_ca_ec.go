@@ -30,7 +30,7 @@ import (
 
 type PseudonymsysCAClientEC struct {
 	genericClient
-	grpcClient pb.PseudonymSystemCAClient
+	grpcClient pb.PseudonymSystemCA_ECClient
 	curve      groups.ECurve
 	prover     *dlogproofs.SchnorrECProver
 }
@@ -43,7 +43,7 @@ func NewPseudonymsysCAClientEC(conn *grpc.ClientConn, curve groups.ECurve) (*Pse
 
 	return &PseudonymsysCAClientEC{
 		genericClient: newGenericClient(),
-		grpcClient:    pb.NewPseudonymSystemCAClient(conn),
+		grpcClient:    pb.NewPseudonymSystemCA_ECClient(conn),
 		curve:         curve,
 		prover:        prover,
 	}, nil

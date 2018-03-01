@@ -28,8 +28,9 @@ import (
 
 type PedersenECClient struct {
 	pedersenCommonClient
-	committer *commitments.PedersenECCommitter
-	val       *big.Int
+	grpcClient pb.Protocol_ECClient
+	committer  *commitments.PedersenECCommitter
+	val        *big.Int
 }
 
 // NewPedersenECClient returns an initialized struct of type PedersenECClient.
@@ -37,10 +38,10 @@ func NewPedersenECClient(conn *grpc.ClientConn, v *big.Int, curveType groups.ECu
 	return &PedersenECClient{
 		pedersenCommonClient: pedersenCommonClient{
 			genericClient: newGenericClient(),
-			grpcClient:    pb.NewProtocolClient(conn),
 		},
-		committer: commitments.NewPedersenECCommitter(curveType),
-		val:       v,
+		grpcClient: pb.NewProtocol_ECClient(conn),
+		committer:  commitments.NewPedersenECCommitter(curveType),
+		val:        v,
 	}, nil
 }
 

@@ -32,14 +32,14 @@ import (
 
 type PseudonymsysClientEC struct {
 	genericClient
-	grpcClient pb.PseudonymSystemClient
+	grpcClient pb.PseudonymSystem_ECClient
 	curve      groups.ECurve
 }
 
 func NewPseudonymsysClientEC(conn *grpc.ClientConn, curve groups.ECurve) (*PseudonymsysClientEC, error) {
 	return &PseudonymsysClientEC{
 		genericClient: newGenericClient(),
-		grpcClient:    pb.NewPseudonymSystemClient(conn),
+		grpcClient:    pb.NewPseudonymSystem_ECClient(conn),
 		curve:         curve,
 	}, nil
 }
