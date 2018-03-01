@@ -15,7 +15,7 @@
  *
  */
 
-package server
+package mod
 
 import (
 	"fmt"
@@ -34,7 +34,7 @@ func (s *Server) QNR(req *pb.Message, qr *groups.QRRSA,
 	resp := &pb.Message{
 		Content: &pb.Message_Empty{&pb.EmptyMsg{}},
 	}
-	if err := s.send(resp, stream); err != nil {
+	if err := s.Send(resp, stream); err != nil {
 		return err
 	}
 
@@ -45,7 +45,7 @@ func (s *Server) QNR(req *pb.Message, qr *groups.QRRSA,
 	// the client has to prove for all i - if in one iteration the knowledge
 	// is not proved, the protocol is stopped
 	for i := 0; i < m; i++ {
-		req, err = s.receive(stream)
+		req, err = s.Receive(stream)
 		if err != nil {
 			return err
 		}
@@ -70,11 +70,11 @@ func (s *Server) QNR(req *pb.Message, qr *groups.QRRSA,
 			},
 		}
 
-		if err = s.send(resp, stream); err != nil {
+		if err = s.Send(resp, stream); err != nil {
 			return err
 		}
 
-		req, err := s.receive(stream)
+		req, err := s.Receive(stream)
 		if err != nil {
 			return err
 		}
@@ -100,11 +100,11 @@ func (s *Server) QNR(req *pb.Message, qr *groups.QRRSA,
 			},
 		}
 
-		if err := s.send(resp, stream); err != nil {
+		if err := s.Send(resp, stream); err != nil {
 			return err
 		}
 
-		req, err = s.receive(stream)
+		req, err = s.Receive(stream)
 		if err != nil {
 			return err
 		}
@@ -116,7 +116,7 @@ func (s *Server) QNR(req *pb.Message, qr *groups.QRRSA,
 			Content: &pb.Message_Status{&pb.Status{Success: proved}},
 		}
 
-		if err = s.send(resp, stream); err != nil {
+		if err = s.Send(resp, stream); err != nil {
 			return err
 		}
 

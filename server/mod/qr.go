@@ -15,7 +15,7 @@
  *
  */
 
-package server
+package mod
 
 import (
 	"math/big"
@@ -36,7 +36,7 @@ func (s *Server) QR(req *pb.Message, group *groups.SchnorrGroup,
 	resp := &pb.Message{
 		Content: &pb.Message_Empty{&pb.EmptyMsg{}},
 	}
-	if err := s.send(resp, stream); err != nil {
+	if err := s.Send(resp, stream); err != nil {
 		return err
 	}
 
@@ -44,7 +44,7 @@ func (s *Server) QR(req *pb.Message, group *groups.SchnorrGroup,
 	// the client has to prove for all i - if in one iteration the knowledge
 	// is not proved, the protocol is stopped
 	for i := 0; i < m; i++ {
-		req, err = s.receive(stream)
+		req, err = s.Receive(stream)
 		if err != nil {
 			return err
 		}
@@ -59,11 +59,11 @@ func (s *Server) QR(req *pb.Message, group *groups.SchnorrGroup,
 			},
 		}
 
-		if err := s.send(resp, stream); err != nil {
+		if err := s.Send(resp, stream); err != nil {
 			return err
 		}
 
-		req, err := s.receive(stream)
+		req, err := s.Receive(stream)
 		if err != nil {
 			return err
 		}
@@ -76,7 +76,7 @@ func (s *Server) QR(req *pb.Message, group *groups.SchnorrGroup,
 			Content: &pb.Message_Status{&pb.Status{Success: proved}},
 		}
 
-		if err = s.send(resp, stream); err != nil {
+		if err = s.Send(resp, stream); err != nil {
 			return err
 		}
 

@@ -15,7 +15,7 @@
  *
  */
 
-package server
+package ec
 
 import (
 	"math/big"
@@ -25,34 +25,39 @@ import (
 	pb "github.com/xlab-si/emmy/protobuf"
 )
 
-func (s *Server) Pedersen(group *groups.SchnorrGroup, stream pb.Protocol_RunServer) error {
-	pedersenReceiver := commitments.NewPedersenReceiver(group)
+func (s *Server) Pedersen(curveType groups.ECurve, stream pb.Protocol_EC_RunServer) error {
+	pedersenECReceiver := commitments.NewPedersenECReceiver(curveType)
 
-	h := pedersenReceiver.GetH()
-
-	pedersenFirst := pb.PedersenFirst{
-		H: h.Bytes(),
+	h := pedersenECReceiver.GetH()
+	ecge := pb.ECGroupElement{
+		X: h.X.Bytes(),
+		Y: h.Y.Bytes(),
 	}
-	resp := &pb.Message{Content: &pb.Message_PedersenFirst{&pedersenFirst}}
+	resp := &pb.Message{Content: &pb.Message_EcGroupElement{&ecge}}
 
-	if err := s.send(resp, stream); err != nil {
+	if err := s.Send(resp, stream); err != nil {
 		return err
 	}
 
-	req, err := s.receive(stream)
+	req, err := s.Receive(stream)
 	if err != nil {
 		return err
 	}
 
-	bigint := req.GetBigint()
-	el := new(big.Int).SetBytes(bigint.X1)
-	pedersenReceiver.SetCommitment(el)
-	resp = &pb.Message{Content: &pb.Message_Empty{&pb.EmptyMsg{}}}
-	if err = s.send(resp, stream); err != nil {
+	el := req.GetEcGroupElement()
+	if el == nil {
+		s.Logger.Critical("Got a nil EC group element")
 		return err
 	}
 
-	req, err = s.receive(stream)
+	myEl := el.GetNativeType()
+	pedersenECReceiver.SetCommitment(myEl)
+	resp = &pb.Message{Content: &pb.Message_Empty{&pb.EmptyMsg{}}}
+	if err = s.Send(resp, stream); err != nil {
+		return err
+	}
+
+	req, err = s.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -60,15 +65,15 @@ func (s *Server) Pedersen(group *groups.SchnorrGroup, stream pb.Protocol_RunServ
 	pedersenDecommitment := req.GetPedersenDecommitment()
 	val := new(big.Int).SetBytes(pedersenDecommitment.X)
 	r := new(big.Int).SetBytes(pedersenDecommitment.R)
-	valid := pedersenReceiver.CheckDecommitment(r, val)
+	valid := pedersenECReceiver.CheckDecommitment(r, val)
 
-	s.logger.Noticef("Commitment scheme success: **%v**", valid)
+	s.Logger.Noticef("Commitment scheme success: **%v**", valid)
 
 	resp = &pb.Message{
 		Content: &pb.Message_Status{&pb.Status{Success: valid}},
 	}
 
-	if err = s.send(resp, stream); err != nil {
+	if err = s.Send(resp, stream); err != nil {
 		return err
 	}
 

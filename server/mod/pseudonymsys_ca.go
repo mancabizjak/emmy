@@ -15,7 +15,7 @@
  *
  */
 
-package server
+package mod
 
 import (
 	"math/big"
@@ -28,7 +28,7 @@ import (
 func (s *Server) GenerateCertificate(stream pb.PseudonymSystemCA_GenerateCertificateServer) error {
 	var err error
 
-	req, err := s.receive(stream)
+	req, err := s.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -52,11 +52,11 @@ func (s *Server) GenerateCertificate(stream pb.PseudonymSystemCA_GenerateCertifi
 		},
 	}
 
-	if err := s.send(resp, stream); err != nil {
+	if err := s.Send(resp, stream); err != nil {
 		return err
 	}
 
-	req, err = s.receive(stream)
+	req, err = s.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -77,13 +77,13 @@ func (s *Server) GenerateCertificate(stream pb.PseudonymSystemCA_GenerateCertifi
 			},
 		}
 	} else {
-		s.logger.Debug(err)
+		s.Logger.Debug(err)
 		resp = &pb.Message{
 			ProtocolError: err.Error(),
 		}
 	}
 
-	if err = s.send(resp, stream); err != nil {
+	if err = s.Send(resp, stream); err != nil {
 		return err
 	}
 

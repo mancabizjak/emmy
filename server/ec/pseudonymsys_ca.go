@@ -15,7 +15,7 @@
  *
  */
 
-package server
+package ec
 
 import (
 	"math/big"
@@ -25,15 +25,15 @@ import (
 	pb "github.com/xlab-si/emmy/protobuf"
 )
 
-func (s *Server) GenerateCertificate_EC(stream pb.PseudonymSystemCA_GenerateCertificate_ECServer) error {
-	req, err := s.receive(stream)
+func (s *Server) GenerateCertificate(stream pb.PseudonymSystemCA_EC_GenerateCertificateServer) error {
+	req, err := s.Receive(stream)
 	if err != nil {
 		return err
 	}
 
 	d := config.LoadPseudonymsysCASecret()
 	pubKeyX, pubKeyY := config.LoadPseudonymsysCAPubKey()
-	ca := pseudonymsys.NewCAEC(d, pubKeyX, pubKeyY, curve)
+	ca := pseudonymsys.NewCAEC(d, pubKeyX, pubKeyY, s.curve)
 
 	sProofRandData := req.GetSchnorrEcProofRandomData()
 	x := sProofRandData.X.GetNativeType()
@@ -49,11 +49,11 @@ func (s *Server) GenerateCertificate_EC(stream pb.PseudonymSystemCA_GenerateCert
 		},
 	}
 
-	if err := s.send(resp, stream); err != nil {
+	if err := s.Send(resp, stream); err != nil {
 		return err
 	}
 
-	req, err = s.receive(stream)
+	req, err = s.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -74,13 +74,13 @@ func (s *Server) GenerateCertificate_EC(stream pb.PseudonymSystemCA_GenerateCert
 			},
 		}
 	} else {
-		s.logger.Debug(err)
+		s.Logger.Debug(err)
 		resp = &pb.Message{
 			ProtocolError: err.Error(),
 		}
 	}
 
-	if err = s.send(resp, stream); err != nil {
+	if err = s.Send(resp, stream); err != nil {
 		return err
 	}
 

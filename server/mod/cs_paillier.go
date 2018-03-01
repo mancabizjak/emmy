@@ -15,7 +15,7 @@
  *
  */
 
-package server
+package mod
 
 import (
 	"math/big"
@@ -45,11 +45,11 @@ func (s *Server) CSPaillier(req *pb.Message, secKeyPath string, stream pb.Protoc
 		Content: &pb.Message_Empty{&pb.EmptyMsg{}},
 	}
 
-	if err = s.send(resp, stream); err != nil {
+	if err = s.Send(resp, stream); err != nil {
 		return err
 	}
 
-	req, err = s.receive(stream)
+	req, err = s.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -72,11 +72,11 @@ func (s *Server) CSPaillier(req *pb.Message, secKeyPath string, stream pb.Protoc
 		Content: &pb.Message_Bigint{&challenge},
 	}
 
-	if err = s.send(resp, stream); err != nil {
+	if err = s.Send(resp, stream); err != nil {
 		return err
 	}
 
-	req, err = s.receive(stream)
+	req, err = s.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -107,7 +107,7 @@ func (s *Server) CSPaillier(req *pb.Message, secKeyPath string, stream pb.Protoc
 		Content: &pb.Message_Status{&status},
 	}
 
-	if err = s.send(resp, stream); err != nil {
+	if err = s.Send(resp, stream); err != nil {
 		return err
 	}
 

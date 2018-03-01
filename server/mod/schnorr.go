@@ -15,7 +15,7 @@
  *
  */
 
-package server
+package mod
 
 import (
 	"math/big"
@@ -43,11 +43,11 @@ func (s *Server) Schnorr(req *pb.Message, group *groups.SchnorrGroup,
 			},
 		}
 
-		if err = s.send(resp, stream); err != nil {
+		if err = s.Send(resp, stream); err != nil {
 			return err
 		}
 
-		req, err = s.receive(stream)
+		req, err = s.Receive(stream)
 		if err != nil {
 			return err
 		}
@@ -75,11 +75,11 @@ func (s *Server) Schnorr(req *pb.Message, group *groups.SchnorrGroup,
 		},
 	}
 
-	if err := s.send(resp, stream); err != nil {
+	if err := s.Send(resp, stream); err != nil {
 		return err
 	}
 
-	req, err = s.receive(stream)
+	req, err = s.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -93,7 +93,7 @@ func (s *Server) Schnorr(req *pb.Message, group *groups.SchnorrGroup,
 		Content: &pb.Message_Status{&pb.Status{Success: valid}},
 	}
 
-	if err = s.send(resp, stream); err != nil {
+	if err = s.Send(resp, stream); err != nil {
 		return err
 	}
 

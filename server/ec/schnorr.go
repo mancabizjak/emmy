@@ -15,7 +15,7 @@
  *
  */
 
-package server
+package ec
 
 import (
 	"math/big"
@@ -26,8 +26,8 @@ import (
 	pb "github.com/xlab-si/emmy/protobuf"
 )
 
-func (s *Server) SchnorrEC(req *pb.Message, protocolType protocoltypes.ProtocolType,
-	stream pb.Protocol_RunServer, curve groups.ECurve) error {
+func (s *Server) Schnorr(req *pb.Message, protocolType protocoltypes.ProtocolType,
+	stream pb.Protocol_EC_RunServer, curve groups.ECurve) error {
 	verifier := dlogproofs.NewSchnorrECVerifier(curve, protocolType)
 	var err error
 
@@ -44,11 +44,11 @@ func (s *Server) SchnorrEC(req *pb.Message, protocolType protocoltypes.ProtocolT
 			},
 		}
 
-		if err := s.send(resp, stream); err != nil {
+		if err := s.Send(resp, stream); err != nil {
 			return err
 		}
 
-		req, err = s.receive(stream)
+		req, err = s.Receive(stream)
 		if err != nil {
 			return err
 		}
@@ -76,11 +76,11 @@ func (s *Server) SchnorrEC(req *pb.Message, protocolType protocoltypes.ProtocolT
 		},
 	}
 
-	if err := s.send(resp, stream); err != nil {
+	if err := s.Send(resp, stream); err != nil {
 		return err
 	}
 
-	req, err = s.receive(stream)
+	req, err = s.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -94,7 +94,7 @@ func (s *Server) SchnorrEC(req *pb.Message, protocolType protocoltypes.ProtocolT
 		Content: &pb.Message_Status{&pb.Status{Success: valid}},
 	}
 
-	if err = s.send(resp, stream); err != nil {
+	if err = s.Send(resp, stream); err != nil {
 		return err
 	}
 

@@ -15,7 +15,7 @@
  *
  */
 
-package server
+package ec
 
 import (
 	"math/big"
@@ -27,14 +27,14 @@ import (
 	pb "github.com/xlab-si/emmy/protobuf"
 )
 
-func (s *Server) GenerateNym_EC(stream pb.PseudonymSystem_GenerateNym_ECServer) error {
-	req, err := s.receive(stream)
+func (s *Server) GenerateNym(stream pb.PseudonymSystem_EC_GenerateNymServer) error {
+	req, err := s.Receive(stream)
 	if err != nil {
 		return err
 	}
 
 	caPubKeyX, caPubKeyY := config.LoadPseudonymsysCAPubKey()
-	org := pseudonymsys.NewOrgNymGenEC(caPubKeyX, caPubKeyY, curve)
+	org := pseudonymsys.NewOrgNymGenEC(caPubKeyX, caPubKeyY, s.curve)
 
 	proofRandData := req.GetPseudonymsysNymGenProofRandomDataEc()
 	x1 := proofRandData.X1.GetNativeType()
@@ -46,24 +46,24 @@ func (s *Server) GenerateNym_EC(stream pb.PseudonymSystem_GenerateNym_ECServer) 
 	signatureR := new(big.Int).SetBytes(proofRandData.R)
 	signatureS := new(big.Int).SetBytes(proofRandData.S)
 
-	regKeyOk, err := s.registrationManager.CheckRegistrationKey(proofRandData.RegKey)
+	regKeyOk, err := s.RegistrationManager.CheckRegistrationKey(proofRandData.RegKey)
 
 	var resp *pb.Message
 
 	if !regKeyOk || err != nil {
-		s.logger.Debugf("Registration key %s ok=%t, error=%v",
+		s.Logger.Debugf("Registration key %s ok=%t, error=%v",
 			proofRandData.RegKey, regKeyOk, err)
 		resp = &pb.Message{
 			ProtocolError: "registration key verification failed",
 		}
 
-		if err = s.send(resp, stream); err != nil {
+		if err = s.Send(resp, stream); err != nil {
 			return err
 		}
 	} else {
 		challenge, err := org.GetChallenge(nymA, blindedA, nymB, blindedB, x1, x2, signatureR, signatureS)
 		if err != nil {
-			s.logger.Debug(err)
+			s.Logger.Debug(err)
 			resp = &pb.Message{
 				ProtocolError: err.Error(),
 			}
@@ -77,11 +77,11 @@ func (s *Server) GenerateNym_EC(stream pb.PseudonymSystem_GenerateNym_ECServer) 
 			}
 		}
 
-		if err := s.send(resp, stream); err != nil {
+		if err := s.Send(resp, stream); err != nil {
 			return err
 		}
 
-		req, err = s.receive(stream)
+		req, err = s.Receive(stream)
 		if err != nil {
 			return err
 		}
@@ -94,7 +94,7 @@ func (s *Server) GenerateNym_EC(stream pb.PseudonymSystem_GenerateNym_ECServer) 
 			Content: &pb.Message_Status{&pb.Status{Success: valid}},
 		}
 
-		if err = s.send(resp, stream); err != nil {
+		if err = s.Send(resp, stream); err != nil {
 			return err
 		}
 	}
@@ -102,8 +102,8 @@ func (s *Server) GenerateNym_EC(stream pb.PseudonymSystem_GenerateNym_ECServer) 
 	return nil
 }
 
-func (s *Server) ObtainCredential_EC(stream pb.PseudonymSystem_ObtainCredential_ECServer) error {
-	req, err := s.receive(stream)
+func (s *Server) ObtainCredential(stream pb.PseudonymSystem_EC_ObtainCredentialServer) error {
+	req, err := s.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -114,7 +114,7 @@ func (s *Server) ObtainCredential_EC(stream pb.PseudonymSystem_ObtainCredential_
 	b := proofRandData.B.GetNativeType()
 
 	s1, s2 := config.LoadPseudonymsysOrgSecrets("org1", "ecdlog")
-	org := pseudonymsys.NewOrgCredentialIssuerEC(s1, s2, curve)
+	org := pseudonymsys.NewOrgCredentialIssuerEC(s1, s2, s.curve)
 	challenge := org.GetAuthenticationChallenge(a, b, x)
 
 	resp := &pb.Message{
@@ -125,11 +125,11 @@ func (s *Server) ObtainCredential_EC(stream pb.PseudonymSystem_ObtainCredential_
 		},
 	}
 
-	if err := s.send(resp, stream); err != nil {
+	if err := s.Send(resp, stream); err != nil {
 		return err
 	}
 
-	req, err = s.receive(stream)
+	req, err = s.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -140,7 +140,7 @@ func (s *Server) ObtainCredential_EC(stream pb.PseudonymSystem_ObtainCredential_
 	x11, x12, x21, x22, A, B, err := org.VerifyAuthentication(z)
 
 	if err != nil {
-		s.logger.Debug(err)
+		s.Logger.Debug(err)
 		resp = &pb.Message{
 			ProtocolError: err.Error(),
 		}
@@ -159,11 +159,11 @@ func (s *Server) ObtainCredential_EC(stream pb.PseudonymSystem_ObtainCredential_
 		}
 	}
 
-	if err := s.send(resp, stream); err != nil {
+	if err := s.Send(resp, stream); err != nil {
 		return err
 	}
 
-	req, err = s.receive(stream)
+	req, err = s.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -182,21 +182,21 @@ func (s *Server) ObtainCredential_EC(stream pb.PseudonymSystem_ObtainCredential_
 		},
 	}
 
-	if err := s.send(resp, stream); err != nil {
+	if err := s.Send(resp, stream); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (s *Server) TransferCredential_EC(stream pb.PseudonymSystem_TransferCredential_ECServer) error {
-	req, err := s.receive(stream)
+func (s *Server) TransferCredential(stream pb.PseudonymSystem_EC_TransferCredentialServer) error {
+	req, err := s.Receive(stream)
 	if err != nil {
 		return err
 	}
 
 	s1, s2 := config.LoadPseudonymsysOrgSecrets("org1", "ecdlog")
-	org := pseudonymsys.NewOrgCredentialVerifierEC(s1, s2, curve)
+	org := pseudonymsys.NewOrgCredentialVerifierEC(s1, s2, s.curve)
 
 	data := req.GetPseudonymsysTransferCredentialDataEc()
 	orgName := data.OrgName
@@ -240,11 +240,11 @@ func (s *Server) TransferCredential_EC(stream pb.PseudonymSystem_TransferCredent
 		},
 	}
 
-	if err := s.send(resp, stream); err != nil {
+	if err := s.Send(resp, stream); err != nil {
 		return err
 	}
 
-	req, err = s.receive(stream)
+	req, err = s.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -264,9 +264,9 @@ func (s *Server) TransferCredential_EC(stream pb.PseudonymSystem_TransferCredent
 	// If something went wrong (either user was not authenticated or secure session key could not
 	// be generated), then sessionKey will be nil and the message will contain ProtocolError.
 	if verified {
-		sessionKey, err := s.generateSessionKey()
+		sessionKey, err := s.GenerateSessionKey()
 		if err != nil {
-			s.logger.Debug(err)
+			s.Logger.Debug(err)
 			resp.ProtocolError = "failed to obtain session key"
 		} else {
 			resp.Content = &pb.Message_SessionKey{
@@ -276,11 +276,11 @@ func (s *Server) TransferCredential_EC(stream pb.PseudonymSystem_TransferCredent
 			}
 		}
 	} else {
-		s.logger.Debug("User authentication failed")
+		s.Logger.Debug("User authentication failed")
 		resp.ProtocolError = "user authentication failed"
 	}
 
-	if err = s.send(resp, stream); err != nil {
+	if err = s.Send(resp, stream); err != nil {
 		return err
 	}
 
