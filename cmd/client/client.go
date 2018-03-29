@@ -15,7 +15,7 @@
  *
  */
 
-package cmd
+package client
 
 import (
 	"fmt"
@@ -40,7 +40,7 @@ var logLevelFlag = cli.StringFlag{
 	Usage: "debug|info|notice|error|critical",
 }
 
-var ClientCmd = cli.Command{
+var Cmd = cli.Command{
 	Name:  "client",
 	Usage: "A client (prover) that wants to prove something to the server (verifier)",
 	// clientFlags are flags common to all client CLI subcommands, regardless of the protocol.

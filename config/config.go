@@ -128,17 +128,6 @@ func LoadSchnorrGroup() *groups.SchnorrGroup {
 	return groups.NewSchnorrGroupFromParams(p, g, q)
 }
 
-func LoadQRRSA() *groups.QRRSA {
-	x := viper.GetStringMapString("qr")
-	p, _ := new(big.Int).SetString(x["p"], 10)
-	q, _ := new(big.Int).SetString(x["q"], 10)
-	qr, err := groups.NewQRRSA(p, q)
-	if err != nil {
-		panic(fmt.Errorf("error when loading QRRSA RSA group: %s\n", err))
-	}
-	return qr
-}
-
 func LoadPseudonymsysOrgSecrets(orgName, dlogType string) *pseudonymsys.SecKey {
 	org := viper.GetStringMap(fmt.Sprintf("pseudonymsys.%s.%s", orgName, dlogType))
 	s1, _ := new(big.Int).SetString(org["s1"].(string), 10)

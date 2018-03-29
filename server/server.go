@@ -25,6 +25,8 @@ import (
 
 	"net/http"
 
+	"os"
+
 	"github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/xlab-si/emmy/config"
@@ -54,6 +56,7 @@ var _ EmmyServer = (*Server)(nil)
 type Server struct {
 	GrpcServer *grpc.Server
 	Logger     log.Logger
+	*PseudonymSystemConfig
 	*SessionManager
 	*RegistrationManager
 }
@@ -62,7 +65,8 @@ type Server struct {
 // It performs some default configuration (tracing of gRPC communication and interceptors)
 // and registers RPC server handlers with gRPC server. It requires TLS cert and keyfile
 // in order to establish a secure channel with clients.
-func NewServer(certFile, keyFile, dbAddress string, logger log.Logger) (*Server, error) {
+func NewServer(certFile, keyFile, dbAddress string, logger log.Logger, configFile string) (*Server,
+	error) {
 	logger.Info("Instantiating new server")
 
 	// Obtain TLS credentials
@@ -84,6 +88,24 @@ func NewServer(certFile, keyFile, dbAddress string, logger log.Logger) (*Server,
 		return nil, err
 	}
 
+	cfg := &PseudonymSystemConfig{}
+	if err := ReadConfig(configFile, cfg); err != nil {
+		if !os.IsNotExist(err) {
+			logger.Critical(err.Error())
+			return nil, err
+		}
+
+		logger.Warning("Error loading config from file", err.Error())
+		logger.Warning("Generating configuration from scratch")
+		cfg = GeneratePseudonymSystemConfig()
+		err := os.MkdirAll(configFile, 0644) // makes a dir, we need a file
+		err = StoreConfig(configFile, cfg)
+		if err != nil {
+			logger.Critical(err.Error())
+			return nil, err
+		}
+	}
+
 	// Allow as much concurrent streams as possible and register a gRPC stream interceptor
 	// for logging and monitoring purposes.
 	server := &Server{
@@ -92,9 +114,10 @@ func NewServer(certFile, keyFile, dbAddress string, logger log.Logger) (*Server,
 			grpc.MaxConcurrentStreams(math.MaxUint32),
 			grpc.StreamInterceptor(grpc_prometheus.StreamServerInterceptor),
 		),
-		Logger:              logger,
-		SessionManager:      sessionManager,
-		RegistrationManager: registrationManager,
+		Logger:                logger,
+		SessionManager:        sessionManager,
+		RegistrationManager:   registrationManager,
+		PseudonymSystemConfig: cfg,
 	}
 
 	// Disable tracing by default, as is used for debugging purposes.

@@ -21,7 +21,8 @@ import (
 	"os"
 
 	"github.com/urfave/cli"
-	emmy "github.com/xlab-si/emmy/cmd"
+	"github.com/xlab-si/emmy/cmd/client"
+	"github.com/xlab-si/emmy/cmd/server"
 )
 
 // version marks the version of emmy.
@@ -39,7 +40,7 @@ func main() {
 	app.Version = version
 	app.Usage = `A CLI app for running emmy server, emmy clients 
 		and examples of proofs offered by the emmy library`
-	app.Commands = []cli.Command{emmy.ServerCmd, emmy.ClientCmd}
+	app.Commands = []cli.Command{client.Cmd, server.Cmd}
 
 	app.Run(os.Args)
 }

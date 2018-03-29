@@ -43,7 +43,7 @@ var testGrpcClientConn *grpc.ClientConn
 func TestMain(m *testing.M) {
 	logger, _ := log.NewStdoutLogger("testServer", log.NOTICE, log.FORMAT_LONG)
 	server, err := server.NewServer("testdata/server.pem", "testdata/server.key",
-		config.LoadRegistrationDBAddress(), logger)
+		config.LoadRegistrationDBAddress(), logger, "testdata/.emmy/emmy.conf")
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

@@ -15,28 +15,4 @@
  *
  */
 
-package storage
-
-import (
-	"io/ioutil"
-)
-
-func Store(content []byte, path string) error {
-	/*f, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-	defer f.Close()*/
-
-	return ioutil.WriteFile(path, content, 0600)
-	//f.Write(content)
-}
-
-func Load(path string) ([]byte, error) {
-	bytes, err := ioutil.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-
-	return bytes, nil
-}
+package server
