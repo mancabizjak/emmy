@@ -24,9 +24,13 @@ import (
 	"os"
 	"path/filepath"
 
+	"bytes"
+	"encoding/gob"
+
 	"github.com/spf13/viper"
 	"github.com/xlab-si/emmy/crypto/groups"
 	"github.com/xlab-si/emmy/crypto/zkp/schemes/pseudonymsys"
+	"github.com/xlab-si/emmy/storage"
 )
 
 // init loads the default config file
@@ -180,4 +184,55 @@ func LoadSessionKeyMinByteLen() int {
 
 func LoadRegistrationDBAddress() string {
 	return viper.GetString("registration_db_address")
+}
+
+type PseudonymSystemConfig struct {
+	SchnorrGroup *groups.SchnorrGroup
+	SecKey       *pseudonymsys.SecKey
+	PubKey       *pseudonymsys.PubKey
+	//CaSecret     *big.Int
+	//CaPubKey     *pseudonymsys.PubKey
+}
+
+type PseudonymSystem struct{}
+
+func (s *PseudonymSystem) Generate() interface{} {
+	group, _ := groups.NewSchnorrGroup(256)
+	secKey, pubKey := pseudonymsys.GenerateKeyPair(group)
+
+	return &PseudonymSystemConfig{
+		//filename:     "pseudonym_system",
+		SchnorrGroup: group,
+		SecKey:       secKey,
+		PubKey:       pubKey,
+		//CaSecKey: ,
+		//CaPubKey: ,
+	}
+}
+
+type CryptoConfigGenerator interface {
+	Generate() interface{}
+}
+
+func Read(path string, config interface{}) error {
+	data, err := storage.Load(path)
+	if err != nil {
+		return err
+	}
+
+	buf := bytes.Buffer{}
+	buf.Write(data)
+	dec := gob.NewDecoder(&buf)
+
+	return dec.Decode(config)
+}
+
+func Store(path string, config interface{}) error {
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	if err := enc.Encode(config); err != nil {
+		return err
+	}
+
+	return storage.Store(buf.Bytes(), path)
 }

@@ -35,7 +35,7 @@ func (s *Server) GenerateCertificate(stream pb.PseudonymSystemCA_GenerateCertifi
 		return err
 	}
 
-	group := config.LoadSchnorrGroup()
+	group := s.Config.SchnorrGroup //config.LoadSchnorrGroup()
 	d := config.LoadPseudonymsysCASecret()
 	pubKey := config.LoadPseudonymsysCAPubKey()
 	ca := pseudonymsys.NewCA(group, d, pubKey)

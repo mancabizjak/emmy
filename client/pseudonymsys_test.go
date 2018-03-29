@@ -29,7 +29,7 @@ import (
 
 // TestPseudonymsys requires a running server (it is started in communication_test.go).
 func TestPseudonymsys(t *testing.T) {
-	group := config.LoadSchnorrGroup()
+	group := testSchnorrGroup //config.LoadSchnorrGroup()
 
 	caClient, err := NewPseudonymsysCAClient(testGrpcClientConn, group)
 	if err != nil {
@@ -65,7 +65,7 @@ func TestPseudonymsys(t *testing.T) {
 	assert.NotNil(t, err, "Should produce an error")
 
 	orgName := "org1"
-	orgPubKeys := config.LoadPseudonymsysOrgPubKeys(orgName)
+	orgPubKeys := testOrgPubKeys //config.LoadPseudonymsysOrgPubKeys(orgName)
 	credential, err := c1.ObtainCredential(userSecret, nym1, orgPubKeys)
 	if err != nil {
 		t.Errorf(err.Error())

@@ -26,6 +26,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/xlab-si/emmy/config"
+	"github.com/xlab-si/emmy/crypto/groups"
+	"github.com/xlab-si/emmy/crypto/zkp/schemes/pseudonymsys"
 	"github.com/xlab-si/emmy/log"
 	"github.com/xlab-si/emmy/server"
 	"google.golang.org/grpc"
@@ -36,6 +38,11 @@ var testGrpcServerEndpoint = "localhost:7008"
 // testGrpcClientConn is re-used for all the test clients
 var testGrpcClientConn *grpc.ClientConn
 
+var (
+	testSchnorrGroup *groups.SchnorrGroup
+	testOrgPubKeys   *pseudonymsys.PubKey
+)
+
 // TestMain is run implicitly and only once, before any of the tests defined in this file run.
 // It sets up a test gRPC server and establishes connection to the server. This gRPC client
 // connection is then re-used in all the tests to reduce overhead.
@@ -43,11 +50,14 @@ var testGrpcClientConn *grpc.ClientConn
 func TestMain(m *testing.M) {
 	logger, _ := log.NewStdoutLogger("testServer", log.NOTICE, log.FORMAT_LONG)
 	server, err := server.NewServer("testdata/server.pem", "testdata/server.key",
-		config.LoadRegistrationDBAddress(), logger, "testdata/.emmy/emmy.conf")
+		config.LoadRegistrationDBAddress(), logger, "testdata/emmy.psys")
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+
+	testSchnorrGroup = server.Config.SchnorrGroup
+	testOrgPubKeys = server.Config.PubKey
 
 	// Configure a custom logger for the client package
 	clientLogger, _ := log.NewStdoutLogger("client", log.NOTICE, log.FORMAT_SHORT)

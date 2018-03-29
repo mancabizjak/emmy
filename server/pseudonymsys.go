@@ -28,14 +28,38 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *Server) GenerateNym(stream pb.PseudonymSystem_GenerateNymServer) error {
+type PseudonymSystemServer struct {
+	*PseudonymSystemConfig
+	*SessionManager
+	*RegistrationManager
+}
+
+func NewPseudonymSystemServer(sm *SessionManager, rm *RegistrationManager,
+	cfg *config.PseudonymSystemConfig) (*PseudonymSystemServer, error) {
+	/*sessionManager, err := newSessionManager(config.LoadSessionKeyMinByteLen())
+	if err != nil {
+		return nil, err
+	}
+
+	registrationManager, err := NewRegistrationManager(dbAddress)
+	if err != nil {
+		return nil, err
+	}*/
+	return &PseudonymSystemServer{
+		PseudonymSystemConfig: cfg,
+		SessionManager:        sm,
+		RegistrationManager:   rm,
+	}, nil
+}
+
+func (s *PseudonymSystemServer) GenerateNym(stream pb.PseudonymSystem_GenerateNymServer) error {
 	req, err := s.receive(stream)
 	if err != nil {
 		return err
 	}
 
-	group := config.LoadSchnorrGroup()
-	caPubKey := config.LoadPseudonymsysCAPubKey()
+	group := s.Config.SchnorrGroup                //config.LoadSchnorrGroup()
+	caPubKey := config.LoadPseudonymsysCAPubKey() //s.Config.CaPubKey  //
 	org := pseudonymsys.NewOrgNymGen(group, caPubKey)
 
 	proofRandData := req.GetPseudonymsysNymGenProofRandomData()
@@ -96,14 +120,14 @@ func (s *Server) GenerateNym(stream pb.PseudonymSystem_GenerateNymServer) error 
 	return nil
 }
 
-func (s *Server) ObtainCredential(stream pb.PseudonymSystem_ObtainCredentialServer) error {
+func (s *PseudonymSystemServer) ObtainCredential(stream pb.PseudonymSystem_ObtainCredentialServer) error {
 	req, err := s.receive(stream)
 	if err != nil {
 		return err
 	}
 
-	group := config.LoadSchnorrGroup()
-	secKey := config.LoadPseudonymsysOrgSecrets("org1", "dlog")
+	group := s.Config.SchnorrGroup //config.LoadSchnorrGroup()
+	secKey := s.Config.SecKey      //config.LoadPseudonymsysOrgSecrets("org1", "dlog")
 	org := pseudonymsys.NewOrgCredentialIssuer(group, secKey)
 
 	sProofRandData := req.GetSchnorrProofRandomData()
@@ -180,18 +204,18 @@ func (s *Server) ObtainCredential(stream pb.PseudonymSystem_ObtainCredentialServ
 	return nil
 }
 
-func (s *Server) TransferCredential(stream pb.PseudonymSystem_TransferCredentialServer) error {
+func (s *PseudonymSystemServer) TransferCredential(stream pb.PseudonymSystem_TransferCredentialServer) error {
 	req, err := s.receive(stream)
 	if err != nil {
 		return err
 	}
 
-	group := config.LoadSchnorrGroup()
-	secKey := config.LoadPseudonymsysOrgSecrets("org1", "dlog")
+	group := s.Config.SchnorrGroup //config.LoadSchnorrGroup()
+	secKey := s.Config.SecKey      //config.LoadPseudonymsysOrgSecrets("org1", "dlog")
 	org := pseudonymsys.NewOrgCredentialVerifier(group, secKey)
 
 	data := req.GetPseudonymsysTransferCredentialData()
-	orgName := data.OrgName
+	//orgName := data.OrgName
 	x1 := new(big.Int).SetBytes(data.X1)
 	x2 := new(big.Int).SetBytes(data.X2)
 	nymA := new(big.Int).SetBytes(data.NymA)
@@ -240,7 +264,7 @@ func (s *Server) TransferCredential(stream pb.PseudonymSystem_TransferCredential
 	}
 
 	// PubKeys of the organization that issue a credential:
-	orgPubKeys := config.LoadPseudonymsysOrgPubKeys(orgName)
+	orgPubKeys := s.Config.PubKey //config.LoadPseudonymsysOrgPubKeys(orgName)
 
 	proofData := req.GetBigint()
 	z := new(big.Int).SetBytes(proofData.X1)
