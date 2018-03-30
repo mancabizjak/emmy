@@ -28,6 +28,7 @@ import (
 	"github.com/xlab-si/emmy/config"
 	"github.com/xlab-si/emmy/log"
 	"github.com/xlab-si/emmy/server"
+	"github.com/xlab-si/emmy/server/psys"
 )
 
 const (
@@ -151,7 +152,7 @@ func Bootstrap(dir string) error {
 
 	//generator := &config.PseudonymSystem{}
 	//psysconfig := generator.Generate()
-	psysconfig := server.NewPseudonymSystemConfig()
+	psysconfig := psys.NewConfig()
 
 	// read mode, generate as appropriate
 
@@ -210,7 +211,7 @@ func Start(port int, certPath, keyPath, dbAddress, logFilePath,
 		return err
 	}
 
-	srv, err := server.NewServer(certPath, keyPath, logger)
+	srv, err := server.NewGrpcServer(certPath, keyPath, logger)
 	if err != nil {
 		return err
 	}

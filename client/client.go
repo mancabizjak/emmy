@@ -56,7 +56,7 @@ func SetLogger(lgr log.Logger) {
 
 // ConnectionConfig holds all the details required for establishing a connection to the server.
 type ConnectionConfig struct {
-	Endpoint           string // Server's Endpoint
+	Endpoint           string // GrpcServer's Endpoint
 	ServerNameOverride string // When ServerNameOverride != "",
 	// server cert's CN will be compared with the provided ServerNameOverride instead of server's
 	// hostname

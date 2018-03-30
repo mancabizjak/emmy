@@ -15,7 +15,7 @@
  *
  */
 
-package server
+package psys_ec
 
 import (
 	"math/big"
@@ -27,24 +27,21 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *PseudonymSystemServer) GenerateCertificate(stream pb.
-	PseudonymSystem_GenerateCertificateServer) error {
-	var err error
-
-	req, err := s.receive(stream)
+func (s *PseudonymSystemServerEC) GenerateCertificate_EC(stream pb.
+	PseudonymSystemEC_GenerateCertificate_ECServer) error {
+	req, err := s.Receive(stream)
 	if err != nil {
 		return err
 	}
 
-	group := s.Config.SchnorrGroup //config.LoadSchnorrGroup()
 	d := config.LoadPseudonymsysCASecret()
 	pubKey := config.LoadPseudonymsysCAPubKey()
-	ca := pseudonymsys.NewCA(group, d, pubKey)
+	ca := pseudonymsys.NewCAEC(d, pubKey, curve)
 
-	sProofRandData := req.GetSchnorrProofRandomData()
-	x := new(big.Int).SetBytes(sProofRandData.X)
-	a := new(big.Int).SetBytes(sProofRandData.A)
-	b := new(big.Int).SetBytes(sProofRandData.B)
+	sProofRandData := req.GetSchnorrEcProofRandomData()
+	x := sProofRandData.X.GetNativeType()
+	a := sProofRandData.A.GetNativeType()
+	b := sProofRandData.B.GetNativeType()
 
 	challenge := ca.GetChallenge(a, b, x)
 	resp := &pb.Message{
@@ -55,11 +52,11 @@ func (s *PseudonymSystemServer) GenerateCertificate(stream pb.
 		},
 	}
 
-	if err := s.send(resp, stream); err != nil {
+	if err := s.Send(resp, stream); err != nil {
 		return err
 	}
 
-	req, err = s.receive(stream)
+	req, err = s.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -74,17 +71,17 @@ func (s *PseudonymSystemServer) GenerateCertificate(stream pb.
 	}
 
 	resp = &pb.Message{
-		Content: &pb.Message_PseudonymsysCaCertificate{
-			&pb.PseudonymsysCACertificate{
-				BlindedA: cert.BlindedA.Bytes(),
-				BlindedB: cert.BlindedB.Bytes(),
+		Content: &pb.Message_PseudonymsysCaCertificateEc{
+			&pb.PseudonymsysCACertificateEC{
+				BlindedA: pb.ToPbECGroupElement(cert.BlindedA),
+				BlindedB: pb.ToPbECGroupElement(cert.BlindedB),
 				R:        cert.R.Bytes(),
 				S:        cert.S.Bytes(),
 			},
 		},
 	}
 
-	if err = s.send(resp, stream); err != nil {
+	if err = s.Send(resp, stream); err != nil {
 		return err
 	}
 

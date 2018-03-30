@@ -15,7 +15,7 @@
  *
  */
 
-package server
+package psys
 
 import (
 	"math/big"
@@ -25,49 +25,45 @@ import (
 	"github.com/xlab-si/emmy/crypto/zkp/primitives/dlogproofs"
 	"github.com/xlab-si/emmy/crypto/zkp/schemes/pseudonymsys"
 	pb "github.com/xlab-si/emmy/proto"
+	"github.com/xlab-si/emmy/server"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-func NewPseudonymSystemConfig() interface{} {
+func NewConfig() interface{} {
 	group, _ := groups.NewSchnorrGroup(256)
 	secKey, pubKey := pseudonymsys.GenerateKeyPair(group)
 
-	return &PseudonymSystemConfig{
+	return &Config{
 		SchnorrGroup: group,
 		SecKey:       secKey,
 		PubKey:       pubKey,
 	}
 }
 
-type PseudonymSystemConfig struct {
+type Config struct {
 	SchnorrGroup *groups.SchnorrGroup
 	SecKey       *pseudonymsys.SecKey
 	PubKey       *pseudonymsys.PubKey
 }
 
-type PseudonymSystemServer struct {
-	*Server
-	Config *PseudonymSystemConfig
-	*SessionManager
-	*RegistrationManager
+type Server struct {
+	*server.AnonymousAuthServer
+	Config *Config
 }
 
-func NewPseudonymSystemServer(sm *SessionManager, rm *RegistrationManager,
-	cfg *PseudonymSystemConfig, baseServer *Server) (*PseudonymSystemServer, error) {
-	s := &PseudonymSystemServer{
+func NewServer(cfg *Config, server *server.AnonymousAuthServer) (*Server, error) {
+	s := &Server{
 		Config:              cfg,
-		Server:              baseServer,
-		SessionManager:      sm,
-		RegistrationManager: rm,
+		AnonymousAuthServer: server,
 	}
-	pb.RegisterPseudonymSystemServer(baseServer.GrpcServer, s)
+	pb.RegisterPseudonymSystemServer(server.Server, s)
 
 	return s, nil
 }
 
-func (s *PseudonymSystemServer) GenerateNym(stream pb.PseudonymSystem_GenerateNymServer) error {
-	req, err := s.receive(stream)
+func (s *Server) GenerateNym(stream pb.PseudonymSystem_GenerateNymServer) error {
+	req, err := s.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -110,11 +106,11 @@ func (s *PseudonymSystemServer) GenerateNym(stream pb.PseudonymSystem_GenerateNy
 		},
 	}
 
-	if err := s.send(resp, stream); err != nil {
+	if err := s.Send(resp, stream); err != nil {
 		return err
 	}
 
-	req, err = s.receive(stream)
+	req, err = s.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -127,15 +123,15 @@ func (s *PseudonymSystemServer) GenerateNym(stream pb.PseudonymSystem_GenerateNy
 		Content: &pb.Message_Status{&pb.Status{Success: valid}},
 	}
 
-	if err = s.send(resp, stream); err != nil {
+	if err = s.Send(resp, stream); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (s *PseudonymSystemServer) ObtainCredential(stream pb.PseudonymSystem_ObtainCredentialServer) error {
-	req, err := s.receive(stream)
+func (s *Server) ObtainCredential(stream pb.PseudonymSystem_ObtainCredentialServer) error {
+	req, err := s.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -158,11 +154,11 @@ func (s *PseudonymSystemServer) ObtainCredential(stream pb.PseudonymSystem_Obtai
 		},
 	}
 
-	if err := s.send(resp, stream); err != nil {
+	if err := s.Send(resp, stream); err != nil {
 		return err
 	}
 
-	req, err = s.receive(stream)
+	req, err = s.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -188,11 +184,11 @@ func (s *PseudonymSystemServer) ObtainCredential(stream pb.PseudonymSystem_Obtai
 		},
 	}
 
-	if err := s.send(resp, stream); err != nil {
+	if err := s.Send(resp, stream); err != nil {
 		return err
 	}
 
-	req, err = s.receive(stream)
+	req, err = s.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -211,15 +207,15 @@ func (s *PseudonymSystemServer) ObtainCredential(stream pb.PseudonymSystem_Obtai
 		},
 	}
 
-	if err := s.send(resp, stream); err != nil {
+	if err := s.Send(resp, stream); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (s *PseudonymSystemServer) TransferCredential(stream pb.PseudonymSystem_TransferCredentialServer) error {
-	req, err := s.receive(stream)
+func (s *Server) TransferCredential(stream pb.PseudonymSystem_TransferCredentialServer) error {
+	req, err := s.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -268,11 +264,11 @@ func (s *PseudonymSystemServer) TransferCredential(stream pb.PseudonymSystem_Tra
 		},
 	}
 
-	if err := s.send(resp, stream); err != nil {
+	if err := s.Send(resp, stream); err != nil {
 		return err
 	}
 
-	req, err = s.receive(stream)
+	req, err = s.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -288,7 +284,7 @@ func (s *PseudonymSystemServer) TransferCredential(stream pb.PseudonymSystem_Tra
 		return status.Error(codes.Unauthenticated, "user authentication failed")
 	}
 
-	sessionKey, err := s.generateSessionKey()
+	sessionKey, err := s.GenerateSessionKey()
 	if err != nil {
 		s.Logger.Debug(err)
 		return status.Error(codes.Internal, "failed to obtain session key")
@@ -302,7 +298,7 @@ func (s *PseudonymSystemServer) TransferCredential(stream pb.PseudonymSystem_Tra
 		},
 	}
 
-	if err = s.send(resp, stream); err != nil {
+	if err = s.Send(resp, stream); err != nil {
 		return err
 	}
 

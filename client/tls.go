@@ -25,7 +25,7 @@ import (
 )
 
 // getTLSCredentials generates TLS credentials that the client can use to contact the
-// server via TLS. Server's certificate (in PEM format) will always be validated against the
+// server via TLS. GrpcServer's certificate (in PEM format) will always be validated against the
 // provided caCert.
 // If serverNameOverride == "", certificate validation will include a check that server's hostname
 // 	matches the common name (CN) in server's certificate.

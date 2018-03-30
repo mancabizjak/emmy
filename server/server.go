@@ -27,16 +27,10 @@ import (
 
 	"github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/xlab-si/emmy/crypto/groups"
 	"github.com/xlab-si/emmy/log"
 	pb "github.com/xlab-si/emmy/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-)
-
-const (
-	// Curve to be used in all schemes using elliptic curve arithmetic.
-	curve = groups.P256
 )
 
 type AnonymousAuthServerConfigurator interface {
@@ -51,21 +45,30 @@ type AnonymousAuthServerConfigurator interface {
 	pb.InfoServer
 }
 
-// Server struct implements the EmmyServer interface.
-var _ EmmyServer = (*Server)(nil)
+// GrpcServer struct implements the EmmyServer interface.
+var _ EmmyServer = (*GrpcServer)(nil)
 */
 
-type Server struct {
-	GrpcServer *grpc.Server
-	Logger     log.Logger
+// AnonymousAuthServer represents the core of anonymous authentication server.
+// It embeds structs to which  all anonymous, regardless of specific implementations.
+// Concrete manifestations of authentication servers, e.g. servers dedicated to specific
+// schemes should embed this struct.
+type AnonymousAuthServer struct {
+	*GrpcServer
+	*SessionManager
+	*RegistrationManager
 }
 
-// NewServer initializes an instance of the Server struct and returns a pointer.
+type GrpcServer struct {
+	*grpc.Server
+	Logger log.Logger
+}
+
+// NewServer initializes an instance of the GrpcServer struct and returns a pointer.
 // It performs some default configuration (tracing of gRPC communication and interceptors)
 // and registers RPC server handlers with gRPC server. It requires TLS cert and keyfile
 // in order to establish a secure channel with clients.
-func NewServer(certFile, keyFile string, logger log.Logger) (*Server,
-	error) {
+func NewGrpcServer(certFile, keyFile string, logger log.Logger) (*GrpcServer, error) {
 	logger.Info("Instantiating new server")
 
 	// Obtain TLS credentials
@@ -78,8 +81,8 @@ func NewServer(certFile, keyFile string, logger log.Logger) (*Server,
 
 	// Allow as much concurrent streams as possible and register a gRPC stream interceptor
 	// for logging and monitoring purposes.
-	server := &Server{
-		GrpcServer: grpc.NewServer(
+	server := &GrpcServer{
+		Server: grpc.NewServer(
 			grpc.Creds(creds),
 			grpc.MaxConcurrentStreams(math.MaxUint32),
 			grpc.StreamInterceptor(grpc_prometheus.StreamServerInterceptor),
@@ -88,20 +91,20 @@ func NewServer(certFile, keyFile string, logger log.Logger) (*Server,
 	}
 
 	// Disable tracing by default, as is used for debugging purposes.
-	// The user will be able to turn it on via Server's EnableTracing function.
+	// The user will be able to turn it on via GrpcServer's EnableTracing function.
 	grpc.EnableTracing = false
 
 	// Register our services with the supporting gRPC server
-	server.registerServices()
+	//server.registerServices()
 
 	// Initialize gRPC metrics offered by Prometheus package
-	grpc_prometheus.Register(server.GrpcServer)
+	grpc_prometheus.Register(server.Server)
 
 	return server, nil
 }
 
 // Start configures and starts the protocol server at the requested port.
-func (s *Server) Start(port int) error {
+func (s *GrpcServer) Start(port int) error {
 	connStr := fmt.Sprintf(":%d", port)
 	listener, err := net.Listen("tcp", connStr)
 	if err != nil {
@@ -119,36 +122,35 @@ func (s *Server) Start(port int) error {
 
 	// From here on, gRPC server will accept connections
 	s.Logger.Noticef("Emmy server listening for connections on port %d", port)
-	s.GrpcServer.Serve(listener)
-	return nil
+	return s.Serve(listener)
 }
 
 // Teardown stops the protocol server by gracefully stopping enclosed gRPC server.
-func (s *Server) Teardown() {
+func (s *GrpcServer) Teardown() {
 	s.Logger.Notice("Tearing down gRPC server")
-	s.GrpcServer.GracefulStop()
+	s.GracefulStop()
 }
 
 // EnableTracing instructs the gRPC framework to enable its tracing capability, which
 // is mainly used for debugging purposes.
-// Although this function does not explicitly affect the Server struct, it is wired to Server
+// Although this function does not explicitly affect the GrpcServer struct, it is wired to GrpcServer
 // in order to provide a nicer API when setting up the server.
-func (s *Server) EnableTracing() {
+func (s *GrpcServer) EnableTracing() {
 	grpc.EnableTracing = true
 	s.Logger.Notice("Enabled gRPC tracing")
 }
 
 // registerServices binds gRPC server interfaces to the server instance itself, as the server
 // provides implementations of these interfaces.
-func (s *Server) registerServices() {
-	pb.RegisterInfoServer(s.GrpcServer, s)
+/*func (s *GrpcServer) registerServices() {
+	pb.RegisterInfoServer(s)
 	//pb.RegisterPseudonymSystemServer(s.GrpcServer, s)
 	//pb.RegisterPseudonymSystemCAServer(s.GrpcServer, s)
 
 	s.Logger.Notice("Registered gRPC Services")
-}
+}*/
 
-func (s *Server) send(msg *pb.Message, stream pb.ServerStream) error {
+func (s *GrpcServer) Send(msg *pb.Message, stream pb.ServerStream) error {
 	if err := stream.Send(msg); err != nil {
 		return fmt.Errorf("error sending message: %v", err)
 	}
@@ -159,7 +161,7 @@ func (s *Server) send(msg *pb.Message, stream pb.ServerStream) error {
 	return nil
 }
 
-func (s *Server) receive(stream pb.ServerStream) (*pb.Message, error) {
+func (s *GrpcServer) Receive(stream pb.ServerStream) (*pb.Message, error) {
 	resp, err := stream.Recv()
 	if err == io.EOF {
 		return nil, err

@@ -25,8 +25,10 @@ import (
 	pb "github.com/xlab-si/emmy/proto"
 )
 
-func (s *Server) GetServiceInfo(ctx context.Context, _ *empty.Empty) (*pb.ServiceInfo, error) {
-	s.Logger.Info("Client requested service information")
+type InfoServer struct{}
+
+func (s *InfoServer) GetServiceInfo(ctx context.Context, _ *empty.Empty) (*pb.ServiceInfo, error) {
+	//s.Logger.Info("Client requested service information")
 
 	name, provider, description := config.LoadServiceInfo()
 	info := &pb.ServiceInfo{

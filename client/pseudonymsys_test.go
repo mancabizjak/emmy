@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/xlab-si/emmy/config"
 	"github.com/xlab-si/emmy/server"
+	"github.com/xlab-si/emmy/server/psys"
 )
 
 func setupPseudonymsysServer() {
@@ -44,9 +45,10 @@ func TestPseudonymsys(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	cfg := server.NewPseudonymSystemConfig().(*server.PseudonymSystemConfig)
+	cfg := psys.NewConfig().(*psys.Config)
 
-	server, _ := server.NewPseudonymSystemServer(sm, rm, cfg, testGrpcServer)
+	server, _ := psys.NewServer(cfg, &server.AnonymousAuthServer{testGrpcServer, sm,
+		rm})
 
 	go server.Start(7008)
 	defer server.Teardown()

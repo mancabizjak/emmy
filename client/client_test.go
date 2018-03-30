@@ -30,7 +30,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-var testGrpcServer *server.Server
+var testGrpcServer *server.GrpcServer
 var testGrpcServerEndpoint = "localhost:7008"
 
 // testGrpcClientConn is re-used for all the test clients
@@ -47,7 +47,7 @@ var testGrpcClientConn *grpc.ClientConn
 // Once all the tests run, we close the connection to the server and stop the server.
 func TestMain(m *testing.M) {
 	logger, _ := log.NewStdoutLogger("testServer", log.NOTICE, log.FORMAT_LONG)
-	server, err := server.NewServer(
+	server, err := server.NewGrpcServer(
 		"testdata/server.pem",
 		"testdata/server.key",
 		logger,

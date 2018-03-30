@@ -26,10 +26,10 @@ func NewSessionManager(n int) (*SessionManager, error) {
 	}, err
 }
 
-// generateSessionKey produces a secure random n-byte session key and returns its
+// GenerateSessionKey produces a secure random n-byte session key and returns its
 // base64-encoded representation that is URL-safe.
 // It reports an error if n is less than MIN_SESSION_KEY_BYTE_LEN.
-func (m *SessionManager) generateSessionKey() (*string, error) {
+func (m *SessionManager) GenerateSessionKey() (*string, error) {
 	randBytes := make([]byte, m.sessionKeyByteLen)
 
 	// reads m.sessionKeyByteLen random bytes (e.g. len(randBytes)) to randBytes array

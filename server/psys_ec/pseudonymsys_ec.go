@@ -15,28 +15,35 @@
  *
  */
 
-package server
+package psys_ec
 
 import (
 	"math/big"
 
 	"github.com/xlab-si/emmy/config"
+	"github.com/xlab-si/emmy/crypto/groups"
 	"github.com/xlab-si/emmy/crypto/zkp/primitives/dlogproofs"
 	"github.com/xlab-si/emmy/crypto/zkp/schemes/pseudonymsys"
 	pb "github.com/xlab-si/emmy/proto"
+	"github.com/xlab-si/emmy/server"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
+const (
+	// Curve to be used in all schemes using elliptic curve arithmetic.
+	curve = groups.P256
+)
+
 type PseudonymSystemServerEC struct {
-	Server
-	//Config *PseudonymSystemConfig
-	*SessionManager
-	*RegistrationManager
+	*server.GrpcServer
+	//Config *Config
+	*server.SessionManager
+	*server.RegistrationManager
 }
 
 func (s *PseudonymSystemServerEC) GenerateNym_EC(stream pb.PseudonymSystemEC_GenerateNym_ECServer) error {
-	req, err := s.receive(stream)
+	req, err := s.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -77,11 +84,11 @@ func (s *PseudonymSystemServerEC) GenerateNym_EC(stream pb.PseudonymSystemEC_Gen
 		},
 	}
 
-	if err := s.send(resp, stream); err != nil {
+	if err := s.Send(resp, stream); err != nil {
 		return err
 	}
 
-	req, err = s.receive(stream)
+	req, err = s.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -94,7 +101,7 @@ func (s *PseudonymSystemServerEC) GenerateNym_EC(stream pb.PseudonymSystemEC_Gen
 		Content: &pb.Message_Status{&pb.Status{Success: valid}},
 	}
 
-	if err = s.send(resp, stream); err != nil {
+	if err = s.Send(resp, stream); err != nil {
 		return err
 	}
 
@@ -102,7 +109,7 @@ func (s *PseudonymSystemServerEC) GenerateNym_EC(stream pb.PseudonymSystemEC_Gen
 }
 
 func (s *PseudonymSystemServerEC) ObtainCredential_EC(stream pb.PseudonymSystemEC_ObtainCredential_ECServer) error {
-	req, err := s.receive(stream)
+	req, err := s.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -124,11 +131,11 @@ func (s *PseudonymSystemServerEC) ObtainCredential_EC(stream pb.PseudonymSystemE
 		},
 	}
 
-	if err := s.send(resp, stream); err != nil {
+	if err := s.Send(resp, stream); err != nil {
 		return err
 	}
 
-	req, err = s.receive(stream)
+	req, err = s.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -155,11 +162,11 @@ func (s *PseudonymSystemServerEC) ObtainCredential_EC(stream pb.PseudonymSystemE
 		},
 	}
 
-	if err := s.send(resp, stream); err != nil {
+	if err := s.Send(resp, stream); err != nil {
 		return err
 	}
 
-	req, err = s.receive(stream)
+	req, err = s.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -178,7 +185,7 @@ func (s *PseudonymSystemServerEC) ObtainCredential_EC(stream pb.PseudonymSystemE
 		},
 	}
 
-	if err := s.send(resp, stream); err != nil {
+	if err := s.Send(resp, stream); err != nil {
 		return err
 	}
 
@@ -187,7 +194,7 @@ func (s *PseudonymSystemServerEC) ObtainCredential_EC(stream pb.PseudonymSystemE
 
 func (s *PseudonymSystemServerEC) TransferCredential_EC(stream pb.
 	PseudonymSystemEC_TransferCredential_ECServer) error {
-	req, err := s.receive(stream)
+	req, err := s.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -237,11 +244,11 @@ func (s *PseudonymSystemServerEC) TransferCredential_EC(stream pb.
 		},
 	}
 
-	if err := s.send(resp, stream); err != nil {
+	if err := s.Send(resp, stream); err != nil {
 		return err
 	}
 
-	req, err = s.receive(stream)
+	req, err = s.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -257,7 +264,7 @@ func (s *PseudonymSystemServerEC) TransferCredential_EC(stream pb.
 		return status.Error(codes.Unauthenticated, "user authentication failed")
 	}
 
-	sessionKey, err := s.generateSessionKey()
+	sessionKey, err := s.GenerateSessionKey()
 	if err != nil {
 		s.Logger.Debug(err)
 		return status.Error(codes.Internal, "failed to obtain session key")
@@ -271,7 +278,7 @@ func (s *PseudonymSystemServerEC) TransferCredential_EC(stream pb.
 		},
 	}
 
-	if err = s.send(resp, stream); err != nil {
+	if err = s.Send(resp, stream); err != nil {
 		return err
 	}
 
