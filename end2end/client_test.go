@@ -44,7 +44,7 @@ var (
 // connection is then re-used in all the tests to reduce overhead.
 // Once all the tests run, we close the connection to the server and stop the server.
 func TestMain(m *testing.M) {
-
+pb.
 	// Configure a custom logger for the client package
 	clientLogger, _ := log.NewStdoutLogger("client", log.NOTICE, log.FORMAT_SHORT)
 	client.SetLogger(clientLogger)
