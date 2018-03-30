@@ -15,7 +15,7 @@
  *
  */
 
-package client
+package end2end
 
 import (
 	"testing"
