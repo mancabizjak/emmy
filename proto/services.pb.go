@@ -27,45 +27,47 @@ var _ grpc.ClientConn
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion4
 
-// Client API for PseudonymSystemCA service
+// Client API for PseudonymSystemEC service
 
-type PseudonymSystemCAClient interface {
-	GenerateCertificate(ctx context.Context, opts ...grpc.CallOption) (PseudonymSystemCA_GenerateCertificateClient, error)
-	GenerateCertificate_EC(ctx context.Context, opts ...grpc.CallOption) (PseudonymSystemCA_GenerateCertificate_ECClient, error)
+type PseudonymSystemECClient interface {
+	GenerateCertificate_EC(ctx context.Context, opts ...grpc.CallOption) (PseudonymSystemEC_GenerateCertificate_ECClient, error)
+	GenerateNym_EC(ctx context.Context, opts ...grpc.CallOption) (PseudonymSystemEC_GenerateNym_ECClient, error)
+	ObtainCredential_EC(ctx context.Context, opts ...grpc.CallOption) (PseudonymSystemEC_ObtainCredential_ECClient, error)
+	TransferCredential_EC(ctx context.Context, opts ...grpc.CallOption) (PseudonymSystemEC_TransferCredential_ECClient, error)
 }
 
-type pseudonymSystemCAClient struct {
+type pseudonymSystemECClient struct {
 	cc *grpc.ClientConn
 }
 
-func NewPseudonymSystemCAClient(cc *grpc.ClientConn) PseudonymSystemCAClient {
-	return &pseudonymSystemCAClient{cc}
+func NewPseudonymSystemECClient(cc *grpc.ClientConn) PseudonymSystemECClient {
+	return &pseudonymSystemECClient{cc}
 }
 
-func (c *pseudonymSystemCAClient) GenerateCertificate(ctx context.Context, opts ...grpc.CallOption) (PseudonymSystemCA_GenerateCertificateClient, error) {
-	stream, err := grpc.NewClientStream(ctx, &_PseudonymSystemCA_serviceDesc.Streams[0], c.cc, "/proto.PseudonymSystemCA/GenerateCertificate", opts...)
+func (c *pseudonymSystemECClient) GenerateCertificate_EC(ctx context.Context, opts ...grpc.CallOption) (PseudonymSystemEC_GenerateCertificate_ECClient, error) {
+	stream, err := grpc.NewClientStream(ctx, &_PseudonymSystemEC_serviceDesc.Streams[0], c.cc, "/proto.PseudonymSystemEC/GenerateCertificate_EC", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &pseudonymSystemCAGenerateCertificateClient{stream}
+	x := &pseudonymSystemECGenerateCertificate_ECClient{stream}
 	return x, nil
 }
 
-type PseudonymSystemCA_GenerateCertificateClient interface {
+type PseudonymSystemEC_GenerateCertificate_ECClient interface {
 	Send(*Message) error
 	Recv() (*Message, error)
 	grpc.ClientStream
 }
 
-type pseudonymSystemCAGenerateCertificateClient struct {
+type pseudonymSystemECGenerateCertificate_ECClient struct {
 	grpc.ClientStream
 }
 
-func (x *pseudonymSystemCAGenerateCertificateClient) Send(m *Message) error {
+func (x *pseudonymSystemECGenerateCertificate_ECClient) Send(m *Message) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *pseudonymSystemCAGenerateCertificateClient) Recv() (*Message, error) {
+func (x *pseudonymSystemECGenerateCertificate_ECClient) Recv() (*Message, error) {
 	m := new(Message)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -73,30 +75,30 @@ func (x *pseudonymSystemCAGenerateCertificateClient) Recv() (*Message, error) {
 	return m, nil
 }
 
-func (c *pseudonymSystemCAClient) GenerateCertificate_EC(ctx context.Context, opts ...grpc.CallOption) (PseudonymSystemCA_GenerateCertificate_ECClient, error) {
-	stream, err := grpc.NewClientStream(ctx, &_PseudonymSystemCA_serviceDesc.Streams[1], c.cc, "/proto.PseudonymSystemCA/GenerateCertificate_EC", opts...)
+func (c *pseudonymSystemECClient) GenerateNym_EC(ctx context.Context, opts ...grpc.CallOption) (PseudonymSystemEC_GenerateNym_ECClient, error) {
+	stream, err := grpc.NewClientStream(ctx, &_PseudonymSystemEC_serviceDesc.Streams[1], c.cc, "/proto.PseudonymSystemEC/GenerateNym_EC", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &pseudonymSystemCAGenerateCertificate_ECClient{stream}
+	x := &pseudonymSystemECGenerateNym_ECClient{stream}
 	return x, nil
 }
 
-type PseudonymSystemCA_GenerateCertificate_ECClient interface {
+type PseudonymSystemEC_GenerateNym_ECClient interface {
 	Send(*Message) error
 	Recv() (*Message, error)
 	grpc.ClientStream
 }
 
-type pseudonymSystemCAGenerateCertificate_ECClient struct {
+type pseudonymSystemECGenerateNym_ECClient struct {
 	grpc.ClientStream
 }
 
-func (x *pseudonymSystemCAGenerateCertificate_ECClient) Send(m *Message) error {
+func (x *pseudonymSystemECGenerateNym_ECClient) Send(m *Message) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *pseudonymSystemCAGenerateCertificate_ECClient) Recv() (*Message, error) {
+func (x *pseudonymSystemECGenerateNym_ECClient) Recv() (*Message, error) {
 	m := new(Message)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -104,36 +106,100 @@ func (x *pseudonymSystemCAGenerateCertificate_ECClient) Recv() (*Message, error)
 	return m, nil
 }
 
-// Server API for PseudonymSystemCA service
-
-type PseudonymSystemCAServer interface {
-	GenerateCertificate(PseudonymSystemCA_GenerateCertificateServer) error
-	GenerateCertificate_EC(PseudonymSystemCA_GenerateCertificate_ECServer) error
+func (c *pseudonymSystemECClient) ObtainCredential_EC(ctx context.Context, opts ...grpc.CallOption) (PseudonymSystemEC_ObtainCredential_ECClient, error) {
+	stream, err := grpc.NewClientStream(ctx, &_PseudonymSystemEC_serviceDesc.Streams[2], c.cc, "/proto.PseudonymSystemEC/ObtainCredential_EC", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &pseudonymSystemECObtainCredential_ECClient{stream}
+	return x, nil
 }
 
-func RegisterPseudonymSystemCAServer(s *grpc.Server, srv PseudonymSystemCAServer) {
-	s.RegisterService(&_PseudonymSystemCA_serviceDesc, srv)
+type PseudonymSystemEC_ObtainCredential_ECClient interface {
+	Send(*Message) error
+	Recv() (*Message, error)
+	grpc.ClientStream
 }
 
-func _PseudonymSystemCA_GenerateCertificate_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(PseudonymSystemCAServer).GenerateCertificate(&pseudonymSystemCAGenerateCertificateServer{stream})
+type pseudonymSystemECObtainCredential_ECClient struct {
+	grpc.ClientStream
 }
 
-type PseudonymSystemCA_GenerateCertificateServer interface {
+func (x *pseudonymSystemECObtainCredential_ECClient) Send(m *Message) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *pseudonymSystemECObtainCredential_ECClient) Recv() (*Message, error) {
+	m := new(Message)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *pseudonymSystemECClient) TransferCredential_EC(ctx context.Context, opts ...grpc.CallOption) (PseudonymSystemEC_TransferCredential_ECClient, error) {
+	stream, err := grpc.NewClientStream(ctx, &_PseudonymSystemEC_serviceDesc.Streams[3], c.cc, "/proto.PseudonymSystemEC/TransferCredential_EC", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &pseudonymSystemECTransferCredential_ECClient{stream}
+	return x, nil
+}
+
+type PseudonymSystemEC_TransferCredential_ECClient interface {
+	Send(*Message) error
+	Recv() (*Message, error)
+	grpc.ClientStream
+}
+
+type pseudonymSystemECTransferCredential_ECClient struct {
+	grpc.ClientStream
+}
+
+func (x *pseudonymSystemECTransferCredential_ECClient) Send(m *Message) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *pseudonymSystemECTransferCredential_ECClient) Recv() (*Message, error) {
+	m := new(Message)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// Server API for PseudonymSystemEC service
+
+type PseudonymSystemECServer interface {
+	GenerateCertificate_EC(PseudonymSystemEC_GenerateCertificate_ECServer) error
+	GenerateNym_EC(PseudonymSystemEC_GenerateNym_ECServer) error
+	ObtainCredential_EC(PseudonymSystemEC_ObtainCredential_ECServer) error
+	TransferCredential_EC(PseudonymSystemEC_TransferCredential_ECServer) error
+}
+
+func RegisterPseudonymSystemECServer(s *grpc.Server, srv PseudonymSystemECServer) {
+	s.RegisterService(&_PseudonymSystemEC_serviceDesc, srv)
+}
+
+func _PseudonymSystemEC_GenerateCertificate_EC_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(PseudonymSystemECServer).GenerateCertificate_EC(&pseudonymSystemECGenerateCertificate_ECServer{stream})
+}
+
+type PseudonymSystemEC_GenerateCertificate_ECServer interface {
 	Send(*Message) error
 	Recv() (*Message, error)
 	grpc.ServerStream
 }
 
-type pseudonymSystemCAGenerateCertificateServer struct {
+type pseudonymSystemECGenerateCertificate_ECServer struct {
 	grpc.ServerStream
 }
 
-func (x *pseudonymSystemCAGenerateCertificateServer) Send(m *Message) error {
+func (x *pseudonymSystemECGenerateCertificate_ECServer) Send(m *Message) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *pseudonymSystemCAGenerateCertificateServer) Recv() (*Message, error) {
+func (x *pseudonymSystemECGenerateCertificate_ECServer) Recv() (*Message, error) {
 	m := new(Message)
 	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -141,25 +207,25 @@ func (x *pseudonymSystemCAGenerateCertificateServer) Recv() (*Message, error) {
 	return m, nil
 }
 
-func _PseudonymSystemCA_GenerateCertificate_EC_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(PseudonymSystemCAServer).GenerateCertificate_EC(&pseudonymSystemCAGenerateCertificate_ECServer{stream})
+func _PseudonymSystemEC_GenerateNym_EC_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(PseudonymSystemECServer).GenerateNym_EC(&pseudonymSystemECGenerateNym_ECServer{stream})
 }
 
-type PseudonymSystemCA_GenerateCertificate_ECServer interface {
+type PseudonymSystemEC_GenerateNym_ECServer interface {
 	Send(*Message) error
 	Recv() (*Message, error)
 	grpc.ServerStream
 }
 
-type pseudonymSystemCAGenerateCertificate_ECServer struct {
+type pseudonymSystemECGenerateNym_ECServer struct {
 	grpc.ServerStream
 }
 
-func (x *pseudonymSystemCAGenerateCertificate_ECServer) Send(m *Message) error {
+func (x *pseudonymSystemECGenerateNym_ECServer) Send(m *Message) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *pseudonymSystemCAGenerateCertificate_ECServer) Recv() (*Message, error) {
+func (x *pseudonymSystemECGenerateNym_ECServer) Recv() (*Message, error) {
 	m := new(Message)
 	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -167,20 +233,84 @@ func (x *pseudonymSystemCAGenerateCertificate_ECServer) Recv() (*Message, error)
 	return m, nil
 }
 
-var _PseudonymSystemCA_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "proto.PseudonymSystemCA",
-	HandlerType: (*PseudonymSystemCAServer)(nil),
+func _PseudonymSystemEC_ObtainCredential_EC_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(PseudonymSystemECServer).ObtainCredential_EC(&pseudonymSystemECObtainCredential_ECServer{stream})
+}
+
+type PseudonymSystemEC_ObtainCredential_ECServer interface {
+	Send(*Message) error
+	Recv() (*Message, error)
+	grpc.ServerStream
+}
+
+type pseudonymSystemECObtainCredential_ECServer struct {
+	grpc.ServerStream
+}
+
+func (x *pseudonymSystemECObtainCredential_ECServer) Send(m *Message) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *pseudonymSystemECObtainCredential_ECServer) Recv() (*Message, error) {
+	m := new(Message)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func _PseudonymSystemEC_TransferCredential_EC_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(PseudonymSystemECServer).TransferCredential_EC(&pseudonymSystemECTransferCredential_ECServer{stream})
+}
+
+type PseudonymSystemEC_TransferCredential_ECServer interface {
+	Send(*Message) error
+	Recv() (*Message, error)
+	grpc.ServerStream
+}
+
+type pseudonymSystemECTransferCredential_ECServer struct {
+	grpc.ServerStream
+}
+
+func (x *pseudonymSystemECTransferCredential_ECServer) Send(m *Message) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *pseudonymSystemECTransferCredential_ECServer) Recv() (*Message, error) {
+	m := new(Message)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+var _PseudonymSystemEC_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "proto.PseudonymSystemEC",
+	HandlerType: (*PseudonymSystemECServer)(nil),
 	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "GenerateCertificate",
-			Handler:       _PseudonymSystemCA_GenerateCertificate_Handler,
+			StreamName:    "GenerateCertificate_EC",
+			Handler:       _PseudonymSystemEC_GenerateCertificate_EC_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
 		},
 		{
-			StreamName:    "GenerateCertificate_EC",
-			Handler:       _PseudonymSystemCA_GenerateCertificate_EC_Handler,
+			StreamName:    "GenerateNym_EC",
+			Handler:       _PseudonymSystemEC_GenerateNym_EC_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "ObtainCredential_EC",
+			Handler:       _PseudonymSystemEC_ObtainCredential_EC_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "TransferCredential_EC",
+			Handler:       _PseudonymSystemEC_TransferCredential_EC_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
 		},
@@ -191,12 +321,10 @@ var _PseudonymSystemCA_serviceDesc = grpc.ServiceDesc{
 // Client API for PseudonymSystem service
 
 type PseudonymSystemClient interface {
+	GenerateCertificate(ctx context.Context, opts ...grpc.CallOption) (PseudonymSystem_GenerateCertificateClient, error)
 	GenerateNym(ctx context.Context, opts ...grpc.CallOption) (PseudonymSystem_GenerateNymClient, error)
-	GenerateNym_EC(ctx context.Context, opts ...grpc.CallOption) (PseudonymSystem_GenerateNym_ECClient, error)
 	ObtainCredential(ctx context.Context, opts ...grpc.CallOption) (PseudonymSystem_ObtainCredentialClient, error)
-	ObtainCredential_EC(ctx context.Context, opts ...grpc.CallOption) (PseudonymSystem_ObtainCredential_ECClient, error)
 	TransferCredential(ctx context.Context, opts ...grpc.CallOption) (PseudonymSystem_TransferCredentialClient, error)
-	TransferCredential_EC(ctx context.Context, opts ...grpc.CallOption) (PseudonymSystem_TransferCredential_ECClient, error)
 }
 
 type pseudonymSystemClient struct {
@@ -207,8 +335,39 @@ func NewPseudonymSystemClient(cc *grpc.ClientConn) PseudonymSystemClient {
 	return &pseudonymSystemClient{cc}
 }
 
+func (c *pseudonymSystemClient) GenerateCertificate(ctx context.Context, opts ...grpc.CallOption) (PseudonymSystem_GenerateCertificateClient, error) {
+	stream, err := grpc.NewClientStream(ctx, &_PseudonymSystem_serviceDesc.Streams[0], c.cc, "/proto.PseudonymSystem/GenerateCertificate", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &pseudonymSystemGenerateCertificateClient{stream}
+	return x, nil
+}
+
+type PseudonymSystem_GenerateCertificateClient interface {
+	Send(*Message) error
+	Recv() (*Message, error)
+	grpc.ClientStream
+}
+
+type pseudonymSystemGenerateCertificateClient struct {
+	grpc.ClientStream
+}
+
+func (x *pseudonymSystemGenerateCertificateClient) Send(m *Message) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *pseudonymSystemGenerateCertificateClient) Recv() (*Message, error) {
+	m := new(Message)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 func (c *pseudonymSystemClient) GenerateNym(ctx context.Context, opts ...grpc.CallOption) (PseudonymSystem_GenerateNymClient, error) {
-	stream, err := grpc.NewClientStream(ctx, &_PseudonymSystem_serviceDesc.Streams[0], c.cc, "/proto.PseudonymSystem/GenerateNym", opts...)
+	stream, err := grpc.NewClientStream(ctx, &_PseudonymSystem_serviceDesc.Streams[1], c.cc, "/proto.PseudonymSystem/GenerateNym", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -231,37 +390,6 @@ func (x *pseudonymSystemGenerateNymClient) Send(m *Message) error {
 }
 
 func (x *pseudonymSystemGenerateNymClient) Recv() (*Message, error) {
-	m := new(Message)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func (c *pseudonymSystemClient) GenerateNym_EC(ctx context.Context, opts ...grpc.CallOption) (PseudonymSystem_GenerateNym_ECClient, error) {
-	stream, err := grpc.NewClientStream(ctx, &_PseudonymSystem_serviceDesc.Streams[1], c.cc, "/proto.PseudonymSystem/GenerateNym_EC", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &pseudonymSystemGenerateNym_ECClient{stream}
-	return x, nil
-}
-
-type PseudonymSystem_GenerateNym_ECClient interface {
-	Send(*Message) error
-	Recv() (*Message, error)
-	grpc.ClientStream
-}
-
-type pseudonymSystemGenerateNym_ECClient struct {
-	grpc.ClientStream
-}
-
-func (x *pseudonymSystemGenerateNym_ECClient) Send(m *Message) error {
-	return x.ClientStream.SendMsg(m)
-}
-
-func (x *pseudonymSystemGenerateNym_ECClient) Recv() (*Message, error) {
 	m := new(Message)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -300,39 +428,8 @@ func (x *pseudonymSystemObtainCredentialClient) Recv() (*Message, error) {
 	return m, nil
 }
 
-func (c *pseudonymSystemClient) ObtainCredential_EC(ctx context.Context, opts ...grpc.CallOption) (PseudonymSystem_ObtainCredential_ECClient, error) {
-	stream, err := grpc.NewClientStream(ctx, &_PseudonymSystem_serviceDesc.Streams[3], c.cc, "/proto.PseudonymSystem/ObtainCredential_EC", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &pseudonymSystemObtainCredential_ECClient{stream}
-	return x, nil
-}
-
-type PseudonymSystem_ObtainCredential_ECClient interface {
-	Send(*Message) error
-	Recv() (*Message, error)
-	grpc.ClientStream
-}
-
-type pseudonymSystemObtainCredential_ECClient struct {
-	grpc.ClientStream
-}
-
-func (x *pseudonymSystemObtainCredential_ECClient) Send(m *Message) error {
-	return x.ClientStream.SendMsg(m)
-}
-
-func (x *pseudonymSystemObtainCredential_ECClient) Recv() (*Message, error) {
-	m := new(Message)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
 func (c *pseudonymSystemClient) TransferCredential(ctx context.Context, opts ...grpc.CallOption) (PseudonymSystem_TransferCredentialClient, error) {
-	stream, err := grpc.NewClientStream(ctx, &_PseudonymSystem_serviceDesc.Streams[4], c.cc, "/proto.PseudonymSystem/TransferCredential", opts...)
+	stream, err := grpc.NewClientStream(ctx, &_PseudonymSystem_serviceDesc.Streams[3], c.cc, "/proto.PseudonymSystem/TransferCredential", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -362,50 +459,43 @@ func (x *pseudonymSystemTransferCredentialClient) Recv() (*Message, error) {
 	return m, nil
 }
 
-func (c *pseudonymSystemClient) TransferCredential_EC(ctx context.Context, opts ...grpc.CallOption) (PseudonymSystem_TransferCredential_ECClient, error) {
-	stream, err := grpc.NewClientStream(ctx, &_PseudonymSystem_serviceDesc.Streams[5], c.cc, "/proto.PseudonymSystem/TransferCredential_EC", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &pseudonymSystemTransferCredential_ECClient{stream}
-	return x, nil
-}
-
-type PseudonymSystem_TransferCredential_ECClient interface {
-	Send(*Message) error
-	Recv() (*Message, error)
-	grpc.ClientStream
-}
-
-type pseudonymSystemTransferCredential_ECClient struct {
-	grpc.ClientStream
-}
-
-func (x *pseudonymSystemTransferCredential_ECClient) Send(m *Message) error {
-	return x.ClientStream.SendMsg(m)
-}
-
-func (x *pseudonymSystemTransferCredential_ECClient) Recv() (*Message, error) {
-	m := new(Message)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
 // Server API for PseudonymSystem service
 
 type PseudonymSystemServer interface {
+	GenerateCertificate(PseudonymSystem_GenerateCertificateServer) error
 	GenerateNym(PseudonymSystem_GenerateNymServer) error
-	GenerateNym_EC(PseudonymSystem_GenerateNym_ECServer) error
 	ObtainCredential(PseudonymSystem_ObtainCredentialServer) error
-	ObtainCredential_EC(PseudonymSystem_ObtainCredential_ECServer) error
 	TransferCredential(PseudonymSystem_TransferCredentialServer) error
-	TransferCredential_EC(PseudonymSystem_TransferCredential_ECServer) error
 }
 
 func RegisterPseudonymSystemServer(s *grpc.Server, srv PseudonymSystemServer) {
 	s.RegisterService(&_PseudonymSystem_serviceDesc, srv)
+}
+
+func _PseudonymSystem_GenerateCertificate_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(PseudonymSystemServer).GenerateCertificate(&pseudonymSystemGenerateCertificateServer{stream})
+}
+
+type PseudonymSystem_GenerateCertificateServer interface {
+	Send(*Message) error
+	Recv() (*Message, error)
+	grpc.ServerStream
+}
+
+type pseudonymSystemGenerateCertificateServer struct {
+	grpc.ServerStream
+}
+
+func (x *pseudonymSystemGenerateCertificateServer) Send(m *Message) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *pseudonymSystemGenerateCertificateServer) Recv() (*Message, error) {
+	m := new(Message)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 func _PseudonymSystem_GenerateNym_Handler(srv interface{}, stream grpc.ServerStream) error {
@@ -427,32 +517,6 @@ func (x *pseudonymSystemGenerateNymServer) Send(m *Message) error {
 }
 
 func (x *pseudonymSystemGenerateNymServer) Recv() (*Message, error) {
-	m := new(Message)
-	if err := x.ServerStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func _PseudonymSystem_GenerateNym_EC_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(PseudonymSystemServer).GenerateNym_EC(&pseudonymSystemGenerateNym_ECServer{stream})
-}
-
-type PseudonymSystem_GenerateNym_ECServer interface {
-	Send(*Message) error
-	Recv() (*Message, error)
-	grpc.ServerStream
-}
-
-type pseudonymSystemGenerateNym_ECServer struct {
-	grpc.ServerStream
-}
-
-func (x *pseudonymSystemGenerateNym_ECServer) Send(m *Message) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func (x *pseudonymSystemGenerateNym_ECServer) Recv() (*Message, error) {
 	m := new(Message)
 	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -486,32 +550,6 @@ func (x *pseudonymSystemObtainCredentialServer) Recv() (*Message, error) {
 	return m, nil
 }
 
-func _PseudonymSystem_ObtainCredential_EC_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(PseudonymSystemServer).ObtainCredential_EC(&pseudonymSystemObtainCredential_ECServer{stream})
-}
-
-type PseudonymSystem_ObtainCredential_ECServer interface {
-	Send(*Message) error
-	Recv() (*Message, error)
-	grpc.ServerStream
-}
-
-type pseudonymSystemObtainCredential_ECServer struct {
-	grpc.ServerStream
-}
-
-func (x *pseudonymSystemObtainCredential_ECServer) Send(m *Message) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func (x *pseudonymSystemObtainCredential_ECServer) Recv() (*Message, error) {
-	m := new(Message)
-	if err := x.ServerStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
 func _PseudonymSystem_TransferCredential_Handler(srv interface{}, stream grpc.ServerStream) error {
 	return srv.(PseudonymSystemServer).TransferCredential(&pseudonymSystemTransferCredentialServer{stream})
 }
@@ -538,46 +576,20 @@ func (x *pseudonymSystemTransferCredentialServer) Recv() (*Message, error) {
 	return m, nil
 }
 
-func _PseudonymSystem_TransferCredential_EC_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(PseudonymSystemServer).TransferCredential_EC(&pseudonymSystemTransferCredential_ECServer{stream})
-}
-
-type PseudonymSystem_TransferCredential_ECServer interface {
-	Send(*Message) error
-	Recv() (*Message, error)
-	grpc.ServerStream
-}
-
-type pseudonymSystemTransferCredential_ECServer struct {
-	grpc.ServerStream
-}
-
-func (x *pseudonymSystemTransferCredential_ECServer) Send(m *Message) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func (x *pseudonymSystemTransferCredential_ECServer) Recv() (*Message, error) {
-	m := new(Message)
-	if err := x.ServerStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
 var _PseudonymSystem_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "proto.PseudonymSystem",
 	HandlerType: (*PseudonymSystemServer)(nil),
 	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "GenerateNym",
-			Handler:       _PseudonymSystem_GenerateNym_Handler,
+			StreamName:    "GenerateCertificate",
+			Handler:       _PseudonymSystem_GenerateCertificate_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
 		},
 		{
-			StreamName:    "GenerateNym_EC",
-			Handler:       _PseudonymSystem_GenerateNym_EC_Handler,
+			StreamName:    "GenerateNym",
+			Handler:       _PseudonymSystem_GenerateNym_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
 		},
@@ -588,20 +600,8 @@ var _PseudonymSystem_serviceDesc = grpc.ServiceDesc{
 			ClientStreams: true,
 		},
 		{
-			StreamName:    "ObtainCredential_EC",
-			Handler:       _PseudonymSystem_ObtainCredential_EC_Handler,
-			ServerStreams: true,
-			ClientStreams: true,
-		},
-		{
 			StreamName:    "TransferCredential",
 			Handler:       _PseudonymSystem_TransferCredential_Handler,
-			ServerStreams: true,
-			ClientStreams: true,
-		},
-		{
-			StreamName:    "TransferCredential_EC",
-			Handler:       _PseudonymSystem_TransferCredential_EC_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
 		},
@@ -676,22 +676,22 @@ var _Info_serviceDesc = grpc.ServiceDesc{
 func init() { proto1.RegisterFile("services.proto", fileDescriptor1) }
 
 var fileDescriptor1 = []byte{
-	// 269 bytes of a gzipped FileDescriptorProto
+	// 267 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xe2, 0xe2, 0x2b, 0x4e, 0x2d, 0x2a,
 	0xcb, 0x4c, 0x4e, 0x2d, 0xd6, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x05, 0x53, 0x52, 0x7c,
 	0xb9, 0xa9, 0xc5, 0xc5, 0x89, 0xe9, 0x30, 0x61, 0x29, 0xe9, 0xf4, 0xfc, 0xfc, 0xf4, 0x9c, 0x54,
-	0x7d, 0x30, 0x2f, 0xa9, 0x34, 0x4d, 0x3f, 0x35, 0xb7, 0xa0, 0xa4, 0x12, 0x22, 0x69, 0x34, 0x81,
-	0x91, 0x4b, 0x30, 0xa0, 0x38, 0xb5, 0x34, 0x25, 0x3f, 0xaf, 0x32, 0x37, 0xb8, 0xb2, 0xb8, 0x24,
-	0x35, 0xd7, 0xd9, 0x51, 0xc8, 0x9a, 0x4b, 0xd8, 0x3d, 0x35, 0x2f, 0xb5, 0x28, 0xb1, 0x24, 0xd5,
-	0x39, 0xb5, 0xa8, 0x24, 0x33, 0x2d, 0x33, 0x19, 0xc8, 0x14, 0xe2, 0x83, 0x68, 0xd2, 0xf3, 0x85,
-	0x58, 0x20, 0x85, 0xc6, 0x57, 0x62, 0xd0, 0x60, 0x34, 0x60, 0x14, 0xb2, 0xe3, 0x12, 0xc3, 0xa2,
-	0x39, 0xde, 0xd5, 0x99, 0x38, 0xfd, 0x46, 0x1f, 0x98, 0xb8, 0xf8, 0xd1, 0x9c, 0x24, 0x64, 0xcc,
-	0xc5, 0x0d, 0x33, 0xd3, 0xaf, 0x32, 0x97, 0x48, 0x87, 0x98, 0x71, 0xf1, 0x21, 0x69, 0x22, 0xda,
-	0x01, 0x42, 0x16, 0x5c, 0x02, 0xfe, 0x49, 0x25, 0x89, 0x99, 0x79, 0xce, 0x45, 0xa9, 0x29, 0xa9,
-	0x79, 0x25, 0x99, 0x89, 0x39, 0x44, 0xea, 0x04, 0x86, 0x1b, 0xba, 0x4e, 0xe2, 0xad, 0xb5, 0xe2,
-	0x12, 0x0a, 0x29, 0x4a, 0xcc, 0x2b, 0x4e, 0x4b, 0x2d, 0x22, 0xd9, 0x62, 0x5b, 0x2e, 0x51, 0x4c,
-	0xbd, 0xc4, 0x07, 0xb9, 0x1b, 0x17, 0x8b, 0x67, 0x5e, 0x5a, 0x3e, 0x30, 0xea, 0x80, 0x21, 0x56,
-	0x12, 0x0c, 0x49, 0x56, 0x60, 0x11, 0x31, 0x3d, 0x48, 0xea, 0xd1, 0x83, 0xa5, 0x1e, 0x3d, 0x57,
-	0x50, 0xea, 0x91, 0x12, 0x82, 0x9a, 0x83, 0xa4, 0x56, 0x89, 0x21, 0x89, 0x0d, 0x2c, 0x68, 0x0c,
-	0x08, 0x00, 0x00, 0xff, 0xff, 0x92, 0x49, 0xd0, 0xbc, 0x9a, 0x02, 0x00, 0x00,
+	0x7d, 0x30, 0x2f, 0xa9, 0x34, 0x4d, 0x3f, 0x35, 0xb7, 0xa0, 0xa4, 0x12, 0x22, 0x69, 0xd4, 0xce,
+	0xc4, 0x25, 0x18, 0x50, 0x9c, 0x5a, 0x9a, 0x92, 0x9f, 0x57, 0x99, 0x1b, 0x5c, 0x59, 0x5c, 0x92,
+	0x9a, 0xeb, 0xea, 0x2c, 0x64, 0xc7, 0x25, 0xe6, 0x9e, 0x9a, 0x97, 0x5a, 0x94, 0x58, 0x92, 0xea,
+	0x9c, 0x5a, 0x54, 0x92, 0x99, 0x96, 0x99, 0x0c, 0x64, 0xc6, 0x03, 0x65, 0xf8, 0x20, 0xfa, 0xf4,
+	0x7c, 0x21, 0x76, 0x48, 0xa1, 0xf1, 0x95, 0x18, 0x34, 0x18, 0x0d, 0x18, 0x85, 0xcc, 0xb8, 0xf8,
+	0x60, 0xfa, 0xfd, 0x2a, 0x73, 0x89, 0xd7, 0x67, 0xcd, 0x25, 0xec, 0x9f, 0x54, 0x92, 0x98, 0x99,
+	0xe7, 0x5c, 0x94, 0x9a, 0x92, 0x9a, 0x57, 0x92, 0x99, 0x98, 0x43, 0xbc, 0x66, 0x5b, 0x2e, 0xd1,
+	0x90, 0xa2, 0xc4, 0xbc, 0xe2, 0xb4, 0xd4, 0x22, 0x32, 0xb4, 0x1b, 0xfd, 0x64, 0xe4, 0xe2, 0x47,
+	0x0b, 0x09, 0x90, 0x7b, 0xb0, 0x84, 0x03, 0x91, 0xee, 0x31, 0xe6, 0xe2, 0x46, 0x0a, 0x04, 0x22,
+	0x35, 0x59, 0x70, 0x09, 0xa0, 0x87, 0x00, 0x91, 0x3a, 0xad, 0xb8, 0x84, 0x30, 0xbd, 0x4f, 0xa4,
+	0xdf, 0xdd, 0xb8, 0x58, 0x3c, 0xf3, 0xd2, 0xf2, 0x81, 0xf1, 0x0e, 0x8c, 0xb7, 0x92, 0x60, 0x48,
+	0xb2, 0x02, 0x8b, 0x88, 0xe9, 0x41, 0x52, 0x8f, 0x1e, 0x2c, 0xf5, 0xe8, 0xb9, 0x82, 0x52, 0x8f,
+	0x94, 0x10, 0xd4, 0x1c, 0x24, 0xb5, 0x4a, 0x0c, 0x49, 0x6c, 0x60, 0x41, 0x63, 0x40, 0x00, 0x00,
+	0x00, 0xff, 0xff, 0x20, 0x9b, 0x44, 0x52, 0x9a, 0x02, 0x00, 0x00,
 }

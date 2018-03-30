@@ -27,7 +27,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *Server) GenerateCertificate(stream pb.PseudonymSystemCA_GenerateCertificateServer) error {
+func (s *PseudonymSystemServer) GenerateCertificate(stream pb.
+	PseudonymSystem_GenerateCertificateServer) error {
 	var err error
 
 	req, err := s.receive(stream)

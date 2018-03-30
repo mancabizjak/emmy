@@ -14,7 +14,7 @@ type SessionManager struct {
 	sessionKeyByteLen int
 }
 
-func newSessionManager(n int) (*SessionManager, error) {
+func NewSessionManager(n int) (*SessionManager, error) {
 	var err error
 	if n < MIN_SESSION_KEY_BYTE_LEN {
 		err = fmt.Errorf("desired length of the session key (%d B) is too short, falling back to %d B",

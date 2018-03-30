@@ -30,7 +30,7 @@ import (
 
 type PseudonymsysCAClient struct {
 	genericClient
-	grpcClient pb.PseudonymSystemCAClient
+	grpcClient pb.PseudonymSystemClient
 	group      *groups.SchnorrGroup
 	prover     *dlogproofs.SchnorrProver
 }
@@ -39,7 +39,7 @@ func NewPseudonymsysCAClient(conn *grpc.ClientConn,
 	group *groups.SchnorrGroup) (*PseudonymsysCAClient, error) {
 	return &PseudonymsysCAClient{
 		genericClient: newGenericClient(),
-		grpcClient:    pb.NewPseudonymSystemCAClient(conn),
+		grpcClient:    pb.NewPseudonymSystemClient(conn),
 		group:         group,
 		prover:        dlogproofs.NewSchnorrProver(group, protocoltypes.Sigma),
 	}, nil

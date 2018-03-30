@@ -21,6 +21,7 @@ import (
 	"math/big"
 
 	"github.com/xlab-si/emmy/config"
+	"github.com/xlab-si/emmy/crypto/groups"
 	"github.com/xlab-si/emmy/crypto/zkp/primitives/dlogproofs"
 	"github.com/xlab-si/emmy/crypto/zkp/schemes/pseudonymsys"
 	pb "github.com/xlab-si/emmy/proto"
@@ -28,28 +29,41 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+func NewPseudonymSystemConfig() interface{} {
+	group, _ := groups.NewSchnorrGroup(256)
+	secKey, pubKey := pseudonymsys.GenerateKeyPair(group)
+
+	return &PseudonymSystemConfig{
+		SchnorrGroup: group,
+		SecKey:       secKey,
+		PubKey:       pubKey,
+	}
+}
+
+type PseudonymSystemConfig struct {
+	SchnorrGroup *groups.SchnorrGroup
+	SecKey       *pseudonymsys.SecKey
+	PubKey       *pseudonymsys.PubKey
+}
+
 type PseudonymSystemServer struct {
-	*PseudonymSystemConfig
+	*Server
+	Config *PseudonymSystemConfig
 	*SessionManager
 	*RegistrationManager
 }
 
 func NewPseudonymSystemServer(sm *SessionManager, rm *RegistrationManager,
-	cfg *config.PseudonymSystemConfig) (*PseudonymSystemServer, error) {
-	/*sessionManager, err := newSessionManager(config.LoadSessionKeyMinByteLen())
-	if err != nil {
-		return nil, err
+	cfg *PseudonymSystemConfig, baseServer *Server) (*PseudonymSystemServer, error) {
+	s := &PseudonymSystemServer{
+		Config:              cfg,
+		Server:              baseServer,
+		SessionManager:      sm,
+		RegistrationManager: rm,
 	}
+	pb.RegisterPseudonymSystemServer(baseServer.GrpcServer, s)
 
-	registrationManager, err := NewRegistrationManager(dbAddress)
-	if err != nil {
-		return nil, err
-	}*/
-	return &PseudonymSystemServer{
-		PseudonymSystemConfig: cfg,
-		SessionManager:        sm,
-		RegistrationManager:   rm,
-	}, nil
+	return s, nil
 }
 
 func (s *PseudonymSystemServer) GenerateNym(stream pb.PseudonymSystem_GenerateNymServer) error {

@@ -27,9 +27,32 @@ import (
 	"github.com/xlab-si/emmy/server"
 )
 
+func setupPseudonymsysServer() {
+
+}
+
 // TestPseudonymsys requires a running server (it is started in communication_test.go).
 func TestPseudonymsys(t *testing.T) {
-	group := testSchnorrGroup //config.LoadSchnorrGroup()
+
+	// Configure dependencies
+	sm, err := server.NewSessionManager(config.LoadSessionKeyMinByteLen())
+	if err != nil {
+		panic(err)
+	}
+
+	rm, err := server.NewRegistrationManager("localhost:6379")
+	if err != nil {
+		panic(err)
+	}
+	cfg := server.NewPseudonymSystemConfig().(*server.PseudonymSystemConfig)
+
+	server, _ := server.NewPseudonymSystemServer(sm, rm, cfg, testGrpcServer)
+
+	go server.Start(7008)
+	defer server.Teardown()
+	// register service?
+
+	group := cfg.SchnorrGroup //config.LoadSchnorrGroup()
 
 	caClient, err := NewPseudonymsysCAClient(testGrpcClientConn, group)
 	if err != nil {
@@ -65,7 +88,7 @@ func TestPseudonymsys(t *testing.T) {
 	assert.NotNil(t, err, "Should produce an error")
 
 	orgName := "org1"
-	orgPubKeys := testOrgPubKeys //config.LoadPseudonymsysOrgPubKeys(orgName)
+	orgPubKeys := cfg.PubKey //config.LoadPseudonymsysOrgPubKeys(orgName)
 	credential, err := c1.ObtainCredential(userSecret, nym1, orgPubKeys)
 	if err != nil {
 		t.Errorf(err.Error())

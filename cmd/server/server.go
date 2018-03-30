@@ -149,8 +149,12 @@ func Bootstrap(dir string) error {
 		return cli.NewExitError(err.Error(), 1) // system error
 	}
 
-	generator := &config.PseudonymSystem{}
-	psysconfig := generator.Generate()
+	//generator := &config.PseudonymSystem{}
+	//psysconfig := generator.Generate()
+	psysconfig := server.NewPseudonymSystemConfig()
+
+	// read mode, generate as appropriate
+
 	if err := config.Store(dir+"/emmy.psys", psysconfig); err != nil {
 		return cli.NewExitError(err.Error(), 1)
 	}
@@ -206,7 +210,7 @@ func Start(port int, certPath, keyPath, dbAddress, logFilePath,
 		return err
 	}
 
-	srv, err := server.NewServer(certPath, keyPath, dbAddress, logger, configFile)
+	srv, err := server.NewServer(certPath, keyPath, logger)
 	if err != nil {
 		return err
 	}

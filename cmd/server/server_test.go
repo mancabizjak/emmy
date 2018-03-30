@@ -41,18 +41,15 @@ func (s *ServerSuite) SetUpSuite(c *C) {
 func (s *ServerSuite) TestBootstrap(c *C) {
 	err := Bootstrap(s.emmyDir)
 	c.Assert(err, IsNil)
-	removeTestDir(s.emmyDir)
+	removeTestDir(c, s.emmyDir)
 }
 
 // "re-bootstrapping emmy server with existing configuration",
 func (s *ServerSuite) TestBootstrapInvalid(c *C) {
-	createTestDir(s.emmyDir)
+	defer handleTestDir(c, s.emmyDir)()
 	err := Bootstrap(s.emmyDir)
-
 	c.Assert(err, NotNil)
 	c.Check(err, ErrorMatches, "emmy directory .*/.emmy already exists")
-
-	removeTestDir(s.emmyDir)
 }
 
 // "clean non-emmy directory
@@ -60,7 +57,6 @@ func (s *ServerSuite) TestCleanForeignDir(c *C) {
 	err := Clean(c.MkDir(), false)
 	c.Assert(err, NotNil)
 	c.Check(err, ErrorMatches, "skipping .*")
-
 }
 
 func (s *ServerSuite) TestCleanNonexistingEmmyDir(c *C) {
@@ -69,22 +65,32 @@ func (s *ServerSuite) TestCleanNonexistingEmmyDir(c *C) {
 }
 
 func (s *ServerSuite) TestClean(c *C) {
-	createTestDir(s.emmyDir)
+	defer handleTestDir(c, s.emmyDir)
 	err := Clean(s.emmyDir, false)
 	c.Assert(err, IsNil)
-	removeTestDir(s.emmyDir)
 }
 
-func removeTestDir(dir string) {
-	if err := os.RemoveAll(dir); err != nil {
-		err = errors.Wrap(err, "failed to remove test directory")
-		panic(err)
-	}
-}
+// HELPERS
 
-func createTestDir(dir string) {
+// handleTestDir is a convenience helper.
+// It returns a closure of the function that removes the given directory.
+// This way, the caller that needs to create test directory and remove it afterwards can
+// simply call 'defer handleTestDir(t, dir)' and if either creation or deletion of directory fails,
+// the test itself will fail.
+// This is convenient, because it does not pollute the actual test code with error handling.
+func handleTestDir(c *C, dir string) func() {
 	if err := os.Mkdir(dir, 0744); err != nil {
 		err = errors.Wrap(err, "failed to create test directory")
-		panic(err)
+		c.Fatal(err)
+	}
+
+	return func() { removeTestDir(c, dir) }
+}
+
+// removeTestDir removes a given directory, failing the test in case of error.
+func removeTestDir(c *C, dir string) {
+	if err := os.RemoveAll(dir); err != nil {
+		err = errors.Wrap(err, "failed to remove test directory")
+		c.Fatal(err)
 	}
 }

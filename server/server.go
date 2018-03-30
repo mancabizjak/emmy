@@ -27,7 +27,6 @@ import (
 
 	"github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/xlab-si/emmy/config"
 	"github.com/xlab-si/emmy/crypto/groups"
 	"github.com/xlab-si/emmy/log"
 	pb "github.com/xlab-si/emmy/proto"
@@ -42,28 +41,6 @@ const (
 
 type AnonymousAuthServerConfigurator interface {
 	GenerateCryptoConfig() interface{}
-}
-
-type AnonymousAuthServer struct {
-	*SessionManager
-	*RegistrationManager
-}
-
-func NewAnonymousAuthServer() *AnonymousAuthServer {
-	sessionManager, err := newSessionManager(config.LoadSessionKeyMinByteLen())
-	if err != nil {
-		logger.Warning(err)
-	}
-
-	registrationManager, err := NewRegistrationManager(dbAddress)
-	if err != nil {
-		logger.Critical(err)
-		return nil, err
-	}
-
-	return &
-	SessionManager:      sessionManager,
-	RegistrationManager: registrationManager,
 }
 
 // EmmyServer is an interface composed of all the auto-generated server interfaces that
@@ -87,8 +64,7 @@ type Server struct {
 // It performs some default configuration (tracing of gRPC communication and interceptors)
 // and registers RPC server handlers with gRPC server. It requires TLS cert and keyfile
 // in order to establish a secure channel with clients.
-func NewServer(certFile, keyFile, dbAddress string, logger log.Logger,
-	configFile string) (*Server,
+func NewServer(certFile, keyFile string, logger log.Logger) (*Server,
 	error) {
 	logger.Info("Instantiating new server")
 
@@ -109,13 +85,6 @@ func NewServer(certFile, keyFile, dbAddress string, logger log.Logger,
 			grpc.StreamInterceptor(grpc_prometheus.StreamServerInterceptor),
 		),
 		Logger: logger,
-		//SessionManager:      sessionManager,
-		//RegistrationManager: registrationManager,
-	}
-
-	err = server.genOrCreateConfig(configFile)
-	if err != nil {
-		return nil, err
 	}
 
 	// Disable tracing by default, as is used for debugging purposes.
@@ -129,36 +98,6 @@ func NewServer(certFile, keyFile, dbAddress string, logger log.Logger,
 	grpc_prometheus.Register(server.GrpcServer)
 
 	return server, nil
-}
-
-func (s *Server) genOrCreateConfig(file string) error {
-	cfg := &config.PseudonymSystemConfig{}
-
-	if err := config.Read(file, cfg); err != nil {
-		/*if os.IsNotExist(err) {
-			s.Logger.Warning("Error loading config from file", err.Error())
-			s.Logger.Warning("Generating configuration from scratch")
-
-			// FIXME
-			generator := &config.PseudonymSystem{}
-			fresh := generator.Generate()
-			//err := ioutil.WriteFile(file, 0644) // makes a dir, we need a file
-			err = config.Store(file, fresh)
-
-			if err != nil {
-				s.Logger.Critical(err.Error())
-				return nil, err
-			}
-
-			return fresh, nil
-		}*/
-
-		return err
-
-	}
-
-	s.Config = cfg
-	return nil
 }
 
 // Start configures and starts the protocol server at the requested port.
@@ -203,8 +142,8 @@ func (s *Server) EnableTracing() {
 // provides implementations of these interfaces.
 func (s *Server) registerServices() {
 	pb.RegisterInfoServer(s.GrpcServer, s)
-	pb.RegisterPseudonymSystemServer(s.GrpcServer, s)
-	pb.RegisterPseudonymSystemCAServer(s.GrpcServer, s)
+	//pb.RegisterPseudonymSystemServer(s.GrpcServer, s)
+	//pb.RegisterPseudonymSystemCAServer(s.GrpcServer, s)
 
 	s.Logger.Notice("Registered gRPC Services")
 }

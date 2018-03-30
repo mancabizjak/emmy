@@ -186,34 +186,6 @@ func LoadRegistrationDBAddress() string {
 	return viper.GetString("registration_db_address")
 }
 
-type PseudonymSystemConfig struct {
-	SchnorrGroup *groups.SchnorrGroup
-	SecKey       *pseudonymsys.SecKey
-	PubKey       *pseudonymsys.PubKey
-	//CaSecret     *big.Int
-	//CaPubKey     *pseudonymsys.PubKey
-}
-
-type PseudonymSystem struct{}
-
-func (s *PseudonymSystem) Generate() interface{} {
-	group, _ := groups.NewSchnorrGroup(256)
-	secKey, pubKey := pseudonymsys.GenerateKeyPair(group)
-
-	return &PseudonymSystemConfig{
-		//filename:     "pseudonym_system",
-		SchnorrGroup: group,
-		SecKey:       secKey,
-		PubKey:       pubKey,
-		//CaSecKey: ,
-		//CaPubKey: ,
-	}
-}
-
-type CryptoConfigGenerator interface {
-	Generate() interface{}
-}
-
 func Read(path string, config interface{}) error {
 	data, err := storage.Load(path)
 	if err != nil {

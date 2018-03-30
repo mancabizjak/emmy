@@ -28,7 +28,14 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *Server) GenerateNym_EC(stream pb.PseudonymSystem_GenerateNym_ECServer) error {
+type PseudonymSystemServerEC struct {
+	Server
+	//Config *PseudonymSystemConfig
+	*SessionManager
+	*RegistrationManager
+}
+
+func (s *PseudonymSystemServerEC) GenerateNym_EC(stream pb.PseudonymSystemEC_GenerateNym_ECServer) error {
 	req, err := s.receive(stream)
 	if err != nil {
 		return err
@@ -94,7 +101,7 @@ func (s *Server) GenerateNym_EC(stream pb.PseudonymSystem_GenerateNym_ECServer) 
 	return nil
 }
 
-func (s *Server) ObtainCredential_EC(stream pb.PseudonymSystem_ObtainCredential_ECServer) error {
+func (s *PseudonymSystemServerEC) ObtainCredential_EC(stream pb.PseudonymSystemEC_ObtainCredential_ECServer) error {
 	req, err := s.receive(stream)
 	if err != nil {
 		return err
@@ -178,7 +185,8 @@ func (s *Server) ObtainCredential_EC(stream pb.PseudonymSystem_ObtainCredential_
 	return nil
 }
 
-func (s *Server) TransferCredential_EC(stream pb.PseudonymSystem_TransferCredential_ECServer) error {
+func (s *PseudonymSystemServerEC) TransferCredential_EC(stream pb.
+	PseudonymSystemEC_TransferCredential_ECServer) error {
 	req, err := s.receive(stream)
 	if err != nil {
 		return err
