@@ -17,13 +17,7 @@
 
 package end2end
 
-import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-)
-
-func TestGetServiceInfo(t *testing.T) {
+/*func TestGetServiceInfo(t *testing.T) {
 	info, _ := GetServiceInfo(testGrpcClientConn)
 	assert.NotNil(t, info, "expected non-nil service info")
-}
+}*/

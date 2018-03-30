@@ -57,11 +57,12 @@ type AnonymousAuthServer struct {
 	*GrpcServer
 	*SessionManager
 	*RegistrationManager
+	//*grpc.Server
+	Logger log.Logger
 }
 
 type GrpcServer struct {
 	*grpc.Server
-	Logger log.Logger
 }
 
 // NewServer initializes an instance of the GrpcServer struct and returns a pointer.
@@ -81,14 +82,15 @@ func NewGrpcServer(certFile, keyFile string, logger log.Logger) (*GrpcServer, er
 
 	// Allow as much concurrent streams as possible and register a gRPC stream interceptor
 	// for logging and monitoring purposes.
-	server := &GrpcServer{
-		Server: grpc.NewServer(
-			grpc.Creds(creds),
-			grpc.MaxConcurrentStreams(math.MaxUint32),
-			grpc.StreamInterceptor(grpc_prometheus.StreamServerInterceptor),
-		),
-		Logger: logger,
-	}
+	//server := &GrpcServer{
+	//Server:
+	server := grpc.NewServer(
+		grpc.Creds(creds),
+		grpc.MaxConcurrentStreams(math.MaxUint32),
+		grpc.StreamInterceptor(grpc_prometheus.StreamServerInterceptor),
+	)
+	//	Logger: logger,
+	//}
 
 	// Disable tracing by default, as is used for debugging purposes.
 	// The user will be able to turn it on via GrpcServer's EnableTracing function.
@@ -98,9 +100,9 @@ func NewGrpcServer(certFile, keyFile string, logger log.Logger) (*GrpcServer, er
 	//server.registerServices()
 
 	// Initialize gRPC metrics offered by Prometheus package
-	grpc_prometheus.Register(server.Server)
+	grpc_prometheus.Register(server)
 
-	return server, nil
+	return &GrpcServer{server}, nil
 }
 
 // Start configures and starts the protocol server at the requested port.
@@ -121,13 +123,13 @@ func (s *GrpcServer) Start(port int) error {
 	go http.ListenAndServe(":8881", nil)
 
 	// From here on, gRPC server will accept connections
-	s.Logger.Noticef("Emmy server listening for connections on port %d", port)
+	//s.Logger.Noticef("Emmy server listening for connections on port %d", port)
 	return s.Serve(listener)
 }
 
 // Teardown stops the protocol server by gracefully stopping enclosed gRPC server.
 func (s *GrpcServer) Teardown() {
-	s.Logger.Notice("Tearing down gRPC server")
+	//s.Logger.Notice("Tearing down gRPC server")
 	s.GracefulStop()
 }
 
@@ -137,7 +139,7 @@ func (s *GrpcServer) Teardown() {
 // in order to provide a nicer API when setting up the server.
 func (s *GrpcServer) EnableTracing() {
 	grpc.EnableTracing = true
-	s.Logger.Notice("Enabled gRPC tracing")
+	//s.Logger.Notice("Enabled gRPC tracing")
 }
 
 // registerServices binds gRPC server interfaces to the server instance itself, as the server
@@ -155,8 +157,19 @@ func (s *GrpcServer) Send(msg *pb.Message, stream pb.ServerStream) error {
 		return fmt.Errorf("error sending message: %v", err)
 	}
 
-	s.Logger.Infof("Successfully sent response of type %T", msg.Content)
-	s.Logger.Debugf("%+v", msg)
+	//s.Logger.Infof("Successfully sent response of type %T", msg.Content)
+	//s.Logger.Debugf("%+v", msg)
+
+	return nil
+}
+
+func Send(msg *pb.Message, stream pb.ServerStream) error {
+	if err := stream.Send(msg); err != nil {
+		return fmt.Errorf("error sending message: %v", err)
+	}
+
+	//s.Logger.Infof("Successfully sent response of type %T", msg.Content)
+	//s.Logger.Debugf("%+v", msg)
 
 	return nil
 }
@@ -168,8 +181,21 @@ func (s *GrpcServer) Receive(stream pb.ServerStream) (*pb.Message, error) {
 	} else if err != nil {
 		return nil, fmt.Errorf("an error occurred: %v", err)
 	}
-	s.Logger.Infof("Received request of type %T from the stream", resp.Content)
-	s.Logger.Debugf("%+v", resp)
+	//s.Logger.Infof("Received request of type %T from the stream", resp.Content)
+	//s.Logger.Debugf("%+v", resp)
+
+	return resp, nil
+}
+
+func Receive(stream pb.ServerStream) (*pb.Message, error) {
+	resp, err := stream.Recv()
+	if err == io.EOF {
+		return nil, err
+	} else if err != nil {
+		return nil, fmt.Errorf("an error occurred: %v", err)
+	}
+	//s.Logger.Infof("Received request of type %T from the stream", resp.Content)
+	//s.Logger.Debugf("%+v", resp)
 
 	return resp, nil
 }

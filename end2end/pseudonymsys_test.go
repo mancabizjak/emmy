@@ -23,34 +23,38 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/xlab-si/emmy/client"
 	"github.com/xlab-si/emmy/config"
 	"github.com/xlab-si/emmy/server"
 	"github.com/xlab-si/emmy/server/psys"
 )
 
+func handlePseudonymsysServer(t *testing.T) (*psys.Config, func()) {
+	aa := newAnonymousAuthServer()
+	cfg := psys.NewConfig().(*psys.Config)
+	srv, _ := psys.NewServer(cfg, aa.AnonymousAuthServer)
+
+	go srv.Start(7008)
+
+	return cfg, func() {
+		srv.Teardown()
+	}
+}
+
 // TestPseudonymsys requires a running server (it is started in communication_test.go).
 func TestPseudonymsys(t *testing.T) {
-
-	testAAserver.switchImpl(func() {
-		pb.RegisterPseudonymSystemCAServer(s.GrpcServer)
-	})
-
-	cfg := psys.NewConfig().(*psys.Config)
-	server, _ := psys.NewServer(cfg, aaServer)
-
-	go server.Start(7008)
-	defer server.Teardown()
-	// register service?
+	cfg, teardownFunc := handlePseudonymsysServer(t)
+	defer teardownFunc()
 
 	group := cfg.SchnorrGroup //config.LoadSchnorrGroup()
 
-	caClient, err := NewPseudonymsysCAClient(testGrpcClientConn, group)
+	caClient, err := client.NewPseudonymsysCAClient(testGrpcClientConn, group)
 	if err != nil {
 		t.Errorf("Error when initializing NewPseudonymsysCAClient")
 	}
 
 	// usually the endpoint is different from the one used for CA:
-	c1, err := NewPseudonymsysClient(testGrpcClientConn, group)
+	c1, err := client.NewPseudonymsysClient(testGrpcClientConn, group)
 	userSecret := c1.GenerateMasterKey()
 
 	masterNym := caClient.GenerateMasterNym(userSecret)
@@ -86,7 +90,7 @@ func TestPseudonymsys(t *testing.T) {
 
 	// register with org2
 	// create a client to communicate with org2
-	caClient1, err := NewPseudonymsysCAClient(testGrpcClientConn, group)
+	caClient1, err := client.NewPseudonymsysCAClient(testGrpcClientConn, group)
 	caCertificate1, err := caClient1.GenerateCertificate(userSecret, masterNym)
 	if err != nil {
 		t.Errorf("Error when registering with CA: %s", err.Error())
@@ -95,7 +99,7 @@ func TestPseudonymsys(t *testing.T) {
 	// c2 connects to the same server as c1, so what we're really testing here is
 	// using transferCredential to authenticate with the same organization and not
 	// transferring credentials to another organization
-	c2, err := NewPseudonymsysClient(testGrpcClientConn, group)
+	c2, err := client.NewPseudonymsysClient(testGrpcClientConn, group)
 	nym2, err := c2.GenerateNym(userSecret, caCertificate1, "testRegKey2")
 	if err != nil {
 		t.Errorf(err.Error())

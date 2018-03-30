@@ -23,6 +23,7 @@ import (
 	"github.com/xlab-si/emmy/config"
 	"github.com/xlab-si/emmy/crypto/zkp/schemes/pseudonymsys"
 	pb "github.com/xlab-si/emmy/proto"
+	"github.com/xlab-si/emmy/server"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -31,7 +32,7 @@ func (s *Server) GenerateCertificate(stream pb.
 	PseudonymSystem_GenerateCertificateServer) error {
 	var err error
 
-	req, err := s.Receive(stream)
+	req, err := server.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -55,11 +56,11 @@ func (s *Server) GenerateCertificate(stream pb.
 		},
 	}
 
-	if err := s.Send(resp, stream); err != nil {
+	if err := server.Send(resp, stream); err != nil {
 		return err
 	}
 
-	req, err = s.Receive(stream)
+	req, err = server.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -84,7 +85,7 @@ func (s *Server) GenerateCertificate(stream pb.
 		},
 	}
 
-	if err = s.Send(resp, stream); err != nil {
+	if err = server.Send(resp, stream); err != nil {
 		return err
 	}
 

@@ -63,7 +63,7 @@ func NewServer(cfg *Config, server *server.AnonymousAuthServer) (*Server, error)
 }
 
 func (s *Server) GenerateNym(stream pb.PseudonymSystem_GenerateNymServer) error {
-	req, err := s.Receive(stream)
+	req, err := server.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -106,11 +106,11 @@ func (s *Server) GenerateNym(stream pb.PseudonymSystem_GenerateNymServer) error 
 		},
 	}
 
-	if err := s.Send(resp, stream); err != nil {
+	if err := server.Send(resp, stream); err != nil {
 		return err
 	}
 
-	req, err = s.Receive(stream)
+	req, err = server.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -123,7 +123,7 @@ func (s *Server) GenerateNym(stream pb.PseudonymSystem_GenerateNymServer) error 
 		Content: &pb.Message_Status{&pb.Status{Success: valid}},
 	}
 
-	if err = s.Send(resp, stream); err != nil {
+	if err = server.Send(resp, stream); err != nil {
 		return err
 	}
 
@@ -131,7 +131,7 @@ func (s *Server) GenerateNym(stream pb.PseudonymSystem_GenerateNymServer) error 
 }
 
 func (s *Server) ObtainCredential(stream pb.PseudonymSystem_ObtainCredentialServer) error {
-	req, err := s.Receive(stream)
+	req, err := server.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -154,11 +154,11 @@ func (s *Server) ObtainCredential(stream pb.PseudonymSystem_ObtainCredentialServ
 		},
 	}
 
-	if err := s.Send(resp, stream); err != nil {
+	if err := server.Send(resp, stream); err != nil {
 		return err
 	}
 
-	req, err = s.Receive(stream)
+	req, err = server.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -184,11 +184,11 @@ func (s *Server) ObtainCredential(stream pb.PseudonymSystem_ObtainCredentialServ
 		},
 	}
 
-	if err := s.Send(resp, stream); err != nil {
+	if err := server.Send(resp, stream); err != nil {
 		return err
 	}
 
-	req, err = s.Receive(stream)
+	req, err = server.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -207,7 +207,7 @@ func (s *Server) ObtainCredential(stream pb.PseudonymSystem_ObtainCredentialServ
 		},
 	}
 
-	if err := s.Send(resp, stream); err != nil {
+	if err := server.Send(resp, stream); err != nil {
 		return err
 	}
 
@@ -215,7 +215,7 @@ func (s *Server) ObtainCredential(stream pb.PseudonymSystem_ObtainCredentialServ
 }
 
 func (s *Server) TransferCredential(stream pb.PseudonymSystem_TransferCredentialServer) error {
-	req, err := s.Receive(stream)
+	req, err := server.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -264,11 +264,11 @@ func (s *Server) TransferCredential(stream pb.PseudonymSystem_TransferCredential
 		},
 	}
 
-	if err := s.Send(resp, stream); err != nil {
+	if err := server.Send(resp, stream); err != nil {
 		return err
 	}
 
-	req, err = s.Receive(stream)
+	req, err = server.Receive(stream)
 	if err != nil {
 		return err
 	}
@@ -298,7 +298,7 @@ func (s *Server) TransferCredential(stream pb.PseudonymSystem_TransferCredential
 		},
 	}
 
-	if err = s.Send(resp, stream); err != nil {
+	if err = server.Send(resp, stream); err != nil {
 		return err
 	}
 

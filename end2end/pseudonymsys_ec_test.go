@@ -17,6 +17,7 @@
 
 package end2end
 
+/*
 import (
 	"math/big"
 	"testing"
@@ -96,3 +97,4 @@ func TestPseudonymsysEC(t *testing.T) {
 	assert.Nil(t, sessionKey2, "Authentication should fail, and session key should be nil")
 	assert.NotNil(t, err, "Should produce an error")
 }
+*/

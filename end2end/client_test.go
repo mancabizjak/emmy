@@ -18,13 +18,6 @@
 package end2end
 
 import (
-	"fmt"
-	"os"
-	"testing"
-
-	"io/ioutil"
-
-	"github.com/xlab-si/emmy/client"
 	"github.com/xlab-si/emmy/config"
 	"github.com/xlab-si/emmy/log"
 	"github.com/xlab-si/emmy/server"
@@ -43,12 +36,13 @@ var (
 // It sets up a test gRPC server and establishes connection to the server. This gRPC client
 // connection is then re-used in all the tests to reduce overhead.
 // Once all the tests run, we close the connection to the server and stop the server.
-func TestMain(m *testing.M) {
-pb.
+/*func TestMain(m *testing.M) {
+
 	// Configure a custom logger for the client package
 	clientLogger, _ := log.NewStdoutLogger("client", log.NOTICE, log.FORMAT_SHORT)
 	client.SetLogger(clientLogger)
 
+	//testAAserver = newAnonymousAuthServer()
 	//go server.Start(7008)
 
 	// Establish a connection to previously started server
@@ -68,22 +62,16 @@ pb.
 	}
 
 	// At this point all the tests will actually run
-	returnCode := m.Run()
+	//returnCode := m.Run()
 
 	// Cleanup - close connection, stop the server and exit
 	//server.Teardown()
 	testGrpcClientConn.Close()
 	os.Exit(returnCode)
-}
+}*/
 
 type testAnonymousAuthServer struct {
 	*server.AnonymousAuthServer
-}
-
-func (s *testAnonymousAuthServer) switchImpl(f func()) {
-	s.GrpcServer.Stop()
-	f()
-	go s.GrpcServer.Start(7008)
 }
 
 func newAnonymousAuthServer() *testAnonymousAuthServer {
@@ -108,11 +96,12 @@ func newAnonymousAuthServer() *testAnonymousAuthServer {
 		panic(err)
 	}
 
-	return &testAnonymousAuthServer{
-		GrpcServer:          grpcServer,
+	return &testAnonymousAuthServer{&server.AnonymousAuthServer{
 		SessionManager:      sm,
 		RegistrationManager: rm,
-	}
+		GrpcServer:          grpcServer,
+		Logger:              logger,
+	}}
 
 }
 
