@@ -15,35 +15,33 @@
  *
  */
 
-package client
+package end2end_test_test
 
 import (
 	"math/big"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/xlab-si/emmy/client"
 	"github.com/xlab-si/emmy/config"
-	"github.com/xlab-si/emmy/server"
+	"github.com/xlab-si/emmy/crypto/groups"
 )
 
-// TestPseudonymsys requires a running server (it is started in communication_test.go).
-func TestPseudonymsys(t *testing.T) {
-	group := config.LoadSchnorrGroup()
-
-	caClient, err := NewPseudonymsysCAClient(testGrpcClientConn, group)
+func TestPseudonymsysEC(t *testing.T) {
+	curveType := groups.P256
+	caClient, err := client.NewPseudonymsysCAClientEC(testGrpcClientConn, curveType)
 	if err != nil {
-		t.Errorf("Error when initializing NewPseudonymsysCAClient")
+		t.Errorf("Error when initializing NewPseudonymsysCAClientEC")
 	}
 
 	// usually the endpoint is different from the one used for CA:
-	c1, err := NewPseudonymsysClient(testGrpcClientConn, group)
+	c1, _ := client.NewPseudonymsysClientEC(testGrpcClientConn, curveType)
 	userSecret := c1.GenerateMasterKey()
 
 	masterNym := caClient.GenerateMasterNym(userSecret)
 	caCertificate, err := caClient.GenerateCertificate(userSecret, masterNym)
 	if err != nil {
-		t.Errorf("Error when registering with CA")
+		t.Errorf("Error when registering with CA: %s", err.Error())
 	}
 
 	err = insertTestRegistrationKeys()
@@ -65,7 +63,7 @@ func TestPseudonymsys(t *testing.T) {
 	assert.NotNil(t, err, "Should produce an error")
 
 	orgName := "org1"
-	orgPubKeys := config.LoadPseudonymsysOrgPubKeys(orgName)
+	orgPubKeys := config.LoadPseudonymsysOrgPubKeysEC(orgName)
 	credential, err := c1.ObtainCredential(userSecret, nym1, orgPubKeys)
 	if err != nil {
 		t.Errorf(err.Error())
@@ -73,16 +71,16 @@ func TestPseudonymsys(t *testing.T) {
 
 	// register with org2
 	// create a client to communicate with org2
-	caClient1, err := NewPseudonymsysCAClient(testGrpcClientConn, group)
+	caClient1, _ := client.NewPseudonymsysCAClientEC(testGrpcClientConn, curveType)
 	caCertificate1, err := caClient1.GenerateCertificate(userSecret, masterNym)
 	if err != nil {
-		t.Errorf("Error when registering with CA: %s", err.Error())
+		t.Errorf("Error when registering with CA")
 	}
 
 	// c2 connects to the same server as c1, so what we're really testing here is
 	// using transferCredential to authenticate with the same organization and not
 	// transferring credentials to another organization
-	c2, err := NewPseudonymsysClient(testGrpcClientConn, group)
+	c2, _ := client.NewPseudonymsysClientEC(testGrpcClientConn, curveType)
 	nym2, err := c2.GenerateNym(userSecret, caCertificate1, "testRegKey2")
 	if err != nil {
 		t.Errorf(err.Error())
@@ -98,22 +96,4 @@ func TestPseudonymsys(t *testing.T) {
 	sessionKey2, err := c2.TransferCredential(orgName, wrongUserSecret, nym2, credential)
 	assert.Nil(t, sessionKey2, "Authentication should fail, and session key should be nil")
 	assert.NotNil(t, err, "Should produce an error")
-}
-
-func insertTestRegistrationKeys() error {
-	registrationManager, err := server.NewRegistrationManager(config.LoadRegistrationDBAddress())
-	if err != nil {
-		return err
-	}
-
-	testRegKeys := [...]string{"testRegKey1", "testRegKey2"}
-	for _, regKey := range testRegKeys {
-		err = registrationManager.Set(regKey, regKey, time.Minute).Err()
-
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }

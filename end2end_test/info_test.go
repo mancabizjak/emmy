@@ -15,15 +15,17 @@
  *
  */
 
-package client
+package end2end_test_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/xlab-si/emmy/client"
 )
 
 func TestGetServiceInfo(t *testing.T) {
-	info, _ := GetServiceInfo(testGrpcClientConn)
+	t.Parallel()
+	info, _ := client.GetServiceInfo(testGrpcClientConn)
 	assert.NotNil(t, info, "expected non-nil service info")
 }

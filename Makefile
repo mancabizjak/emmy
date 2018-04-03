@@ -31,7 +31,7 @@ deps:
 
 # Install go package to produce emmy binaries
 install:
-	go install
+	go install ./...
 
 # Install to produce emmy binary, but also add version information
 # Use with "make release version=x.y.z"

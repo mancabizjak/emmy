@@ -15,7 +15,7 @@
  *
  */
 
-package client
+package end2end_test_test
 
 import (
 	"testing"
@@ -23,11 +23,17 @@ import (
 	"io/ioutil"
 
 	"github.com/stretchr/testify/assert"
+
+	. "github.com/xlab-si/emmy/client"
 )
+
+var testGrpcServerEndpoint = "localhost:7008"
 
 // TestServerNameOverride tests whether a secure connection to the server can be successfully
 // established despite byspassing the server hostname == server cert's CN check.
 func TestServerNameOverride(t *testing.T) {
+	t.Parallel()
+
 	caCert, _ := ioutil.ReadFile("testdata/server.pem")
 	cfg := NewConnectionConfig(testGrpcServerEndpoint, "localhost", caCert, 500)
 	_, err := GetConnection(cfg)
@@ -38,6 +44,8 @@ func TestServerNameOverride(t *testing.T) {
 // TestWrongServerNameOverride tests the behavior when a secure connection to the server cannot be
 // successfully established because serverNameOverride != server cert's CN.
 func TestWrongServerNameOverride(t *testing.T) {
+	t.Parallel()
+
 	caCert, _ := ioutil.ReadFile("testdata/server.pem")
 	cfg := NewConnectionConfig(testGrpcServerEndpoint, "test", caCert, 500)
 	_, err := GetConnection(cfg)
@@ -49,6 +57,7 @@ func TestWrongServerNameOverride(t *testing.T) {
 // given that we have a valid CA certificate and that server hostname == server cert's CN check
 // is in place.
 func TestValidCertificate(t *testing.T) {
+	t.Parallel()
 	// This caCert is different than the one used by the test server
 	caCert, _ := ioutil.ReadFile("testdata/server.pem")
 	cfg := NewConnectionConfig(testGrpcServerEndpoint, "", caCert, 500)
@@ -61,6 +70,8 @@ func TestValidCertificate(t *testing.T) {
 // successfully established due because the provided CA certificate is not the one that signed
 // server's certificate.
 func TestInvalidCertificate(t *testing.T) {
+	t.Parallel()
+
 	caCert, _ := ioutil.ReadFile("testdata/server2.pem")
 	cfg := NewConnectionConfig(testGrpcServerEndpoint, "", caCert, 500)
 	_, err := GetConnection(cfg)
@@ -71,6 +82,8 @@ func TestInvalidCertificate(t *testing.T) {
 //TestInvalidFormatCertificate tests client's behavior when secure connection cannot be
 // established due to invalid formatting of the provided CA certificate.
 func TestInvalidFormatCertificate(t *testing.T) {
+	t.Parallel()
+
 	// the caCert parameter to NewConnectionConfig will not be nil, but will be someting that
 	// does not conform to the PEM format
 	cfg := NewConnectionConfig(testGrpcServerEndpoint, "", make([]byte, 0), 500)
@@ -83,6 +96,8 @@ func TestInvalidFormatCertificate(t *testing.T) {
 // be established because certificate of the CA that signed test server's cert is not in the host
 // system's certificate pool.
 func TestNonexistingCertificateFromSysCertPool(t *testing.T) {
+	t.Parallel()
+
 	cfg := NewConnectionConfig(testGrpcServerEndpoint, "", nil, 500)
 	_, err := GetConnection(cfg)
 
