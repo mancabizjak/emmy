@@ -25,6 +25,7 @@ import (
 )
 
 func TestLCM(t *testing.T) {
+	t.Parallel()
 	a := big.NewInt(8)
 	b := big.NewInt(6)
 	lcm := LCM(a, b)

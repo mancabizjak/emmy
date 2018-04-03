@@ -28,6 +28,8 @@ import (
 
 // TestProveDamgardFujisakiCommitmentOpening demonstrates how to prove that you can open DamgardFujisaki commitment.
 func TestProveDamgardFujisakiCommitmentOpening(t *testing.T) {
+	t.Parallel()
+
 	receiver, err := commitments.NewDamgardFujisakiReceiver(1024, 80)
 	if err != nil {
 		t.Errorf("Error in NewDamgardFujisakiReceiver: %v", err)

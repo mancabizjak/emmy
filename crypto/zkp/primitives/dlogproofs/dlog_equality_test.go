@@ -27,6 +27,8 @@ import (
 )
 
 func TestDLogEquality(t *testing.T) {
+	t.Parallel()
+
 	group, _ := groups.NewSchnorrGroup(256)
 
 	secret := common.GetRandomInt(group.Q)

@@ -27,6 +27,8 @@ import (
 )
 
 func TestPartialDLogKnowledge(t *testing.T) {
+	t.Parallel()
+
 	group, _ := groups.NewSchnorrGroup(256)
 
 	secret1 := common.GetRandomInt(group.Q)

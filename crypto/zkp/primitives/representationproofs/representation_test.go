@@ -24,6 +24,8 @@ import (
 )
 
 func TestRepresentationProof(t *testing.T) {
+	t.Parallel()
+
 	proved := ProveKnowledgeOfRepresentation()
 	assert.Equal(t, true, proved, "Proof of knowledge of representation does not work correctly")
 }

@@ -26,6 +26,8 @@ import (
 
 // TestDamgardFujisaki demonstrates how a value can be committed and later opened (decommitted).
 func TestDamgardFujisaki(t *testing.T) {
+	t.Parallel()
+
 	receiver, err := NewDamgardFujisakiReceiver(1024, 80)
 	if err != nil {
 		t.Errorf("Error in NewDamgardFujisakiReceiver: %v", err)

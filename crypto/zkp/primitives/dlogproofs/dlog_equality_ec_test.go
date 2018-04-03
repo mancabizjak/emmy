@@ -26,6 +26,8 @@ import (
 )
 
 func TestDLogEqualityEC(t *testing.T) {
+	t.Parallel()
+
 	group := groups.NewECGroup(groups.P256)
 	secret := common.GetRandomInt(group.Q)
 

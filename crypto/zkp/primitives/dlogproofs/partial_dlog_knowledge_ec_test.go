@@ -26,6 +26,8 @@ import (
 )
 
 func TestPartialDLogKnowledgeEC(t *testing.T) {
+	t.Parallel()
+
 	group := groups.NewECGroup(groups.P256)
 
 	exp1 := common.GetRandomInt(group.Q)

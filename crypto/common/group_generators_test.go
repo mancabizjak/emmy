@@ -25,6 +25,7 @@ import (
 )
 
 func TestGetGeneratorOfZnSubgroup(t *testing.T) {
+	t.Parallel()
 	p, err := GetSafePrime(512)
 	if err != nil {
 		t.Errorf("Error in GetSafePrime: %v", err)

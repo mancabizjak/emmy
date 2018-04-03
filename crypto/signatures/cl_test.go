@@ -26,6 +26,8 @@ import (
 )
 
 func TestCL(t *testing.T) {
+	t.Parallel()
+
 	numOfBlocks := 2
 	cl := NewCL(numOfBlocks)
 	n := new(big.Int).Exp(big.NewInt(2), big.NewInt(int64(160)), nil)

@@ -29,6 +29,8 @@ import (
 // TestProveDamgardFujisakiCommitmentPositive demonstrates how to prove that the commitment
 // hides a positive number. Given c, prove that c = g^x * h^r (mod n) where x >= 0.
 func TestProveDamgardFujisakiCommitmentPositive(t *testing.T) {
+	t.Parallel()
+
 	receiver, err := commitments.NewDamgardFujisakiReceiver(1024, 80)
 	if err != nil {
 		t.Errorf("error in NewDamgardFujisakiReceiver: %v", err)

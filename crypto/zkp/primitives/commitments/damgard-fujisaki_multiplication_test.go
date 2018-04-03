@@ -29,6 +29,8 @@ import (
 // TestProveDamgardFujisakiCommitmentMultiplication demonstrates how to prove that for given commitments
 // c1 = g^x1 * h^r1, c2 = g^x2 * h^r2, c3 = g^x3 * h^r3, it holds x3 = x1 * x2
 func TestProveDamgardFujisakiCommitmentMultiplication(t *testing.T) {
+	t.Parallel()
+
 	receiver1, err := commitments.NewDamgardFujisakiReceiver(1024, 80)
 	if err != nil {
 		t.Errorf("Error in NewDamgardFujisakiReceiver: %v", err)

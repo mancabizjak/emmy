@@ -24,6 +24,8 @@ import (
 )
 
 func TestBitCommitmentProof(t *testing.T) {
+	t.Parallel()
+
 	verified, err := ProveBitCommitment()
 	if err != nil {
 		t.Errorf("Error in bit commitment proof: %v", err)
@@ -33,6 +35,8 @@ func TestBitCommitmentProof(t *testing.T) {
 }
 
 func TestCommitmentMultiplicationProof(t *testing.T) {
+	t.Parallel()
+
 	proved, err := ProveCommitmentMultiplication()
 	if err != nil {
 		t.Errorf("Error in multiplication proof: %v", err)

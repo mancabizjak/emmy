@@ -26,6 +26,8 @@ import (
 )
 
 func TestCSPaillier(t *testing.T) {
+	t.Parallel()
+
 	cspaillierPub, _ := NewCSPaillierFromPubKeyFile("testdata/cspaillierpubkey.txt")
 
 	m := common.GetRandomInt(big.NewInt(8685849))

@@ -27,6 +27,8 @@ import (
 // TestLipmaaDecompositionNegativeInteger tests whether decomposition function returns an error
 // when an invaid argument (negative integer) is provided.
 func TestLipmaaDecompositionNegativeInteger(t *testing.T) {
+	t.Parallel()
+
 	integer := big.NewInt(-1)
 	_, err := lipmaaDecompose(integer)
 	if err == nil {
@@ -37,6 +39,8 @@ func TestLipmaaDecompositionNegativeInteger(t *testing.T) {
 // TestLipmaaDecompositionWithSmallIntegers iteratively tests whether the roots of retrieved
 // decompositions sum up exactly to a given integer when they are squared.
 func TestLipmaaDecompositionWithSmallIntegers(t *testing.T) {
+	t.Parallel()
+
 	var bigInt = new(big.Int)
 	for i := 0; i <= 10000; i++ {
 		bigInt.SetInt64(int64(i))
@@ -51,6 +55,8 @@ func TestLipmaaDecompositionWithSmallIntegers(t *testing.T) {
 
 // TestLipmaaDecompositionWithBigInteger tests whether decomposition works for a large integer.
 func TestLipmaaDecompositionWithBigInteger(t *testing.T) {
+	t.Parallel()
+
 	bigInt, _ := new(big.Int).SetString("16714772973240639959372252262788596420406994288943442724185217359247384753656472309049760952976644136858333233015922583099687128195321947212684779063190875332970679291085543110146729439665070418750765330192961290161474133279960593149307037455272278582955789954847238104228800942225108143276152223829168166008095539967222363070565697796008563529948374781419181195126018918350805639881625937503224895840081959848677868603567824611344898153185576740445411565094067875133968946677861528581074542082733743513314354002186235230287355796577107626422168586230066573268163712626444511811717579062108697723640288393001520781671", 10)
 	roots, _ := lipmaaDecompose(bigInt)
 	if squareRootsAndSum(roots).Cmp(bigInt) != 0 {
@@ -62,6 +68,8 @@ func TestLipmaaDecompositionWithBigInteger(t *testing.T) {
 // TestLipmaaDecomposition checks whether filtering of Lagrangian works - e.g.
 // whether the function returns a slice containing only non-zero roots.
 func TestLipmaaDecomposition(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		n           *big.Int
 		expectedLen int

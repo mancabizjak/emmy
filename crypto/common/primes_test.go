@@ -25,6 +25,7 @@ import (
 )
 
 func TestGetGermainPrime(t *testing.T) {
+	t.Parallel()
 	p := GetGermainPrime(512)
 	p1 := new(big.Int).Add(p, p)
 	p1.Add(p1, big.NewInt(1))
@@ -34,6 +35,7 @@ func TestGetGermainPrime(t *testing.T) {
 }
 
 func TestGetSafePrime(t *testing.T) {
+	t.Parallel()
 	p, err := GetSafePrime(512)
 	if err != nil {
 		t.Errorf("Error in GetSafePrime: %v", err)

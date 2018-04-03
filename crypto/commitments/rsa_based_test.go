@@ -25,6 +25,8 @@ import (
 )
 
 func TestRSABasedCommitment(t *testing.T) {
+	t.Parallel()
+
 	receiver, err := NewRSABasedCommitReceiver(1024)
 	if err != nil {
 		t.Errorf("Error when initializing RSABasedCommitReceiver: %v", err)

@@ -25,6 +25,8 @@ import (
 )
 
 func TestGeneratorOfCompositeQR(t *testing.T) {
+	t.Parallel()
+
 	rsa, err := NewQRSpecialRSA(512)
 	if err != nil {
 		t.Errorf("Error when instantiating QRSpecialRSA: %v", err)

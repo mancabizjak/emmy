@@ -30,6 +30,8 @@ import (
 // hide the same number. Given c1, c2, prove that c1 = g1^x * h1^r1 (mod n1) and
 // c2 = g2^x * h2^r2 (mod n2) for some x, r1, r2 (note that both commitments hide x).
 func TestProveDamgardFujisakiCommitmentEquality(t *testing.T) {
+	t.Parallel()
+
 	receiver1, err := commitments.NewDamgardFujisakiReceiver(1024, 80)
 	if err != nil {
 		t.Errorf("Error in NewDamgardFujisakiReceiver: %v", err)
