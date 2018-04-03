@@ -7,14 +7,6 @@ port: 7007
 # Timeout (in milliseconds) for connections to emmy server
 timeout: 5000
 
-# Path to directory with test files
-testdata_dir: ./client/testdata
-
-# Absolute path to the folder where secret and public keys are serialized to
-# This is used for CSPaillier protocol
-# Must exist prior to execution of tests
-key_folder: /tmp
-
 # Below are some pre-configured values for bootstrapping specific portocols.
 # Several of them are set to values that might not be safe in any real (production) setting.
 

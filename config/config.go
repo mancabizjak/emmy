@@ -105,19 +105,9 @@ func LoadTimeout() int {
 	return viper.GetInt("timeout")
 }
 
-func LoadKeyDirFromConfig() string {
-	key_path := viper.GetString("key_folder")
-	return key_path
-}
-
 func LoadTestdataDir() string {
 	prefix := filepath.Join(os.Getenv("GOPATH"), "src", "github.com", "xlab-si", "emmy")
 	return filepath.Join(prefix, viper.GetString("testdata_dir"))
-}
-
-func LoadTestKeyDirFromConfig() string {
-	key_path := viper.GetString("key_folder")
-	return key_path
 }
 
 func LoadSchnorrGroup() *groups.SchnorrGroup {
