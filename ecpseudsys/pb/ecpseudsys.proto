@@ -17,7 +17,10 @@
 
 syntax = "proto3";
 
-package pb;
+package ecpseudsys;
+option go_package = "github.com/xlab-si/emmy/ecpseudsys/pb";
+
+import "pseudsys/pb/pseudsys.proto";
 
 service CA {
     rpc GenerateCertificate(stream CARequest) returns (stream CAResponse) {}
@@ -37,6 +40,7 @@ message CAResponse {
     }
 }
 
+// Random data for schnorr proof
 message ProofRandData {
     ECGroupElement X = 1;
     ECGroupElement A = 2;
@@ -55,9 +59,84 @@ message ECGroupElement {
     bytes Y = 2;
 }
 
-/*
-service Organization {
-    rpc GenerateNym (stream Message) returns (stream Message) {}
-    rpc ObtainCredential (stream Message) returns (stream Message) {}
-    rpc TransferCredential (stream Message) returns (stream Message) {}
-}*/
+service Org {
+    rpc GenerateNym (stream GenerateNymRequest) returns (stream pseudsys.GenerateNymResponse) {}
+    rpc ObtainCred (stream ObtainCredRequest) returns (stream ObtainCredResponse) {}
+    rpc TransferCred (stream TransferCredRequest) returns (stream pseudsys.TransferCredResponse) {}
+}
+
+message GenerateNymRequest {
+    oneof type {
+        GenerateNymProofRandData proofRandData = 1;
+        bytes proofData = 2;
+    }
+}
+
+message ObtainCredRequest {
+    oneof type {
+        ProofRandData proofRandData = 1;
+        bytes proofData = 2;
+        pseudsys.BytesPair challenge = 3;
+    }
+}
+
+message ObtainCredResponse {
+    oneof type {
+        bytes challenge = 1;
+        ObtainCredProofRandData proofRandData = 2;
+        pseudsys.BytesPair proofData = 3;
+    }
+}
+
+message TransferCredRequest {
+    oneof type {
+        TransferCredProofRandData proofRandData = 1;
+        bytes proofData = 2;
+    }
+}
+
+message GenerateNymProofRandData {
+    ECGroupElement X1 = 1;
+    ECGroupElement A1 = 2;
+    ECGroupElement B1 = 3;
+    ECGroupElement X2 = 4;
+    ECGroupElement A2 = 5;
+    ECGroupElement B2 = 6;
+    bytes R = 7;
+    bytes S = 8;
+    string regKey = 9;
+}
+
+message Cred {
+    ECGroupElement SmallAToGamma = 1;
+    ECGroupElement SmallBToGamma = 2;
+    ECGroupElement AToGamma = 3;
+    ECGroupElement BToGamma = 4;
+    Transcript T1 = 5;
+    Transcript T2 = 6;
+}
+
+message Transcript {
+    ECGroupElement A = 1;
+    ECGroupElement B = 2;
+    bytes Hash = 3;
+    bytes ZAlpha = 4;
+}
+
+message ObtainCredProofRandData {
+    ECGroupElement X11 = 1;
+    ECGroupElement X12 = 2;
+    ECGroupElement X21 = 3;
+    ECGroupElement X22 = 4;
+    ECGroupElement A = 5;
+    ECGroupElement B = 6;
+}
+
+message TransferCredProofRandData {
+    string OrgName = 1; // TODO?
+    ECGroupElement X1 = 2;
+    ECGroupElement X2 = 3;
+    ECGroupElement NymA = 4;
+    ECGroupElement NymB = 5;
+    Cred cred = 6;
+}

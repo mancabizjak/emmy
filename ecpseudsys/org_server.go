@@ -15,27 +15,28 @@
  *
  */
 
-package server
+package ecpseudsys
 
 import (
 	"math/big"
 
 	"github.com/xlab-si/emmy/config"
 	"github.com/xlab-si/emmy/crypto/ecschnorr"
-	"github.com/xlab-si/emmy/ecpseudsys"
-	pb "github.com/xlab-si/emmy/proto"
+	"github.com/xlab-si/emmy/ecpseudsys/pb"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-func (s *Server) GenerateNym_EC(stream pb.PseudonymSystem_GenerateNym_ECServer) error {
-	req, err := s.receive(stream)
+type OrgServer struct{}
+
+func (s *OrgServer) GenerateNym(stream pb.Org_GenerateNymServer) error {
+	req, err := stream.Recv()
 	if err != nil {
 		return err
 	}
 
 	caPubKey := config.LoadPseudonymsysCAPubKey()
-	org := ecpseudsys.NewNymGenerator(caPubKey, curve)
+	org := NewNymGenerator(caPubKey, curve)
 
 	proofRandData := req.GetPseudonymsysNymGenProofRandomDataEc()
 	x1 := proofRandData.X1.GetNativeType()
@@ -49,32 +50,31 @@ func (s *Server) GenerateNym_EC(stream pb.PseudonymSystem_GenerateNym_ECServer) 
 
 	regKeyOk, err := s.RegistrationManager.CheckRegistrationKey(proofRandData.RegKey)
 
-	var resp *pb.Message
 
 	if !regKeyOk || err != nil {
-		s.Logger.Debugf("Registration key %s ok=%t, error=%v",
+		//s.Logger.Debugf("Registration key %s ok=%t, error=%v",
 			proofRandData.RegKey, regKeyOk, err)
 		return status.Error(codes.NotFound, "registration key verification failed")
 
 	}
 	challenge, err := org.GetChallenge(nymA, blindedA, nymB, blindedB, x1, x2, signatureR, signatureS)
 	if err != nil {
-		s.Logger.Debug(err)
+		//s.Logger.Debug(err)
 		return status.Error(codes.Internal, err.Error())
 	}
-	resp = &pb.Message{
-		Content: &pb.Message_PedersenDecommitment{
+	resp := &pb.GenerateNymRequest{
+		Type: &pb.Message_PedersenDecommitment{
 			&pb.PedersenDecommitment{
 				X: challenge.Bytes(),
 			},
 		},
 	}
 
-	if err := s.send(resp, stream); err != nil {
+	if err := stream.Send(resp); err != nil {
 		return err
 	}
 
-	req, err = s.receive(stream)
+	req, err = stream.Recv()
 	if err != nil {
 		return err
 	}
@@ -83,19 +83,15 @@ func (s *Server) GenerateNym_EC(stream pb.PseudonymSystem_GenerateNym_ECServer) 
 	z := new(big.Int).SetBytes(proofData.Z)
 	valid := org.Verify(z)
 
-	resp = &pb.Message{
-		Content: &pb.Message_Status{&pb.Status{Success: valid}},
+	resp = &pb.GenerateNymRe{
+		Type: &pb.Message_Status{&pb.Status{Success: valid}},
 	}
 
-	if err = s.send(resp, stream); err != nil {
-		return err
-	}
-
-	return nil
+	return stream.Send(resp)
 }
 
-func (s *Server) ObtainCredential_EC(stream pb.PseudonymSystem_ObtainCredential_ECServer) error {
-	req, err := s.receive(stream)
+func (s *OrgServer) ObtainCred(stream pb.Org_ObtainCredServer) error {
+	req, err := stream.Recv()
 	if err != nil {
 		return err
 	}
@@ -106,11 +102,11 @@ func (s *Server) ObtainCredential_EC(stream pb.PseudonymSystem_ObtainCredential_
 	b := proofRandData.B.GetNativeType()
 
 	secKey := config.LoadPseudonymsysOrgSecrets("org1", "ecdlog")
-	org := ecpseudsys.NewCredIssuer(secKey, curve)
+	org := NewCredIssuer(secKey, curve)
 	challenge := org.GetChallenge(a, b, x)
 
 	resp := &pb.Message{
-		Content: &pb.Message_Bigint{
+		Type: &pb.Message_Bigint{
 			&pb.BigInt{
 				X1: challenge.Bytes(),
 			},
@@ -132,11 +128,11 @@ func (s *Server) ObtainCredential_EC(stream pb.PseudonymSystem_ObtainCredential_
 	x11, x12, x21, x22, A, B, err := org.Verify(z)
 
 	if err != nil {
-		s.Logger.Debug(err)
+		//s.Logger.Debug(err)
 		return status.Error(codes.Internal, err.Error())
 	}
 	resp = &pb.Message{
-		Content: &pb.Message_PseudonymsysIssueProofRandomDataEc{
+		Type: &pb.Message_PseudonymsysIssueProofRandomDataEc{
 			&pb.PseudonymsysIssueProofRandomDataEC{
 				X11: pb.ToPbECGroupElement(x11),
 				X12: pb.ToPbECGroupElement(x12),
@@ -148,11 +144,11 @@ func (s *Server) ObtainCredential_EC(stream pb.PseudonymSystem_ObtainCredential_
 		},
 	}
 
-	if err := s.send(resp, stream); err != nil {
+	if err := stream.Send(resp); err != nil {
 		return err
 	}
 
-	req, err = s.receive(stream)
+	req, err = stream.Recv()
 	if err != nil {
 		return err
 	}
@@ -163,7 +159,7 @@ func (s *Server) ObtainCredential_EC(stream pb.PseudonymSystem_ObtainCredential_
 
 	z1, z2 := org.GetProofData(challenge1, challenge2)
 	resp = &pb.Message{
-		Content: &pb.Message_DoubleBigint{
+		Type: &pb.Message_DoubleBigint{
 			&pb.DoubleBigInt{
 				X1: z1.Bytes(),
 				X2: z2.Bytes(),
@@ -171,21 +167,17 @@ func (s *Server) ObtainCredential_EC(stream pb.PseudonymSystem_ObtainCredential_
 		},
 	}
 
-	if err := s.send(resp, stream); err != nil {
-		return err
-	}
-
-	return nil
+	return stream.Send(resp)
 }
 
-func (s *Server) TransferCredential_EC(stream pb.PseudonymSystem_TransferCredential_ECServer) error {
-	req, err := s.receive(stream)
+func (s *OrgServer) TransferCred(stream pb.Org_TransferCredServer) error {
+	req, err := stream.Recv()
 	if err != nil {
 		return err
 	}
 
 	secKey := config.LoadPseudonymsysOrgSecrets("org1", "ecdlog")
-	org := ecpseudsys.NewCredVerifier(secKey, curve)
+	org := NewCredVerifier(secKey, curve)
 
 	data := req.GetPseudonymsysTransferCredentialDataEc()
 	orgName := data.OrgName
@@ -195,26 +187,26 @@ func (s *Server) TransferCredential_EC(stream pb.PseudonymSystem_TransferCredent
 	nymB := data.NymB.GetNativeType()
 
 	t1 := ecschnorr.NewBlindedTrans(
-		new(big.Int).SetBytes(data.Credential.T1.A.X),
-		new(big.Int).SetBytes(data.Credential.T1.A.Y),
-		new(big.Int).SetBytes(data.Credential.T1.B.X),
-		new(big.Int).SetBytes(data.Credential.T1.B.Y),
-		new(big.Int).SetBytes(data.Credential.T1.Hash),
-		new(big.Int).SetBytes(data.Credential.T1.ZAlpha))
+		new(big.Int).SetBytes(data.Cred.T1.A.X),
+		new(big.Int).SetBytes(data.Cred.T1.A.Y),
+		new(big.Int).SetBytes(data.Cred.T1.B.X),
+		new(big.Int).SetBytes(data.Cred.T1.B.Y),
+		new(big.Int).SetBytes(data.Cred.T1.Hash),
+		new(big.Int).SetBytes(data.Cred.T1.ZAlpha))
 
 	t2 := ecschnorr.NewBlindedTrans(
-		new(big.Int).SetBytes(data.Credential.T2.A.X),
-		new(big.Int).SetBytes(data.Credential.T2.A.Y),
-		new(big.Int).SetBytes(data.Credential.T2.B.X),
-		new(big.Int).SetBytes(data.Credential.T2.B.Y),
-		new(big.Int).SetBytes(data.Credential.T2.Hash),
-		new(big.Int).SetBytes(data.Credential.T2.ZAlpha))
+		new(big.Int).SetBytes(data.Cred.T2.A.X),
+		new(big.Int).SetBytes(data.Cred.T2.A.Y),
+		new(big.Int).SetBytes(data.Cred.T2.B.X),
+		new(big.Int).SetBytes(data.Cred.T2.B.Y),
+		new(big.Int).SetBytes(data.Cred.T2.Hash),
+		new(big.Int).SetBytes(data.Cred.T2.ZAlpha))
 
-	credential := ecpseudsys.NewCred(
-		data.Credential.SmallAToGamma.GetNativeType(),
-		data.Credential.SmallBToGamma.GetNativeType(),
-		data.Credential.AToGamma.GetNativeType(),
-		data.Credential.BToGamma.GetNativeType(),
+	credential := NewCred(
+		data.Cred.SmallAToGamma.GetNativeType(),
+		data.Cred.SmallBToGamma.GetNativeType(),
+		data.Cred.AToGamma.GetNativeType(),
+		data.Cred.BToGamma.GetNativeType(),
 		t1, t2,
 	)
 
@@ -222,7 +214,7 @@ func (s *Server) TransferCredential_EC(stream pb.PseudonymSystem_TransferCredent
 		credential.SmallAToGamma, credential.SmallBToGamma, x1, x2)
 
 	resp := &pb.Message{
-		Content: &pb.Message_Bigint{
+		Type: &pb.Message_Bigint{
 			&pb.BigInt{
 				X1: challenge.Bytes(),
 			},
@@ -245,27 +237,23 @@ func (s *Server) TransferCredential_EC(stream pb.PseudonymSystem_TransferCredent
 	z := new(big.Int).SetBytes(proofData.X1)
 
 	if verified := org.Verify(z, credential, orgPubKeys); !verified {
-		s.Logger.Debug("User authentication failed")
+		//s.Logger.Debug("User authentication failed")
 		return status.Error(codes.Unauthenticated, "user authentication failed")
 	}
 
 	sessionKey, err := s.generateSessionKey()
 	if err != nil {
-		s.Logger.Debug(err)
+		//s.Logger.Debug(err)
 		return status.Error(codes.Internal, "failed to obtain session key")
 	}
 
 	resp = &pb.Message{
-		Content: &pb.Message_SessionKey{
+		Type: &pb.Message_SessionKey{
 			SessionKey: &pb.SessionKey{
 				Value: *sessionKey,
 			},
 		},
 	}
 
-	if err = s.send(resp, stream); err != nil {
-		return err
-	}
-
-	return nil
+	return stream.Send(resp)
 }
