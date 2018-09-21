@@ -21,12 +21,14 @@ import (
 	"math/big"
 
 	"github.com/xlab-si/emmy/config"
-	"github.com/xlab-si/emmy/crypto/pseudsys"
 	"github.com/xlab-si/emmy/crypto/schnorr"
 	pb "github.com/xlab-si/emmy/proto"
+	"github.com/xlab-si/emmy/pseudsys"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+//type Server struct{}
 
 func (s *Server) GenerateNym(stream pb.PseudonymSystem_GenerateNymServer) error {
 	req, err := s.receive(stream)

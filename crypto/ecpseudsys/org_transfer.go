@@ -22,7 +22,7 @@ import (
 
 	"github.com/xlab-si/emmy/crypto/ec"
 	"github.com/xlab-si/emmy/crypto/ecschnorr"
-	"github.com/xlab-si/emmy/crypto/pseudsys"
+	"github.com/xlab-si/emmy/pseudsys"
 )
 
 type CredVerifier struct {

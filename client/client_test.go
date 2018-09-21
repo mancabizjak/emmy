@@ -77,6 +77,7 @@ func TestMain(m *testing.M) {
 	os.Exit(returnCode)
 }
 
+/*
 // TestInvalidStreamGenerationFunction verifies that if clients using streaming RPCs to
 // communicate with the server try to open a client stream with an invalid stream generation
 // function, the error gets caught.
@@ -88,7 +89,7 @@ func TestInvalidStreamGenerationFunction(t *testing.T) {
 	// for running a given cryptographic protocol
 	res := c.openStream(c.grpcClient, "InvalidFunc")
 	assert.NotNil(t, res, "stream generation function is invalid, error should be produced")
-}
+}*/
 
 // TestConnectionTimeout tests whether timeout of initial connection to the server is reached.
 func TestConnectionTimeout(t *testing.T) {

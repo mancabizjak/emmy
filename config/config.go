@@ -27,9 +27,9 @@ import (
 	"github.com/spf13/viper"
 	"github.com/xlab-si/emmy/crypto/ec"
 	"github.com/xlab-si/emmy/crypto/ecpseudsys"
-	"github.com/xlab-si/emmy/crypto/pseudsys"
 	"github.com/xlab-si/emmy/crypto/qr"
 	"github.com/xlab-si/emmy/crypto/schnorr"
+	"github.com/xlab-si/emmy/pseudsys"
 )
 
 // init loads the default config file

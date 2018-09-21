@@ -33,7 +33,6 @@ message Message {
 		SchnorrProofData schnorr_proof_data = 9;
 		SchnorrProofRandomData schnorr_proof_random_data = 10;
 		SchnorrECProofRandomData schnorr_ec_proof_random_data = 11;
-		PseudonymsysCACertificate pseudonymsys_ca_certificate = 15;
 		PseudonymsysNymGenProofRandomData pseudonymsys_nym_gen_proof_random_data = 16;
 		PseudonymsysIssueProofRandomData pseudonymsys_issue_proof_random_data = 17;
 		DoubleBigInt double_bigint = 18;
@@ -123,13 +122,6 @@ message PseudonymsysNymGenProofRandomDataEC {
 	bytes R = 7;
 	bytes S = 8;
 	string RegKey = 9;
-}
-
-message PseudonymsysCACertificate {
-	bytes BlindedA = 1;
-	bytes BlindedB = 2;
-	bytes R = 3;
-	bytes S = 4;
 }
 
 message PseudonymsysCACertificateEC {

@@ -22,8 +22,8 @@ import (
 	"math/big"
 
 	"github.com/xlab-si/emmy/client"
-	"github.com/xlab-si/emmy/crypto/pseudsys"
 	"github.com/xlab-si/emmy/crypto/schnorr"
+	"github.com/xlab-si/emmy/pseudsys"
 )
 
 // Credential represents an equivalent of pseudsys.Cred,

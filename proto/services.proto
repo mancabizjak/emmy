@@ -23,7 +23,6 @@ import "messages.proto";
 import "google/protobuf/empty.proto";
 
 service PseudonymSystemCA {
-	rpc GenerateCertificate(stream Message) returns (stream Message) {}
 	rpc GenerateCertificate_EC(stream Message) returns (stream Message) {}
 }
 

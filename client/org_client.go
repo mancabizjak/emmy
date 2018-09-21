@@ -22,9 +22,9 @@ import (
 	"math/big"
 
 	"github.com/xlab-si/emmy/crypto/common"
-	"github.com/xlab-si/emmy/crypto/pseudsys"
 	"github.com/xlab-si/emmy/crypto/schnorr"
 	pb "github.com/xlab-si/emmy/proto"
+	"github.com/xlab-si/emmy/pseudsys"
 	"google.golang.org/grpc"
 )
 

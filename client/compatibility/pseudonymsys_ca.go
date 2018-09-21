@@ -22,8 +22,7 @@ import (
 
 	"fmt"
 
-	"github.com/xlab-si/emmy/client"
-	"github.com/xlab-si/emmy/crypto/pseudsys"
+	"github.com/xlab-si/emmy/pseudsys"
 )
 
 // Pseudonym represents an equivalent of pseudsys.Nym, but has string
@@ -84,11 +83,11 @@ func (c *CACertificate) toNativeType() (*pseudsys.CACert, error) {
 	return certificate, nil
 }
 
-// PseudonymsysCAClient wraps around client.PseudonymsysCAClient to conform to
+// CAClient wraps around client.CAClient to conform to
 // type restrictions of Go language binding tools. It exposes the same set of methods as
-// client.PseudonymsysCAClient.
+// client.CAClient.
 type PseudonymsysCAClient struct {
-	*client.PseudonymsysCAClient
+	*pseudsys.CAClient
 }
 
 func NewPseudonymsysCAClient(conn *Connection, g *SchnorrGroup) (*PseudonymsysCAClient, error) {
@@ -98,13 +97,13 @@ func NewPseudonymsysCAClient(conn *Connection, g *SchnorrGroup) (*PseudonymsysCA
 		return nil, err
 	}
 
-	c, err := client.NewPseudonymsysCAClient(conn.ClientConn, group)
+	c, err := pseudsys.NewCAClient(conn.ClientConn, group)
 	if err != nil {
 		return nil, err
 	}
 
 	return &PseudonymsysCAClient{
-		PseudonymsysCAClient: c,
+		CAClient: c,
 	}, nil
 }
 
@@ -114,7 +113,7 @@ func (c *PseudonymsysCAClient) GenerateMasterNym(secret string) (*Pseudonym, err
 	if !sOk {
 		return nil, fmt.Errorf("secret (%s): %s", secret, ArgsConversionError)
 	}
-	masterNym := c.PseudonymsysCAClient.GenerateMasterNym(s)
+	masterNym := c.CAClient.GenerateMasterNym(s)
 	return NewPseudonym(masterNym.A.String(), masterNym.B.String()), nil
 }
 
@@ -132,8 +131,8 @@ func (c *PseudonymsysCAClient) GenerateCertificate(userSecret string,
 		return nil, err
 	}
 
-	// Call PseudonymsysCAClient client with translated parameters
-	cert, err := c.PseudonymsysCAClient.GenerateCertificate(secret, pseudonym)
+	// Call CAClient client with translated parameters
+	cert, err := c.CAClient.GenerateCertificate(secret, pseudonym)
 	if err != nil {
 		return nil, err
 	}

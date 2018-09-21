@@ -19,12 +19,10 @@ package server
 
 import (
 	"fmt"
+	"io"
 	"math"
 	"net"
-
 	"net/http"
-
-	"io"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/xlab-si/emmy/cl"
@@ -33,6 +31,8 @@ import (
 	"github.com/xlab-si/emmy/crypto/ec"
 	"github.com/xlab-si/emmy/log"
 	pb "github.com/xlab-si/emmy/proto"
+	"github.com/xlab-si/emmy/pseudsys"
+	psyspb "github.com/xlab-si/emmy/pseudsys/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -59,6 +59,7 @@ type Server struct {
 	*SessionManager
 	*RegistrationManager
 	cl.Server
+	*pseudsys.CAServer
 }
 
 // NewServer initializes an instance of the Server struct and returns a pointer.
@@ -98,6 +99,12 @@ func NewServer(certFile, keyFile, dbAddress string, logger log.Logger) (*Server,
 		Logger:              logger,
 		SessionManager:      sessionManager,
 		RegistrationManager: registrationManager,
+		// TODO fixme!!!
+		CAServer: pseudsys.NewCAServer(
+			config.LoadSchnorrGroup(),
+			config.LoadPseudonymsysCASecret(),
+			config.LoadPseudonymsysCAPubKey(),
+		),
 	}
 
 	// Disable tracing by default, as is used for debugging purposes.
@@ -156,7 +163,7 @@ func (s *Server) EnableTracing() {
 func (s *Server) registerServices() {
 	pb.RegisterInfoServer(s.GrpcServer, s)
 	pb.RegisterPseudonymSystemServer(s.GrpcServer, s)
-	pb.RegisterPseudonymSystemCAServer(s.GrpcServer, s)
+	psyspb.RegisterCAServer(s.GrpcServer, s)
 	clpb.RegisterAnonCredsServer(s.GrpcServer, s)
 
 	s.Logger.Notice("Registered gRPC Services")

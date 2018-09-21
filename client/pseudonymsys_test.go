@@ -24,6 +24,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/xlab-si/emmy/config"
+	"github.com/xlab-si/emmy/pseudsys"
 	"github.com/xlab-si/emmy/server"
 )
 
@@ -31,9 +32,9 @@ import (
 func TestPseudonymsys(t *testing.T) {
 	group := config.LoadSchnorrGroup()
 
-	caClient, err := NewPseudonymsysCAClient(testGrpcClientConn, group)
+	caClient, err := pseudsys.NewCAClient(testGrpcClientConn, group)
 	if err != nil {
-		t.Errorf("Error when initializing NewPseudonymsysCAClient")
+		t.Errorf("Error when initializing CAClient")
 	}
 
 	// usually the endpoint is different from the one used for CA:
@@ -73,7 +74,7 @@ func TestPseudonymsys(t *testing.T) {
 
 	// register with org2
 	// create a client to communicate with org2
-	caClient1, err := NewPseudonymsysCAClient(testGrpcClientConn, group)
+	caClient1, err := pseudsys.NewCAClient(testGrpcClientConn, group)
 	caCertificate1, err := caClient1.GenerateCertificate(userSecret, masterNym)
 	if err != nil {
 		t.Errorf("Error when registering with CA: %s", err.Error())
