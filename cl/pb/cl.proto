@@ -1,0 +1,101 @@
+/*
+ * Copyright 2017 XLAB d.o.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+syntax = "proto3";
+
+package pb;
+
+import "proto/messages.proto";
+
+service AnonCreds {
+	rpc Issue (stream Request) returns (stream Response) {}
+	rpc Update (CredUpdateRequest) returns (IssuedCred) {}
+	rpc Prove (stream Request) returns (stream Response) {}
+}
+
+message Request {
+    oneof type {
+        Empty empty = 1;
+		CredIssueRequest credIssue = 2;
+        CredProof credProve = 3;
+    }
+}
+
+message Response {
+    oneof type {
+        proto.BigInt nonce = 1;
+		IssuedCred issuedCred = 2;
+		proto.Status status = 3;
+    }
+}
+
+message Empty {}
+
+message CredIssueRequest {
+	bytes Nym = 1;
+	repeated bytes KnownAttrs = 2;
+	repeated bytes CommitmentsOfAttrs = 3;
+	FiatShamir NymProof = 4;
+	bytes U = 5;
+	FiatShamirAlsoNeg UProof = 6;
+	repeated FiatShamir CommitmentsOfAttrsProofs = 7;
+	bytes Nonce = 8;
+}
+
+message Cred {
+	bytes A = 1;
+	bytes E = 2;
+	bytes V11 = 3;
+}
+
+message IssuedCred {
+	Cred cred = 1;
+	FiatShamirAlsoNeg AProof = 2;
+}
+
+message CredUpdateRequest {
+	bytes Nym = 1;
+	bytes Nonce = 2;
+	repeated bytes NewKnownAttrs = 3;
+}
+
+message CredProof {
+	bytes A = 1;
+	FiatShamirAlsoNeg Proof = 2;
+	repeated bytes KnownAttrs = 3;
+	repeated bytes CommitmentsOfAttrs = 4;
+	repeated int32 RevealedKnownAttrs = 5;
+	repeated int32 RevealedCommitmentsOfAttrs = 6;
+}
+
+message FiatShamir {
+	// Used for example for SchnorrProof and RepresentationProof where challenge is constructed by prover
+	// using hash function.
+	// Note that here we don't have A and B as in SchnorrProofRandomData because usually when proving
+	// the knowledge of X such that A^X = B, A is known beforehand (as part of public key).
+	// So here ProofRandomData is actually only X.
+	bytes ProofRandomData = 1;
+	bytes Challenge = 2;
+	repeated bytes ProofData = 3;
+}
+
+message FiatShamirAlsoNeg {
+	// For proofs where proof data can be negative (see RepresentationProof).
+	bytes ProofRandomData = 1;
+	bytes Challenge = 2;
+	repeated string ProofData = 3;
+}

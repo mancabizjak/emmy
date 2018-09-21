@@ -22,7 +22,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/xlab-si/emmy/crypto/cl"
+	"github.com/xlab-si/emmy/cl"
 )
 
 // TestCL requires a running server.
@@ -45,9 +45,9 @@ func TestCL(t *testing.T) {
 		t.Errorf("error when creating a user: %v", err)
 	}
 
-	client, err := NewCLClient(testGrpcClientConn)
+	client, err := cl.NewClient(testGrpcClientConn)
 	if err != nil {
-		t.Errorf("Error when initializing NewCLClient")
+		t.Errorf("Error when initializing NewClient")
 	}
 
 	cred, err := client.IssueCredential(credManager)

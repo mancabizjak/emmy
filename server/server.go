@@ -19,14 +19,16 @@ package server
 
 import (
 	"fmt"
-	"io"
 	"math"
 	"net"
 
 	"net/http"
 
-	"github.com/grpc-ecosystem/go-grpc-prometheus"
+	"io"
+
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/xlab-si/emmy/cl"
+	clpb "github.com/xlab-si/emmy/cl/pb"
 	"github.com/xlab-si/emmy/config"
 	"github.com/xlab-si/emmy/crypto/ec"
 	"github.com/xlab-si/emmy/log"
@@ -49,13 +51,14 @@ type EmmyServer interface {
 }
 
 // Server struct implements the EmmyServer interface.
-var _ EmmyServer = (*Server)(nil)
+//var _ EmmyServer = (*Server)(nil)
 
 type Server struct {
 	GrpcServer *grpc.Server
 	Logger     log.Logger
 	*SessionManager
 	*RegistrationManager
+	cl.Server
 }
 
 // NewServer initializes an instance of the Server struct and returns a pointer.
@@ -90,7 +93,7 @@ func NewServer(certFile, keyFile, dbAddress string, logger log.Logger) (*Server,
 		GrpcServer: grpc.NewServer(
 			grpc.Creds(creds),
 			grpc.MaxConcurrentStreams(math.MaxUint32),
-			grpc.StreamInterceptor(grpc_prometheus.StreamServerInterceptor),
+			//			grpc.StreamInterceptor(grpc_prometheus.StreamServerInterceptor),
 		),
 		Logger:              logger,
 		SessionManager:      sessionManager,
@@ -105,7 +108,7 @@ func NewServer(certFile, keyFile, dbAddress string, logger log.Logger) (*Server,
 	server.registerServices()
 
 	// Initialize gRPC metrics offered by Prometheus package
-	grpc_prometheus.Register(server.GrpcServer)
+	//grpc_prometheus.Register(server.GrpcServer)
 
 	return server, nil
 }
@@ -154,7 +157,7 @@ func (s *Server) registerServices() {
 	pb.RegisterInfoServer(s.GrpcServer, s)
 	pb.RegisterPseudonymSystemServer(s.GrpcServer, s)
 	pb.RegisterPseudonymSystemCAServer(s.GrpcServer, s)
-	pb.RegisterCLServer(s.GrpcServer, s)
+	clpb.RegisterAnonCredsServer(s.GrpcServer, s)
 
 	s.Logger.Notice("Registered gRPC Services")
 }
