@@ -69,7 +69,7 @@ func (c *CAClient) GenerateCertificate(userSecret *big.Int, nym *Nym) (
 	if err := stream.Send(
 		&pb.CARequest{
 			Type: &pb.CARequest_ProofRandData{
-				ProofRandData: &pb.SchnorrProofRandData{
+				ProofRandData: &pb.ProofRandData{
 					X: x.Bytes(),
 					A: nym.A.Bytes(),
 					B: b.Bytes(),
@@ -89,9 +89,7 @@ func (c *CAClient) GenerateCertificate(userSecret *big.Int, nym *Nym) (
 
 	if err := stream.Send(&pb.CARequest{
 		Type: &pb.CARequest_ProofData{
-			ProofData: &pb.SchnorrProofData{
-				Z: z.Bytes(),
-			},
+			ProofData: z.Bytes(),
 		},
 	}); err != nil {
 		return nil, err

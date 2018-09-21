@@ -25,8 +25,8 @@ service CA {
 
 message CARequest {
     oneof type {
-        SchnorrProofRandData proofRandData = 1;
-        SchnorrProofData proofData = 2;
+        ProofRandData proofRandData = 1; // for schnorr proof
+        bytes proofData = 2; // for schnorr proof
     }
 }
 
@@ -37,14 +37,11 @@ message CAResponse {
     }
 }
 
-message SchnorrProofRandData {
+// Random data for schnorr proof
+message ProofRandData {
     bytes X = 1;
     bytes A = 2;
     bytes B = 3;
-}
-
-message SchnorrProofData {
-    bytes Z = 1;
 }
 
 message Cert {

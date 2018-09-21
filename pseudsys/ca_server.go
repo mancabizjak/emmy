@@ -63,7 +63,7 @@ func (s *CAServer) GenerateCertificate(stream pb.CA_GenerateCertificateServer) e
 		return err
 	}
 
-	z := new(big.Int).SetBytes(req.GetProofData().Z)
+	z := new(big.Int).SetBytes(req.GetProofData())
 	cert, err := s.ca.Verify(z)
 	if err != nil {
 		//s.Logger.Debug(err)
