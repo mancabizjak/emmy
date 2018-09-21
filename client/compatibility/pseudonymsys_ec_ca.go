@@ -22,9 +22,8 @@ import (
 
 	"fmt"
 
-	"github.com/xlab-si/emmy/client"
 	"github.com/xlab-si/emmy/crypto/ec"
-	"github.com/xlab-si/emmy/crypto/ecpseudsys"
+	"github.com/xlab-si/emmy/ecpseudsys"
 )
 
 // Representations of specific elliptic curves to be used in elliptic cryptography based schemes.
@@ -130,21 +129,21 @@ func (c *CACertificateEC) getNativeType() (*ecpseudsys.CACert, error) {
 	return certificate, nil
 }
 
-// PseudonymsysCAECClient wraps around client.PseudonymsysCAClientEC to conform to
+// PseudonymsysCAECClient wraps around client.CAClient to conform to
 // type restrictions of Go language binding tools. It exposes the same set of methods as
-// client.PseudonymsysCAClientEC.
+// client.CAClient.
 type PseudonymsysCAClientEC struct {
-	*client.PseudonymsysCAClientEC
+	*ecpseudsys.CAClient
 }
 
 func NewPseudonymsysCAClientEC(conn *Connection, curve int) (*PseudonymsysCAClientEC, error) {
-	c, err := client.NewPseudonymsysCAClientEC(conn.ClientConn, ec.Curve(curve))
+	c, err := ecpseudsys.NewCAClient(conn.ClientConn, ec.Curve(curve))
 	if err != nil {
 		return nil, err
 	}
 
 	return &PseudonymsysCAClientEC{
-		PseudonymsysCAClientEC: c,
+		CAClient: c,
 	}, nil
 }
 
@@ -156,8 +155,8 @@ func (c *PseudonymsysCAClientEC) GenerateMasterNym(secret string, curve int) (*P
 		return nil, fmt.Errorf("secret (%s): %s", secret, ArgsConversionError)
 	}
 
-	// Call PseudonymsysCAClientEC client with translated parameters
-	masterNym := c.PseudonymsysCAClientEC.GenerateMasterNym(s)
+	// Call CAClient client with translated parameters
+	masterNym := c.CAClient.GenerateMasterNym(s)
 
 	// Translate from native emmy types to compatibility types
 	a := NewECGroupElement(masterNym.A.X.String(), masterNym.A.Y.String())
@@ -179,8 +178,8 @@ func (c *PseudonymsysCAClientEC) GenerateCertificate(userSecret string,
 		return nil, err
 	}
 
-	// Call PseudonymsysCAClientEC client with translated parameters
-	cert, err := c.PseudonymsysCAClientEC.GenerateCertificate(secret, pseudonym)
+	// Call CAClient client with translated parameters
+	cert, err := c.CAClient.GenerateCertificate(secret, pseudonym)
 	if err != nil {
 		return nil, err
 	}

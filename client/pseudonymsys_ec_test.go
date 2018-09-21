@@ -24,11 +24,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/xlab-si/emmy/config"
 	"github.com/xlab-si/emmy/crypto/ec"
+	"github.com/xlab-si/emmy/ecpseudsys"
 )
 
 func TestPseudonymsysEC(t *testing.T) {
 	curveType := ec.P256
-	caClient, err := NewPseudonymsysCAClientEC(testGrpcClientConn, curveType)
+	caClient, err := ecpseudsys.NewCAClient(testGrpcClientConn, curveType)
 	if err != nil {
 		t.Errorf("Error when initializing NewPseudonymsysCAClientEC")
 	}
@@ -70,7 +71,7 @@ func TestPseudonymsysEC(t *testing.T) {
 
 	// register with org2
 	// create a client to communicate with org2
-	caClient1, _ := NewPseudonymsysCAClientEC(testGrpcClientConn, curveType)
+	caClient1, _ := ecpseudsys.NewCAClient(testGrpcClientConn, curveType)
 	caCertificate1, err := caClient1.GenerateCertificate(userSecret, masterNym)
 	if err != nil {
 		t.Errorf("Error when registering with CA")

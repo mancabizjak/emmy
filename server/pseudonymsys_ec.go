@@ -21,8 +21,8 @@ import (
 	"math/big"
 
 	"github.com/xlab-si/emmy/config"
-	"github.com/xlab-si/emmy/crypto/ecpseudsys"
 	"github.com/xlab-si/emmy/crypto/ecschnorr"
+	"github.com/xlab-si/emmy/ecpseudsys"
 	pb "github.com/xlab-si/emmy/proto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

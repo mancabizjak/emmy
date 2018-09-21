@@ -24,8 +24,8 @@ import (
 
 	"github.com/xlab-si/emmy/client"
 	"github.com/xlab-si/emmy/crypto/ec"
-	"github.com/xlab-si/emmy/crypto/ecpseudsys"
 	"github.com/xlab-si/emmy/crypto/ecschnorr"
+	"github.com/xlab-si/emmy/ecpseudsys"
 )
 
 // PubKeyEC represents an equivalent of ecpseudsys.PubKeyEC,

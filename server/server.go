@@ -29,10 +29,11 @@ import (
 	clpb "github.com/xlab-si/emmy/cl/pb"
 	"github.com/xlab-si/emmy/config"
 	"github.com/xlab-si/emmy/crypto/ec"
+	"github.com/xlab-si/emmy/ecpseudsys"
+	ecpsyspb "github.com/xlab-si/emmy/ecpseudsys/pb"
 	"github.com/xlab-si/emmy/log"
 	pb "github.com/xlab-si/emmy/proto"
-	"github.com/xlab-si/emmy/pseudsys"
-	psyspb "github.com/xlab-si/emmy/pseudsys/pb"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -59,7 +60,8 @@ type Server struct {
 	*SessionManager
 	*RegistrationManager
 	cl.Server
-	*pseudsys.CAServer
+	//*pseudsys.CAServer
+	*ecpseudsys.CAServer
 }
 
 // NewServer initializes an instance of the Server struct and returns a pointer.
@@ -100,10 +102,17 @@ func NewServer(certFile, keyFile, dbAddress string, logger log.Logger) (*Server,
 		SessionManager:      sessionManager,
 		RegistrationManager: registrationManager,
 		// TODO fixme!!!
-		CAServer: pseudsys.NewCAServer(
+		// TODO can't have both at the same time...
+		/*CAServer: pseudsys.NewCAServer(
 			config.LoadSchnorrGroup(),
 			config.LoadPseudonymsysCASecret(),
 			config.LoadPseudonymsysCAPubKey(),
+		),*/
+
+		CAServer: ecpseudsys.NewCAServer(
+			config.LoadPseudonymsysCASecret(),
+			config.LoadPseudonymsysCAPubKey(),
+			curve,
 		),
 	}
 
@@ -163,7 +172,10 @@ func (s *Server) EnableTracing() {
 func (s *Server) registerServices() {
 	pb.RegisterInfoServer(s.GrpcServer, s)
 	pb.RegisterPseudonymSystemServer(s.GrpcServer, s)
-	psyspb.RegisterCAServer(s.GrpcServer, s)
+
+	//psyspb.RegisterCAServer(s.GrpcServer, s)
+	ecpsyspb.RegisterCAServer(s.GrpcServer, s)
+
 	clpb.RegisterAnonCredsServer(s.GrpcServer, s)
 
 	s.Logger.Notice("Registered gRPC Services")

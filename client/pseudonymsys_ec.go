@@ -23,8 +23,8 @@ import (
 
 	"github.com/xlab-si/emmy/crypto/common"
 	"github.com/xlab-si/emmy/crypto/ec"
-	"github.com/xlab-si/emmy/crypto/ecpseudsys"
 	"github.com/xlab-si/emmy/crypto/ecschnorr"
+	"github.com/xlab-si/emmy/ecpseudsys"
 	pb "github.com/xlab-si/emmy/proto"
 	"google.golang.org/grpc"
 )
