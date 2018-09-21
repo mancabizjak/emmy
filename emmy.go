@@ -15,6 +15,9 @@
  *
  */
 
+package emmy
+
+/*
 package main
 
 import (
@@ -37,9 +40,10 @@ func main() {
 	app.Copyright = `(c) 2017 XLAB d.o.o.
 		Licensed under Apache License, Version 2.0.`
 	app.Version = version
-	app.Usage = `A CLI app for running emmy server, emmy clients 
+	app.Usage = `A CLI app for running emmy server, emmy clients
 		and examples of proofs offered by the emmy library`
 	app.Commands = []cli.Command{emmy.ServerCmd, emmy.ClientCmd}
 
 	app.Run(os.Args)
 }
+*/

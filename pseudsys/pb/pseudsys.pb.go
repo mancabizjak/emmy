@@ -13,6 +13,19 @@ It has these top-level messages:
 	CAResponse
 	ProofRandData
 	Cert
+	GenerateNymRequest
+	GenerateNymResponse
+	ObtainCredRequest
+	ObtainCredResponse
+	TransferCredRequest
+	TransferCredResponse
+	GenerateNymProofRandData
+	BytesPair
+	PedersenDecommitment
+	Cred
+	Transcript
+	ObtainCredProofRandData
+	TransferCredProofRandData
 */
 package pb
 
@@ -343,11 +356,1124 @@ func (m *Cert) GetS() []byte {
 	return nil
 }
 
+type GenerateNymRequest struct {
+	// Types that are valid to be assigned to Type:
+	//	*GenerateNymRequest_ProofRandData
+	//	*GenerateNymRequest_ProofData
+	Type isGenerateNymRequest_Type `protobuf_oneof:"type"`
+}
+
+func (m *GenerateNymRequest) Reset()                    { *m = GenerateNymRequest{} }
+func (m *GenerateNymRequest) String() string            { return proto.CompactTextString(m) }
+func (*GenerateNymRequest) ProtoMessage()               {}
+func (*GenerateNymRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
+
+type isGenerateNymRequest_Type interface {
+	isGenerateNymRequest_Type()
+}
+
+type GenerateNymRequest_ProofRandData struct {
+	ProofRandData *GenerateNymProofRandData `protobuf:"bytes,1,opt,name=proofRandData,oneof"`
+}
+type GenerateNymRequest_ProofData struct {
+	ProofData []byte `protobuf:"bytes,2,opt,name=proofData,proto3,oneof"`
+}
+
+func (*GenerateNymRequest_ProofRandData) isGenerateNymRequest_Type() {}
+func (*GenerateNymRequest_ProofData) isGenerateNymRequest_Type()     {}
+
+func (m *GenerateNymRequest) GetType() isGenerateNymRequest_Type {
+	if m != nil {
+		return m.Type
+	}
+	return nil
+}
+
+func (m *GenerateNymRequest) GetProofRandData() *GenerateNymProofRandData {
+	if x, ok := m.GetType().(*GenerateNymRequest_ProofRandData); ok {
+		return x.ProofRandData
+	}
+	return nil
+}
+
+func (m *GenerateNymRequest) GetProofData() []byte {
+	if x, ok := m.GetType().(*GenerateNymRequest_ProofData); ok {
+		return x.ProofData
+	}
+	return nil
+}
+
+// XXX_OneofFuncs is for the internal use of the proto package.
+func (*GenerateNymRequest) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
+	return _GenerateNymRequest_OneofMarshaler, _GenerateNymRequest_OneofUnmarshaler, _GenerateNymRequest_OneofSizer, []interface{}{
+		(*GenerateNymRequest_ProofRandData)(nil),
+		(*GenerateNymRequest_ProofData)(nil),
+	}
+}
+
+func _GenerateNymRequest_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
+	m := msg.(*GenerateNymRequest)
+	// type
+	switch x := m.Type.(type) {
+	case *GenerateNymRequest_ProofRandData:
+		b.EncodeVarint(1<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.ProofRandData); err != nil {
+			return err
+		}
+	case *GenerateNymRequest_ProofData:
+		b.EncodeVarint(2<<3 | proto.WireBytes)
+		b.EncodeRawBytes(x.ProofData)
+	case nil:
+	default:
+		return fmt.Errorf("GenerateNymRequest.Type has unexpected type %T", x)
+	}
+	return nil
+}
+
+func _GenerateNymRequest_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
+	m := msg.(*GenerateNymRequest)
+	switch tag {
+	case 1: // type.proofRandData
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(GenerateNymProofRandData)
+		err := b.DecodeMessage(msg)
+		m.Type = &GenerateNymRequest_ProofRandData{msg}
+		return true, err
+	case 2: // type.proofData
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		x, err := b.DecodeRawBytes(true)
+		m.Type = &GenerateNymRequest_ProofData{x}
+		return true, err
+	default:
+		return false, nil
+	}
+}
+
+func _GenerateNymRequest_OneofSizer(msg proto.Message) (n int) {
+	m := msg.(*GenerateNymRequest)
+	// type
+	switch x := m.Type.(type) {
+	case *GenerateNymRequest_ProofRandData:
+		s := proto.Size(x.ProofRandData)
+		n += proto.SizeVarint(1<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *GenerateNymRequest_ProofData:
+		n += proto.SizeVarint(2<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(len(x.ProofData)))
+		n += len(x.ProofData)
+	case nil:
+	default:
+		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
+	}
+	return n
+}
+
+type GenerateNymResponse struct {
+	// Types that are valid to be assigned to Type:
+	//	*GenerateNymResponse_Decommitment
+	//	*GenerateNymResponse_Success
+	Type isGenerateNymResponse_Type `protobuf_oneof:"type"`
+}
+
+func (m *GenerateNymResponse) Reset()                    { *m = GenerateNymResponse{} }
+func (m *GenerateNymResponse) String() string            { return proto.CompactTextString(m) }
+func (*GenerateNymResponse) ProtoMessage()               {}
+func (*GenerateNymResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
+
+type isGenerateNymResponse_Type interface {
+	isGenerateNymResponse_Type()
+}
+
+type GenerateNymResponse_Decommitment struct {
+	Decommitment *PedersenDecommitment `protobuf:"bytes,1,opt,name=decommitment,oneof"`
+}
+type GenerateNymResponse_Success struct {
+	Success bool `protobuf:"varint,2,opt,name=success,oneof"`
+}
+
+func (*GenerateNymResponse_Decommitment) isGenerateNymResponse_Type() {}
+func (*GenerateNymResponse_Success) isGenerateNymResponse_Type()      {}
+
+func (m *GenerateNymResponse) GetType() isGenerateNymResponse_Type {
+	if m != nil {
+		return m.Type
+	}
+	return nil
+}
+
+func (m *GenerateNymResponse) GetDecommitment() *PedersenDecommitment {
+	if x, ok := m.GetType().(*GenerateNymResponse_Decommitment); ok {
+		return x.Decommitment
+	}
+	return nil
+}
+
+func (m *GenerateNymResponse) GetSuccess() bool {
+	if x, ok := m.GetType().(*GenerateNymResponse_Success); ok {
+		return x.Success
+	}
+	return false
+}
+
+// XXX_OneofFuncs is for the internal use of the proto package.
+func (*GenerateNymResponse) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
+	return _GenerateNymResponse_OneofMarshaler, _GenerateNymResponse_OneofUnmarshaler, _GenerateNymResponse_OneofSizer, []interface{}{
+		(*GenerateNymResponse_Decommitment)(nil),
+		(*GenerateNymResponse_Success)(nil),
+	}
+}
+
+func _GenerateNymResponse_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
+	m := msg.(*GenerateNymResponse)
+	// type
+	switch x := m.Type.(type) {
+	case *GenerateNymResponse_Decommitment:
+		b.EncodeVarint(1<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.Decommitment); err != nil {
+			return err
+		}
+	case *GenerateNymResponse_Success:
+		t := uint64(0)
+		if x.Success {
+			t = 1
+		}
+		b.EncodeVarint(2<<3 | proto.WireVarint)
+		b.EncodeVarint(t)
+	case nil:
+	default:
+		return fmt.Errorf("GenerateNymResponse.Type has unexpected type %T", x)
+	}
+	return nil
+}
+
+func _GenerateNymResponse_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
+	m := msg.(*GenerateNymResponse)
+	switch tag {
+	case 1: // type.decommitment
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(PedersenDecommitment)
+		err := b.DecodeMessage(msg)
+		m.Type = &GenerateNymResponse_Decommitment{msg}
+		return true, err
+	case 2: // type.success
+		if wire != proto.WireVarint {
+			return true, proto.ErrInternalBadWireType
+		}
+		x, err := b.DecodeVarint()
+		m.Type = &GenerateNymResponse_Success{x != 0}
+		return true, err
+	default:
+		return false, nil
+	}
+}
+
+func _GenerateNymResponse_OneofSizer(msg proto.Message) (n int) {
+	m := msg.(*GenerateNymResponse)
+	// type
+	switch x := m.Type.(type) {
+	case *GenerateNymResponse_Decommitment:
+		s := proto.Size(x.Decommitment)
+		n += proto.SizeVarint(1<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *GenerateNymResponse_Success:
+		n += proto.SizeVarint(2<<3 | proto.WireVarint)
+		n += 1
+	case nil:
+	default:
+		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
+	}
+	return n
+}
+
+type ObtainCredRequest struct {
+	// Types that are valid to be assigned to Type:
+	//	*ObtainCredRequest_ProofRandData
+	//	*ObtainCredRequest_ProofData
+	//	*ObtainCredRequest_Challenge
+	Type isObtainCredRequest_Type `protobuf_oneof:"type"`
+}
+
+func (m *ObtainCredRequest) Reset()                    { *m = ObtainCredRequest{} }
+func (m *ObtainCredRequest) String() string            { return proto.CompactTextString(m) }
+func (*ObtainCredRequest) ProtoMessage()               {}
+func (*ObtainCredRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
+
+type isObtainCredRequest_Type interface {
+	isObtainCredRequest_Type()
+}
+
+type ObtainCredRequest_ProofRandData struct {
+	ProofRandData *ProofRandData `protobuf:"bytes,1,opt,name=proofRandData,oneof"`
+}
+type ObtainCredRequest_ProofData struct {
+	ProofData []byte `protobuf:"bytes,2,opt,name=proofData,proto3,oneof"`
+}
+type ObtainCredRequest_Challenge struct {
+	Challenge *BytesPair `protobuf:"bytes,3,opt,name=challenge,oneof"`
+}
+
+func (*ObtainCredRequest_ProofRandData) isObtainCredRequest_Type() {}
+func (*ObtainCredRequest_ProofData) isObtainCredRequest_Type()     {}
+func (*ObtainCredRequest_Challenge) isObtainCredRequest_Type()     {}
+
+func (m *ObtainCredRequest) GetType() isObtainCredRequest_Type {
+	if m != nil {
+		return m.Type
+	}
+	return nil
+}
+
+func (m *ObtainCredRequest) GetProofRandData() *ProofRandData {
+	if x, ok := m.GetType().(*ObtainCredRequest_ProofRandData); ok {
+		return x.ProofRandData
+	}
+	return nil
+}
+
+func (m *ObtainCredRequest) GetProofData() []byte {
+	if x, ok := m.GetType().(*ObtainCredRequest_ProofData); ok {
+		return x.ProofData
+	}
+	return nil
+}
+
+func (m *ObtainCredRequest) GetChallenge() *BytesPair {
+	if x, ok := m.GetType().(*ObtainCredRequest_Challenge); ok {
+		return x.Challenge
+	}
+	return nil
+}
+
+// XXX_OneofFuncs is for the internal use of the proto package.
+func (*ObtainCredRequest) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
+	return _ObtainCredRequest_OneofMarshaler, _ObtainCredRequest_OneofUnmarshaler, _ObtainCredRequest_OneofSizer, []interface{}{
+		(*ObtainCredRequest_ProofRandData)(nil),
+		(*ObtainCredRequest_ProofData)(nil),
+		(*ObtainCredRequest_Challenge)(nil),
+	}
+}
+
+func _ObtainCredRequest_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
+	m := msg.(*ObtainCredRequest)
+	// type
+	switch x := m.Type.(type) {
+	case *ObtainCredRequest_ProofRandData:
+		b.EncodeVarint(1<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.ProofRandData); err != nil {
+			return err
+		}
+	case *ObtainCredRequest_ProofData:
+		b.EncodeVarint(2<<3 | proto.WireBytes)
+		b.EncodeRawBytes(x.ProofData)
+	case *ObtainCredRequest_Challenge:
+		b.EncodeVarint(3<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.Challenge); err != nil {
+			return err
+		}
+	case nil:
+	default:
+		return fmt.Errorf("ObtainCredRequest.Type has unexpected type %T", x)
+	}
+	return nil
+}
+
+func _ObtainCredRequest_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
+	m := msg.(*ObtainCredRequest)
+	switch tag {
+	case 1: // type.proofRandData
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(ProofRandData)
+		err := b.DecodeMessage(msg)
+		m.Type = &ObtainCredRequest_ProofRandData{msg}
+		return true, err
+	case 2: // type.proofData
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		x, err := b.DecodeRawBytes(true)
+		m.Type = &ObtainCredRequest_ProofData{x}
+		return true, err
+	case 3: // type.challenge
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(BytesPair)
+		err := b.DecodeMessage(msg)
+		m.Type = &ObtainCredRequest_Challenge{msg}
+		return true, err
+	default:
+		return false, nil
+	}
+}
+
+func _ObtainCredRequest_OneofSizer(msg proto.Message) (n int) {
+	m := msg.(*ObtainCredRequest)
+	// type
+	switch x := m.Type.(type) {
+	case *ObtainCredRequest_ProofRandData:
+		s := proto.Size(x.ProofRandData)
+		n += proto.SizeVarint(1<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *ObtainCredRequest_ProofData:
+		n += proto.SizeVarint(2<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(len(x.ProofData)))
+		n += len(x.ProofData)
+	case *ObtainCredRequest_Challenge:
+		s := proto.Size(x.Challenge)
+		n += proto.SizeVarint(3<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case nil:
+	default:
+		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
+	}
+	return n
+}
+
+type ObtainCredResponse struct {
+	// Types that are valid to be assigned to Type:
+	//	*ObtainCredResponse_Challenge
+	//	*ObtainCredResponse_ProofRandData
+	//	*ObtainCredResponse_ProofData
+	Type isObtainCredResponse_Type `protobuf_oneof:"type"`
+}
+
+func (m *ObtainCredResponse) Reset()                    { *m = ObtainCredResponse{} }
+func (m *ObtainCredResponse) String() string            { return proto.CompactTextString(m) }
+func (*ObtainCredResponse) ProtoMessage()               {}
+func (*ObtainCredResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
+
+type isObtainCredResponse_Type interface {
+	isObtainCredResponse_Type()
+}
+
+type ObtainCredResponse_Challenge struct {
+	Challenge []byte `protobuf:"bytes,1,opt,name=challenge,proto3,oneof"`
+}
+type ObtainCredResponse_ProofRandData struct {
+	ProofRandData *ObtainCredProofRandData `protobuf:"bytes,2,opt,name=proofRandData,oneof"`
+}
+type ObtainCredResponse_ProofData struct {
+	ProofData *BytesPair `protobuf:"bytes,3,opt,name=proofData,oneof"`
+}
+
+func (*ObtainCredResponse_Challenge) isObtainCredResponse_Type()     {}
+func (*ObtainCredResponse_ProofRandData) isObtainCredResponse_Type() {}
+func (*ObtainCredResponse_ProofData) isObtainCredResponse_Type()     {}
+
+func (m *ObtainCredResponse) GetType() isObtainCredResponse_Type {
+	if m != nil {
+		return m.Type
+	}
+	return nil
+}
+
+func (m *ObtainCredResponse) GetChallenge() []byte {
+	if x, ok := m.GetType().(*ObtainCredResponse_Challenge); ok {
+		return x.Challenge
+	}
+	return nil
+}
+
+func (m *ObtainCredResponse) GetProofRandData() *ObtainCredProofRandData {
+	if x, ok := m.GetType().(*ObtainCredResponse_ProofRandData); ok {
+		return x.ProofRandData
+	}
+	return nil
+}
+
+func (m *ObtainCredResponse) GetProofData() *BytesPair {
+	if x, ok := m.GetType().(*ObtainCredResponse_ProofData); ok {
+		return x.ProofData
+	}
+	return nil
+}
+
+// XXX_OneofFuncs is for the internal use of the proto package.
+func (*ObtainCredResponse) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
+	return _ObtainCredResponse_OneofMarshaler, _ObtainCredResponse_OneofUnmarshaler, _ObtainCredResponse_OneofSizer, []interface{}{
+		(*ObtainCredResponse_Challenge)(nil),
+		(*ObtainCredResponse_ProofRandData)(nil),
+		(*ObtainCredResponse_ProofData)(nil),
+	}
+}
+
+func _ObtainCredResponse_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
+	m := msg.(*ObtainCredResponse)
+	// type
+	switch x := m.Type.(type) {
+	case *ObtainCredResponse_Challenge:
+		b.EncodeVarint(1<<3 | proto.WireBytes)
+		b.EncodeRawBytes(x.Challenge)
+	case *ObtainCredResponse_ProofRandData:
+		b.EncodeVarint(2<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.ProofRandData); err != nil {
+			return err
+		}
+	case *ObtainCredResponse_ProofData:
+		b.EncodeVarint(3<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.ProofData); err != nil {
+			return err
+		}
+	case nil:
+	default:
+		return fmt.Errorf("ObtainCredResponse.Type has unexpected type %T", x)
+	}
+	return nil
+}
+
+func _ObtainCredResponse_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
+	m := msg.(*ObtainCredResponse)
+	switch tag {
+	case 1: // type.challenge
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		x, err := b.DecodeRawBytes(true)
+		m.Type = &ObtainCredResponse_Challenge{x}
+		return true, err
+	case 2: // type.proofRandData
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(ObtainCredProofRandData)
+		err := b.DecodeMessage(msg)
+		m.Type = &ObtainCredResponse_ProofRandData{msg}
+		return true, err
+	case 3: // type.proofData
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(BytesPair)
+		err := b.DecodeMessage(msg)
+		m.Type = &ObtainCredResponse_ProofData{msg}
+		return true, err
+	default:
+		return false, nil
+	}
+}
+
+func _ObtainCredResponse_OneofSizer(msg proto.Message) (n int) {
+	m := msg.(*ObtainCredResponse)
+	// type
+	switch x := m.Type.(type) {
+	case *ObtainCredResponse_Challenge:
+		n += proto.SizeVarint(1<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(len(x.Challenge)))
+		n += len(x.Challenge)
+	case *ObtainCredResponse_ProofRandData:
+		s := proto.Size(x.ProofRandData)
+		n += proto.SizeVarint(2<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *ObtainCredResponse_ProofData:
+		s := proto.Size(x.ProofData)
+		n += proto.SizeVarint(3<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case nil:
+	default:
+		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
+	}
+	return n
+}
+
+type TransferCredRequest struct {
+	// Types that are valid to be assigned to Type:
+	//	*TransferCredRequest_ProofRandData
+	//	*TransferCredRequest_ProofData
+	Type isTransferCredRequest_Type `protobuf_oneof:"type"`
+}
+
+func (m *TransferCredRequest) Reset()                    { *m = TransferCredRequest{} }
+func (m *TransferCredRequest) String() string            { return proto.CompactTextString(m) }
+func (*TransferCredRequest) ProtoMessage()               {}
+func (*TransferCredRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8} }
+
+type isTransferCredRequest_Type interface {
+	isTransferCredRequest_Type()
+}
+
+type TransferCredRequest_ProofRandData struct {
+	ProofRandData *TransferCredProofRandData `protobuf:"bytes,1,opt,name=proofRandData,oneof"`
+}
+type TransferCredRequest_ProofData struct {
+	ProofData []byte `protobuf:"bytes,2,opt,name=proofData,proto3,oneof"`
+}
+
+func (*TransferCredRequest_ProofRandData) isTransferCredRequest_Type() {}
+func (*TransferCredRequest_ProofData) isTransferCredRequest_Type()     {}
+
+func (m *TransferCredRequest) GetType() isTransferCredRequest_Type {
+	if m != nil {
+		return m.Type
+	}
+	return nil
+}
+
+func (m *TransferCredRequest) GetProofRandData() *TransferCredProofRandData {
+	if x, ok := m.GetType().(*TransferCredRequest_ProofRandData); ok {
+		return x.ProofRandData
+	}
+	return nil
+}
+
+func (m *TransferCredRequest) GetProofData() []byte {
+	if x, ok := m.GetType().(*TransferCredRequest_ProofData); ok {
+		return x.ProofData
+	}
+	return nil
+}
+
+// XXX_OneofFuncs is for the internal use of the proto package.
+func (*TransferCredRequest) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
+	return _TransferCredRequest_OneofMarshaler, _TransferCredRequest_OneofUnmarshaler, _TransferCredRequest_OneofSizer, []interface{}{
+		(*TransferCredRequest_ProofRandData)(nil),
+		(*TransferCredRequest_ProofData)(nil),
+	}
+}
+
+func _TransferCredRequest_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
+	m := msg.(*TransferCredRequest)
+	// type
+	switch x := m.Type.(type) {
+	case *TransferCredRequest_ProofRandData:
+		b.EncodeVarint(1<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.ProofRandData); err != nil {
+			return err
+		}
+	case *TransferCredRequest_ProofData:
+		b.EncodeVarint(2<<3 | proto.WireBytes)
+		b.EncodeRawBytes(x.ProofData)
+	case nil:
+	default:
+		return fmt.Errorf("TransferCredRequest.Type has unexpected type %T", x)
+	}
+	return nil
+}
+
+func _TransferCredRequest_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
+	m := msg.(*TransferCredRequest)
+	switch tag {
+	case 1: // type.proofRandData
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(TransferCredProofRandData)
+		err := b.DecodeMessage(msg)
+		m.Type = &TransferCredRequest_ProofRandData{msg}
+		return true, err
+	case 2: // type.proofData
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		x, err := b.DecodeRawBytes(true)
+		m.Type = &TransferCredRequest_ProofData{x}
+		return true, err
+	default:
+		return false, nil
+	}
+}
+
+func _TransferCredRequest_OneofSizer(msg proto.Message) (n int) {
+	m := msg.(*TransferCredRequest)
+	// type
+	switch x := m.Type.(type) {
+	case *TransferCredRequest_ProofRandData:
+		s := proto.Size(x.ProofRandData)
+		n += proto.SizeVarint(1<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *TransferCredRequest_ProofData:
+		n += proto.SizeVarint(2<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(len(x.ProofData)))
+		n += len(x.ProofData)
+	case nil:
+	default:
+		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
+	}
+	return n
+}
+
+type TransferCredResponse struct {
+	// Types that are valid to be assigned to Type:
+	//	*TransferCredResponse_Challenge
+	//	*TransferCredResponse_SessionKey
+	Type isTransferCredResponse_Type `protobuf_oneof:"type"`
+}
+
+func (m *TransferCredResponse) Reset()                    { *m = TransferCredResponse{} }
+func (m *TransferCredResponse) String() string            { return proto.CompactTextString(m) }
+func (*TransferCredResponse) ProtoMessage()               {}
+func (*TransferCredResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{9} }
+
+type isTransferCredResponse_Type interface {
+	isTransferCredResponse_Type()
+}
+
+type TransferCredResponse_Challenge struct {
+	Challenge []byte `protobuf:"bytes,1,opt,name=challenge,proto3,oneof"`
+}
+type TransferCredResponse_SessionKey struct {
+	SessionKey string `protobuf:"bytes,2,opt,name=sessionKey,oneof"`
+}
+
+func (*TransferCredResponse_Challenge) isTransferCredResponse_Type()  {}
+func (*TransferCredResponse_SessionKey) isTransferCredResponse_Type() {}
+
+func (m *TransferCredResponse) GetType() isTransferCredResponse_Type {
+	if m != nil {
+		return m.Type
+	}
+	return nil
+}
+
+func (m *TransferCredResponse) GetChallenge() []byte {
+	if x, ok := m.GetType().(*TransferCredResponse_Challenge); ok {
+		return x.Challenge
+	}
+	return nil
+}
+
+func (m *TransferCredResponse) GetSessionKey() string {
+	if x, ok := m.GetType().(*TransferCredResponse_SessionKey); ok {
+		return x.SessionKey
+	}
+	return ""
+}
+
+// XXX_OneofFuncs is for the internal use of the proto package.
+func (*TransferCredResponse) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
+	return _TransferCredResponse_OneofMarshaler, _TransferCredResponse_OneofUnmarshaler, _TransferCredResponse_OneofSizer, []interface{}{
+		(*TransferCredResponse_Challenge)(nil),
+		(*TransferCredResponse_SessionKey)(nil),
+	}
+}
+
+func _TransferCredResponse_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
+	m := msg.(*TransferCredResponse)
+	// type
+	switch x := m.Type.(type) {
+	case *TransferCredResponse_Challenge:
+		b.EncodeVarint(1<<3 | proto.WireBytes)
+		b.EncodeRawBytes(x.Challenge)
+	case *TransferCredResponse_SessionKey:
+		b.EncodeVarint(2<<3 | proto.WireBytes)
+		b.EncodeStringBytes(x.SessionKey)
+	case nil:
+	default:
+		return fmt.Errorf("TransferCredResponse.Type has unexpected type %T", x)
+	}
+	return nil
+}
+
+func _TransferCredResponse_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
+	m := msg.(*TransferCredResponse)
+	switch tag {
+	case 1: // type.challenge
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		x, err := b.DecodeRawBytes(true)
+		m.Type = &TransferCredResponse_Challenge{x}
+		return true, err
+	case 2: // type.sessionKey
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		x, err := b.DecodeStringBytes()
+		m.Type = &TransferCredResponse_SessionKey{x}
+		return true, err
+	default:
+		return false, nil
+	}
+}
+
+func _TransferCredResponse_OneofSizer(msg proto.Message) (n int) {
+	m := msg.(*TransferCredResponse)
+	// type
+	switch x := m.Type.(type) {
+	case *TransferCredResponse_Challenge:
+		n += proto.SizeVarint(1<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(len(x.Challenge)))
+		n += len(x.Challenge)
+	case *TransferCredResponse_SessionKey:
+		n += proto.SizeVarint(2<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(len(x.SessionKey)))
+		n += len(x.SessionKey)
+	case nil:
+	default:
+		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
+	}
+	return n
+}
+
+type GenerateNymProofRandData struct {
+	X1     []byte `protobuf:"bytes,1,opt,name=X1,proto3" json:"X1,omitempty"`
+	A1     []byte `protobuf:"bytes,2,opt,name=A1,proto3" json:"A1,omitempty"`
+	B1     []byte `protobuf:"bytes,3,opt,name=B1,proto3" json:"B1,omitempty"`
+	X2     []byte `protobuf:"bytes,4,opt,name=X2,proto3" json:"X2,omitempty"`
+	A2     []byte `protobuf:"bytes,5,opt,name=A2,proto3" json:"A2,omitempty"`
+	B2     []byte `protobuf:"bytes,6,opt,name=B2,proto3" json:"B2,omitempty"`
+	R      []byte `protobuf:"bytes,7,opt,name=R,proto3" json:"R,omitempty"`
+	S      []byte `protobuf:"bytes,8,opt,name=S,proto3" json:"S,omitempty"`
+	RegKey string `protobuf:"bytes,9,opt,name=regKey" json:"regKey,omitempty"`
+}
+
+func (m *GenerateNymProofRandData) Reset()                    { *m = GenerateNymProofRandData{} }
+func (m *GenerateNymProofRandData) String() string            { return proto.CompactTextString(m) }
+func (*GenerateNymProofRandData) ProtoMessage()               {}
+func (*GenerateNymProofRandData) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{10} }
+
+func (m *GenerateNymProofRandData) GetX1() []byte {
+	if m != nil {
+		return m.X1
+	}
+	return nil
+}
+
+func (m *GenerateNymProofRandData) GetA1() []byte {
+	if m != nil {
+		return m.A1
+	}
+	return nil
+}
+
+func (m *GenerateNymProofRandData) GetB1() []byte {
+	if m != nil {
+		return m.B1
+	}
+	return nil
+}
+
+func (m *GenerateNymProofRandData) GetX2() []byte {
+	if m != nil {
+		return m.X2
+	}
+	return nil
+}
+
+func (m *GenerateNymProofRandData) GetA2() []byte {
+	if m != nil {
+		return m.A2
+	}
+	return nil
+}
+
+func (m *GenerateNymProofRandData) GetB2() []byte {
+	if m != nil {
+		return m.B2
+	}
+	return nil
+}
+
+func (m *GenerateNymProofRandData) GetR() []byte {
+	if m != nil {
+		return m.R
+	}
+	return nil
+}
+
+func (m *GenerateNymProofRandData) GetS() []byte {
+	if m != nil {
+		return m.S
+	}
+	return nil
+}
+
+func (m *GenerateNymProofRandData) GetRegKey() string {
+	if m != nil {
+		return m.RegKey
+	}
+	return ""
+}
+
+type BytesPair struct {
+	X []byte `protobuf:"bytes,1,opt,name=x,proto3" json:"x,omitempty"`
+	Y []byte `protobuf:"bytes,2,opt,name=y,proto3" json:"y,omitempty"`
+}
+
+func (m *BytesPair) Reset()                    { *m = BytesPair{} }
+func (m *BytesPair) String() string            { return proto.CompactTextString(m) }
+func (*BytesPair) ProtoMessage()               {}
+func (*BytesPair) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{11} }
+
+func (m *BytesPair) GetX() []byte {
+	if m != nil {
+		return m.X
+	}
+	return nil
+}
+
+func (m *BytesPair) GetY() []byte {
+	if m != nil {
+		return m.Y
+	}
+	return nil
+}
+
+// TODO remove?
+type PedersenDecommitment struct {
+	X []byte `protobuf:"bytes,1,opt,name=X,proto3" json:"X,omitempty"`
+	R []byte `protobuf:"bytes,2,opt,name=R,proto3" json:"R,omitempty"`
+}
+
+func (m *PedersenDecommitment) Reset()                    { *m = PedersenDecommitment{} }
+func (m *PedersenDecommitment) String() string            { return proto.CompactTextString(m) }
+func (*PedersenDecommitment) ProtoMessage()               {}
+func (*PedersenDecommitment) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{12} }
+
+func (m *PedersenDecommitment) GetX() []byte {
+	if m != nil {
+		return m.X
+	}
+	return nil
+}
+
+func (m *PedersenDecommitment) GetR() []byte {
+	if m != nil {
+		return m.R
+	}
+	return nil
+}
+
+type Cred struct {
+	SmallAToGamma []byte      `protobuf:"bytes,1,opt,name=SmallAToGamma,proto3" json:"SmallAToGamma,omitempty"`
+	SmallBToGamma []byte      `protobuf:"bytes,2,opt,name=SmallBToGamma,proto3" json:"SmallBToGamma,omitempty"`
+	AToGamma      []byte      `protobuf:"bytes,3,opt,name=AToGamma,proto3" json:"AToGamma,omitempty"`
+	BToGamma      []byte      `protobuf:"bytes,4,opt,name=BToGamma,proto3" json:"BToGamma,omitempty"`
+	T1            *Transcript `protobuf:"bytes,5,opt,name=T1" json:"T1,omitempty"`
+	T2            *Transcript `protobuf:"bytes,6,opt,name=T2" json:"T2,omitempty"`
+}
+
+func (m *Cred) Reset()                    { *m = Cred{} }
+func (m *Cred) String() string            { return proto.CompactTextString(m) }
+func (*Cred) ProtoMessage()               {}
+func (*Cred) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{13} }
+
+func (m *Cred) GetSmallAToGamma() []byte {
+	if m != nil {
+		return m.SmallAToGamma
+	}
+	return nil
+}
+
+func (m *Cred) GetSmallBToGamma() []byte {
+	if m != nil {
+		return m.SmallBToGamma
+	}
+	return nil
+}
+
+func (m *Cred) GetAToGamma() []byte {
+	if m != nil {
+		return m.AToGamma
+	}
+	return nil
+}
+
+func (m *Cred) GetBToGamma() []byte {
+	if m != nil {
+		return m.BToGamma
+	}
+	return nil
+}
+
+func (m *Cred) GetT1() *Transcript {
+	if m != nil {
+		return m.T1
+	}
+	return nil
+}
+
+func (m *Cred) GetT2() *Transcript {
+	if m != nil {
+		return m.T2
+	}
+	return nil
+}
+
+type Transcript struct {
+	A      []byte `protobuf:"bytes,1,opt,name=A,proto3" json:"A,omitempty"`
+	B      []byte `protobuf:"bytes,2,opt,name=B,proto3" json:"B,omitempty"`
+	Hash   []byte `protobuf:"bytes,3,opt,name=Hash,proto3" json:"Hash,omitempty"`
+	ZAlpha []byte `protobuf:"bytes,4,opt,name=ZAlpha,proto3" json:"ZAlpha,omitempty"`
+}
+
+func (m *Transcript) Reset()                    { *m = Transcript{} }
+func (m *Transcript) String() string            { return proto.CompactTextString(m) }
+func (*Transcript) ProtoMessage()               {}
+func (*Transcript) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{14} }
+
+func (m *Transcript) GetA() []byte {
+	if m != nil {
+		return m.A
+	}
+	return nil
+}
+
+func (m *Transcript) GetB() []byte {
+	if m != nil {
+		return m.B
+	}
+	return nil
+}
+
+func (m *Transcript) GetHash() []byte {
+	if m != nil {
+		return m.Hash
+	}
+	return nil
+}
+
+func (m *Transcript) GetZAlpha() []byte {
+	if m != nil {
+		return m.ZAlpha
+	}
+	return nil
+}
+
+type ObtainCredProofRandData struct {
+	X11 []byte `protobuf:"bytes,1,opt,name=X11,proto3" json:"X11,omitempty"`
+	X12 []byte `protobuf:"bytes,2,opt,name=X12,proto3" json:"X12,omitempty"`
+	X21 []byte `protobuf:"bytes,3,opt,name=X21,proto3" json:"X21,omitempty"`
+	X22 []byte `protobuf:"bytes,4,opt,name=X22,proto3" json:"X22,omitempty"`
+	A   []byte `protobuf:"bytes,5,opt,name=A,proto3" json:"A,omitempty"`
+	B   []byte `protobuf:"bytes,6,opt,name=B,proto3" json:"B,omitempty"`
+}
+
+func (m *ObtainCredProofRandData) Reset()                    { *m = ObtainCredProofRandData{} }
+func (m *ObtainCredProofRandData) String() string            { return proto.CompactTextString(m) }
+func (*ObtainCredProofRandData) ProtoMessage()               {}
+func (*ObtainCredProofRandData) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{15} }
+
+func (m *ObtainCredProofRandData) GetX11() []byte {
+	if m != nil {
+		return m.X11
+	}
+	return nil
+}
+
+func (m *ObtainCredProofRandData) GetX12() []byte {
+	if m != nil {
+		return m.X12
+	}
+	return nil
+}
+
+func (m *ObtainCredProofRandData) GetX21() []byte {
+	if m != nil {
+		return m.X21
+	}
+	return nil
+}
+
+func (m *ObtainCredProofRandData) GetX22() []byte {
+	if m != nil {
+		return m.X22
+	}
+	return nil
+}
+
+func (m *ObtainCredProofRandData) GetA() []byte {
+	if m != nil {
+		return m.A
+	}
+	return nil
+}
+
+func (m *ObtainCredProofRandData) GetB() []byte {
+	if m != nil {
+		return m.B
+	}
+	return nil
+}
+
+type TransferCredProofRandData struct {
+	OrgName string `protobuf:"bytes,1,opt,name=OrgName" json:"OrgName,omitempty"`
+	X1      []byte `protobuf:"bytes,2,opt,name=X1,proto3" json:"X1,omitempty"`
+	X2      []byte `protobuf:"bytes,3,opt,name=X2,proto3" json:"X2,omitempty"`
+	NymA    []byte `protobuf:"bytes,4,opt,name=NymA,proto3" json:"NymA,omitempty"`
+	NymB    []byte `protobuf:"bytes,5,opt,name=NymB,proto3" json:"NymB,omitempty"`
+	Cred    *Cred  `protobuf:"bytes,6,opt,name=cred" json:"cred,omitempty"`
+}
+
+func (m *TransferCredProofRandData) Reset()                    { *m = TransferCredProofRandData{} }
+func (m *TransferCredProofRandData) String() string            { return proto.CompactTextString(m) }
+func (*TransferCredProofRandData) ProtoMessage()               {}
+func (*TransferCredProofRandData) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{16} }
+
+func (m *TransferCredProofRandData) GetOrgName() string {
+	if m != nil {
+		return m.OrgName
+	}
+	return ""
+}
+
+func (m *TransferCredProofRandData) GetX1() []byte {
+	if m != nil {
+		return m.X1
+	}
+	return nil
+}
+
+func (m *TransferCredProofRandData) GetX2() []byte {
+	if m != nil {
+		return m.X2
+	}
+	return nil
+}
+
+func (m *TransferCredProofRandData) GetNymA() []byte {
+	if m != nil {
+		return m.NymA
+	}
+	return nil
+}
+
+func (m *TransferCredProofRandData) GetNymB() []byte {
+	if m != nil {
+		return m.NymB
+	}
+	return nil
+}
+
+func (m *TransferCredProofRandData) GetCred() *Cred {
+	if m != nil {
+		return m.Cred
+	}
+	return nil
+}
+
 func init() {
-	proto.RegisterType((*CARequest)(nil), "pb.CARequest")
-	proto.RegisterType((*CAResponse)(nil), "pb.CAResponse")
-	proto.RegisterType((*ProofRandData)(nil), "pb.ProofRandData")
-	proto.RegisterType((*Cert)(nil), "pb.Cert")
+	proto.RegisterType((*CARequest)(nil), "pseudsys.CARequest")
+	proto.RegisterType((*CAResponse)(nil), "pseudsys.CAResponse")
+	proto.RegisterType((*ProofRandData)(nil), "pseudsys.ProofRandData")
+	proto.RegisterType((*Cert)(nil), "pseudsys.Cert")
+	proto.RegisterType((*GenerateNymRequest)(nil), "pseudsys.GenerateNymRequest")
+	proto.RegisterType((*GenerateNymResponse)(nil), "pseudsys.GenerateNymResponse")
+	proto.RegisterType((*ObtainCredRequest)(nil), "pseudsys.ObtainCredRequest")
+	proto.RegisterType((*ObtainCredResponse)(nil), "pseudsys.ObtainCredResponse")
+	proto.RegisterType((*TransferCredRequest)(nil), "pseudsys.TransferCredRequest")
+	proto.RegisterType((*TransferCredResponse)(nil), "pseudsys.TransferCredResponse")
+	proto.RegisterType((*GenerateNymProofRandData)(nil), "pseudsys.GenerateNymProofRandData")
+	proto.RegisterType((*BytesPair)(nil), "pseudsys.BytesPair")
+	proto.RegisterType((*PedersenDecommitment)(nil), "pseudsys.PedersenDecommitment")
+	proto.RegisterType((*Cred)(nil), "pseudsys.Cred")
+	proto.RegisterType((*Transcript)(nil), "pseudsys.Transcript")
+	proto.RegisterType((*ObtainCredProofRandData)(nil), "pseudsys.ObtainCredProofRandData")
+	proto.RegisterType((*TransferCredProofRandData)(nil), "pseudsys.TransferCredProofRandData")
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -373,7 +1499,7 @@ func NewCAClient(cc *grpc.ClientConn) CAClient {
 }
 
 func (c *cAClient) GenerateCertificate(ctx context.Context, opts ...grpc.CallOption) (CA_GenerateCertificateClient, error) {
-	stream, err := grpc.NewClientStream(ctx, &_CA_serviceDesc.Streams[0], c.cc, "/pb.CA/GenerateCertificate", opts...)
+	stream, err := grpc.NewClientStream(ctx, &_CA_serviceDesc.Streams[0], c.cc, "/pseudsys.CA/GenerateCertificate", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -440,7 +1566,7 @@ func (x *cAGenerateCertificateServer) Recv() (*CARequest, error) {
 }
 
 var _CA_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "pb.CA",
+	ServiceName: "pseudsys.CA",
 	HandlerType: (*CAServer)(nil),
 	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
@@ -454,26 +1580,290 @@ var _CA_serviceDesc = grpc.ServiceDesc{
 	Metadata: "pseudsys/pb/pseudsys.proto",
 }
 
+// Client API for Org service
+
+type OrgClient interface {
+	GenerateNym(ctx context.Context, opts ...grpc.CallOption) (Org_GenerateNymClient, error)
+	ObtainCred(ctx context.Context, opts ...grpc.CallOption) (Org_ObtainCredClient, error)
+	TransferCred(ctx context.Context, opts ...grpc.CallOption) (Org_TransferCredClient, error)
+}
+
+type orgClient struct {
+	cc *grpc.ClientConn
+}
+
+func NewOrgClient(cc *grpc.ClientConn) OrgClient {
+	return &orgClient{cc}
+}
+
+func (c *orgClient) GenerateNym(ctx context.Context, opts ...grpc.CallOption) (Org_GenerateNymClient, error) {
+	stream, err := grpc.NewClientStream(ctx, &_Org_serviceDesc.Streams[0], c.cc, "/pseudsys.Org/GenerateNym", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &orgGenerateNymClient{stream}
+	return x, nil
+}
+
+type Org_GenerateNymClient interface {
+	Send(*GenerateNymRequest) error
+	Recv() (*GenerateNymResponse, error)
+	grpc.ClientStream
+}
+
+type orgGenerateNymClient struct {
+	grpc.ClientStream
+}
+
+func (x *orgGenerateNymClient) Send(m *GenerateNymRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *orgGenerateNymClient) Recv() (*GenerateNymResponse, error) {
+	m := new(GenerateNymResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *orgClient) ObtainCred(ctx context.Context, opts ...grpc.CallOption) (Org_ObtainCredClient, error) {
+	stream, err := grpc.NewClientStream(ctx, &_Org_serviceDesc.Streams[1], c.cc, "/pseudsys.Org/ObtainCred", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &orgObtainCredClient{stream}
+	return x, nil
+}
+
+type Org_ObtainCredClient interface {
+	Send(*ObtainCredRequest) error
+	Recv() (*ObtainCredResponse, error)
+	grpc.ClientStream
+}
+
+type orgObtainCredClient struct {
+	grpc.ClientStream
+}
+
+func (x *orgObtainCredClient) Send(m *ObtainCredRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *orgObtainCredClient) Recv() (*ObtainCredResponse, error) {
+	m := new(ObtainCredResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *orgClient) TransferCred(ctx context.Context, opts ...grpc.CallOption) (Org_TransferCredClient, error) {
+	stream, err := grpc.NewClientStream(ctx, &_Org_serviceDesc.Streams[2], c.cc, "/pseudsys.Org/TransferCred", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &orgTransferCredClient{stream}
+	return x, nil
+}
+
+type Org_TransferCredClient interface {
+	Send(*TransferCredRequest) error
+	Recv() (*TransferCredResponse, error)
+	grpc.ClientStream
+}
+
+type orgTransferCredClient struct {
+	grpc.ClientStream
+}
+
+func (x *orgTransferCredClient) Send(m *TransferCredRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *orgTransferCredClient) Recv() (*TransferCredResponse, error) {
+	m := new(TransferCredResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// Server API for Org service
+
+type OrgServer interface {
+	GenerateNym(Org_GenerateNymServer) error
+	ObtainCred(Org_ObtainCredServer) error
+	TransferCred(Org_TransferCredServer) error
+}
+
+func RegisterOrgServer(s *grpc.Server, srv OrgServer) {
+	s.RegisterService(&_Org_serviceDesc, srv)
+}
+
+func _Org_GenerateNym_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(OrgServer).GenerateNym(&orgGenerateNymServer{stream})
+}
+
+type Org_GenerateNymServer interface {
+	Send(*GenerateNymResponse) error
+	Recv() (*GenerateNymRequest, error)
+	grpc.ServerStream
+}
+
+type orgGenerateNymServer struct {
+	grpc.ServerStream
+}
+
+func (x *orgGenerateNymServer) Send(m *GenerateNymResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *orgGenerateNymServer) Recv() (*GenerateNymRequest, error) {
+	m := new(GenerateNymRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func _Org_ObtainCred_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(OrgServer).ObtainCred(&orgObtainCredServer{stream})
+}
+
+type Org_ObtainCredServer interface {
+	Send(*ObtainCredResponse) error
+	Recv() (*ObtainCredRequest, error)
+	grpc.ServerStream
+}
+
+type orgObtainCredServer struct {
+	grpc.ServerStream
+}
+
+func (x *orgObtainCredServer) Send(m *ObtainCredResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *orgObtainCredServer) Recv() (*ObtainCredRequest, error) {
+	m := new(ObtainCredRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func _Org_TransferCred_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(OrgServer).TransferCred(&orgTransferCredServer{stream})
+}
+
+type Org_TransferCredServer interface {
+	Send(*TransferCredResponse) error
+	Recv() (*TransferCredRequest, error)
+	grpc.ServerStream
+}
+
+type orgTransferCredServer struct {
+	grpc.ServerStream
+}
+
+func (x *orgTransferCredServer) Send(m *TransferCredResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *orgTransferCredServer) Recv() (*TransferCredRequest, error) {
+	m := new(TransferCredRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+var _Org_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "pseudsys.Org",
+	HandlerType: (*OrgServer)(nil),
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "GenerateNym",
+			Handler:       _Org_GenerateNym_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "ObtainCred",
+			Handler:       _Org_ObtainCred_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "TransferCred",
+			Handler:       _Org_TransferCred_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+	},
+	Metadata: "pseudsys/pb/pseudsys.proto",
+}
+
 func init() { proto.RegisterFile("pseudsys/pb/pseudsys.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 285 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0x54, 0x91, 0xbd, 0x4f, 0xc3, 0x30,
-	0x10, 0xc5, 0xeb, 0x10, 0x55, 0xed, 0xb5, 0x45, 0xc2, 0x2c, 0x51, 0x06, 0x84, 0x32, 0x75, 0x4a,
-	0x51, 0x98, 0x60, 0x22, 0x09, 0x12, 0x8c, 0xc8, 0x65, 0xa8, 0xd8, 0xf2, 0x71, 0x85, 0x48, 0x91,
-	0x63, 0x62, 0x77, 0xe8, 0x7f, 0x8f, 0x3f, 0x9a, 0xd0, 0x6e, 0xfe, 0xdd, 0xdd, 0x7b, 0xf7, 0x72,
-	0x81, 0x50, 0x48, 0x3c, 0xd4, 0xf2, 0x28, 0x37, 0xa2, 0xdc, 0x0c, 0xef, 0x58, 0xf4, 0x9d, 0xea,
-	0xa8, 0x27, 0xca, 0x88, 0xc3, 0x3c, 0x4f, 0x19, 0xfe, 0x1e, 0x50, 0x2a, 0xfa, 0x04, 0x2b, 0xdd,
-	0xe9, 0xf6, 0xac, 0xe0, 0xf5, 0x6b, 0xa1, 0x8a, 0x80, 0xdc, 0x93, 0xf5, 0x22, 0xb9, 0x89, 0x45,
-	0x19, 0x7f, 0x9c, 0x37, 0xde, 0x27, 0xec, 0x72, 0x92, 0xde, 0xc1, 0xdc, 0x16, 0xac, 0xcc, 0xd3,
-	0xb2, 0xa5, 0x9e, 0xf9, 0x2f, 0x65, 0x53, 0xf0, 0xd5, 0x51, 0x60, 0xf4, 0x09, 0x60, 0xf6, 0x49,
-	0xd1, 0x71, 0x89, 0x46, 0x55, 0xfd, 0x14, 0x6d, 0x8b, 0xfc, 0x1b, 0xed, 0x32, 0xab, 0x1a, 0x4b,
-	0xba, 0xef, 0x57, 0xd8, 0x2b, 0x6b, 0xb8, 0x48, 0x66, 0x26, 0x47, 0xae, 0x59, 0x0f, 0xd9, 0xfa,
-	0xe8, 0xaa, 0x83, 0x5f, 0xe4, 0xa3, 0x4b, 0x20, 0x3b, 0x67, 0xc8, 0xc8, 0xce, 0x50, 0xea, 0x42,
-	0x31, 0x92, 0x1a, 0xca, 0x82, 0x2b, 0x47, 0x59, 0xf4, 0x05, 0xbe, 0xb1, 0xa4, 0x21, 0xcc, 0xb2,
-	0xb6, 0xe1, 0x35, 0xd6, 0xe9, 0x49, 0x38, 0xf2, 0x59, 0x2f, 0x3b, 0xd9, 0x8c, 0x6c, 0xdc, 0xd8,
-	0xe0, 0xc6, 0x0c, 0x6d, 0x03, 0xdf, 0xd1, 0x36, 0x79, 0x01, 0x2f, 0x4f, 0xe9, 0x33, 0xdc, 0xbe,
-	0x21, 0xc7, 0xbe, 0x50, 0x68, 0x36, 0x35, 0xfb, 0xa6, 0xd2, 0x4f, 0xba, 0xb2, 0x5f, 0x33, 0xdc,
-	0x3e, 0xbc, 0x1e, 0xd0, 0x9d, 0x26, 0x9a, 0xac, 0xc9, 0x03, 0x29, 0xa7, 0xf6, 0x4f, 0x3d, 0xfe,
-	0x05, 0x00, 0x00, 0xff, 0xff, 0xfb, 0x9f, 0x01, 0x0b, 0xc7, 0x01, 0x00, 0x00,
+	// 883 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xbc, 0x56, 0xcd, 0x6e, 0xd3, 0x4a,
+	0x14, 0xae, 0x93, 0x34, 0x4d, 0x4e, 0xd2, 0xea, 0xde, 0x69, 0x74, 0x9b, 0x5b, 0xda, 0xaa, 0xb8,
+	0x20, 0xba, 0xa1, 0x21, 0xee, 0x8a, 0x15, 0xb2, 0x53, 0xd1, 0x42, 0xa1, 0xad, 0x9c, 0x2c, 0xa2,
+	0xae, 0x70, 0x92, 0x69, 0x62, 0x29, 0x76, 0x82, 0xc7, 0x91, 0xea, 0x05, 0x62, 0x8b, 0x78, 0x0b,
+	0x5e, 0x00, 0x89, 0x3d, 0xcf, 0xc1, 0xcb, 0xb0, 0x61, 0x66, 0x3c, 0x63, 0x8f, 0xdb, 0x04, 0xba,
+	0xa8, 0xd8, 0x9d, 0xdf, 0x6f, 0x3e, 0x9f, 0x39, 0xe7, 0x8c, 0x61, 0x73, 0x4a, 0xf0, 0x6c, 0x40,
+	0x22, 0xd2, 0x98, 0xf6, 0x1a, 0x52, 0x3e, 0x98, 0x06, 0x93, 0x70, 0x82, 0x4a, 0x52, 0xd7, 0x43,
+	0x28, 0xb7, 0x4c, 0x1b, 0xbf, 0x9f, 0x61, 0x12, 0xa2, 0x17, 0xb0, 0x4a, 0xfd, 0x93, 0x2b, 0xdb,
+	0xf1, 0x07, 0x47, 0x4e, 0xe8, 0xd4, 0xb5, 0x5d, 0x6d, 0xbf, 0x62, 0x6c, 0x1c, 0x24, 0xe9, 0x17,
+	0xaa, 0xfb, 0x64, 0xc9, 0xce, 0xc6, 0xa3, 0x1d, 0x28, 0x73, 0x03, 0x4f, 0xce, 0xd1, 0xe4, 0x2a,
+	0x8d, 0x49, 0x4d, 0x56, 0x11, 0x0a, 0x61, 0x34, 0xc5, 0xfa, 0x25, 0x00, 0x3b, 0x95, 0x4c, 0x27,
+	0x3e, 0xc1, 0x2c, 0xab, 0x3f, 0x72, 0xc6, 0x63, 0xec, 0x0f, 0x31, 0x3f, 0x92, 0x67, 0x25, 0x26,
+	0xf4, 0x08, 0x0a, 0x7d, 0x1c, 0x84, 0x1c, 0xb0, 0x62, 0xac, 0xa5, 0x6c, 0x5a, 0xd4, 0x4a, 0x43,
+	0xb9, 0x37, 0xc1, 0x7e, 0x0e, 0xab, 0x19, 0x96, 0xa8, 0x0a, 0x5a, 0x37, 0x86, 0xb5, 0xb5, 0x2e,
+	0xd3, 0xcc, 0x98, 0x9a, 0xad, 0x99, 0x4c, 0xb3, 0xea, 0xf9, 0x58, 0xb3, 0x28, 0xad, 0x02, 0x83,
+	0x44, 0x9b, 0x50, 0xb2, 0xc6, 0xae, 0x3f, 0xc0, 0x03, 0x53, 0x24, 0x26, 0xba, 0xe2, 0xb3, 0x04,
+	0x4c, 0xa2, 0x33, 0x34, 0x5b, 0xa2, 0xd9, 0x4c, 0x6b, 0xd7, 0x0b, 0xb1, 0xd6, 0xd6, 0x3f, 0x69,
+	0x80, 0x8e, 0xb1, 0x8f, 0x03, 0x27, 0xc4, 0x67, 0x91, 0x27, 0x4b, 0xfe, 0x7a, 0x7e, 0xc9, 0xf5,
+	0xf4, 0x23, 0x95, 0xa4, 0x7b, 0xaa, 0xfe, 0x47, 0x58, 0xcf, 0x30, 0x11, 0xd7, 0x70, 0x04, 0xd5,
+	0x01, 0xee, 0x4f, 0x3c, 0xcf, 0x0d, 0x3d, 0xec, 0x87, 0x82, 0xc9, 0x8e, 0x72, 0xf9, 0x78, 0x80,
+	0x03, 0x82, 0xfd, 0x23, 0x25, 0x8a, 0x9e, 0x90, 0xc9, 0xa2, 0xf5, 0x59, 0x21, 0xb3, 0x7e, 0x1f,
+	0x13, 0xc2, 0x29, 0x94, 0x68, 0x80, 0x34, 0x24, 0x04, 0xbe, 0x69, 0xf0, 0xef, 0x79, 0x2f, 0x74,
+	0x5c, 0xbf, 0x15, 0xe0, 0xc1, 0xdf, 0xea, 0x3e, 0x74, 0xa8, 0xf6, 0x59, 0x9e, 0x83, 0xaf, 0xa7,
+	0xe0, 0x56, 0x14, 0x62, 0x72, 0xe1, 0xb8, 0x41, 0xa6, 0xf9, 0x12, 0xce, 0xdf, 0xe9, 0xfd, 0xa9,
+	0x9c, 0xef, 0xd8, 0xbb, 0xaf, 0x6e, 0x7e, 0x54, 0xdc, 0xc4, 0x0f, 0xd3, 0x73, 0x53, 0xd0, 0x3f,
+	0x7c, 0xde, 0xa1, 0xfa, 0x79, 0xbf, 0xa7, 0x7f, 0xfb, 0xce, 0x3f, 0x6b, 0xb0, 0xde, 0x09, 0x1c,
+	0x9f, 0x5c, 0xe1, 0x40, 0x2d, 0xfa, 0xe9, 0xfc, 0xa2, 0xef, 0xa5, 0xc0, 0x6a, 0xd6, 0x3d, 0x35,
+	0xe0, 0x3b, 0xa8, 0x65, 0xb9, 0xdc, 0xb1, 0x98, 0xbb, 0x00, 0x84, 0xf6, 0x91, 0x3b, 0xf1, 0x4f,
+	0x71, 0xc4, 0x0f, 0x28, 0xd3, 0x00, 0xc5, 0x96, 0x9c, 0xf0, 0x55, 0x83, 0xfa, 0xa2, 0xc1, 0x41,
+	0x6b, 0x90, 0xeb, 0x36, 0xc5, 0x60, 0x53, 0x89, 0xe9, 0x66, 0x53, 0x0c, 0x33, 0x95, 0x98, 0x6e,
+	0x35, 0xc5, 0x1c, 0x53, 0x89, 0xc7, 0x1b, 0x62, 0x92, 0xa9, 0xc4, 0xe3, 0x8d, 0xfa, 0xb2, 0x88,
+	0xe7, 0xba, 0x65, 0xd4, 0x8b, 0x22, 0xde, 0x88, 0xd7, 0xc0, 0x4a, 0x66, 0x0d, 0x94, 0xc4, 0x1a,
+	0x40, 0xff, 0x41, 0x31, 0xc0, 0x43, 0x46, 0xbf, 0xcc, 0xe8, 0xdb, 0x42, 0xd3, 0x9f, 0x40, 0x39,
+	0xb9, 0x41, 0x96, 0x72, 0x2d, 0x37, 0xd6, 0x35, 0xd3, 0x22, 0xb9, 0xb1, 0x22, 0xdd, 0x80, 0xda,
+	0xbc, 0x39, 0xbc, 0xbd, 0xe5, 0x6c, 0x99, 0x63, 0xeb, 0x3f, 0x34, 0xba, 0xd8, 0x68, 0xa1, 0xe9,
+	0x26, 0x5d, 0x6d, 0x7b, 0xb4, 0x9a, 0x66, 0x67, 0x72, 0xec, 0x78, 0x9e, 0x23, 0x12, 0xb2, 0xc6,
+	0x24, 0xca, 0x92, 0x51, 0x39, 0x25, 0x4a, 0x1a, 0xd9, 0x22, 0x4c, 0x60, 0xe2, 0x5a, 0x25, 0x3a,
+	0x5f, 0x92, 0xd2, 0x57, 0x10, 0x4b, 0x32, 0x45, 0xcf, 0x75, 0x9a, 0xbc, 0x7a, 0x15, 0xa3, 0x76,
+	0xa3, 0xcd, 0xfa, 0x81, 0x3b, 0x0d, 0x6d, 0xea, 0xe7, 0x51, 0x71, 0x4d, 0x17, 0x47, 0x19, 0x7a,
+	0x07, 0x20, 0xb5, 0xc4, 0xab, 0x5d, 0xcb, 0xac, 0x76, 0x51, 0x02, 0x0b, 0x21, 0x28, 0x9c, 0x38,
+	0x64, 0x24, 0x98, 0x72, 0x99, 0xdd, 0xc5, 0xa5, 0x39, 0x9e, 0x8e, 0x24, 0x47, 0xa1, 0xe9, 0x1f,
+	0x60, 0x63, 0xc1, 0x50, 0xa2, 0x7f, 0x20, 0xdf, 0x6d, 0xca, 0xde, 0x61, 0x62, 0x6c, 0x31, 0xc4,
+	0x41, 0x4c, 0xe4, 0x16, 0x43, 0xf6, 0x0f, 0x13, 0x63, 0x8b, 0xec, 0x20, 0x26, 0xc6, 0x54, 0x97,
+	0x33, 0x54, 0x8b, 0xf2, 0x15, 0xfa, 0xa2, 0xc1, 0xff, 0x0b, 0x87, 0x0e, 0xd5, 0x61, 0xe5, 0x3c,
+	0x18, 0x9e, 0x39, 0x5e, 0x3c, 0x21, 0x65, 0x5b, 0xaa, 0xa2, 0xad, 0x73, 0x6a, 0x5b, 0xd3, 0xb6,
+	0xcd, 0x27, 0x6d, 0x4b, 0x4b, 0x40, 0x47, 0xc1, 0x14, 0x34, 0xb8, 0x2c, 0x6c, 0x96, 0xa0, 0xc2,
+	0x65, 0xa4, 0xd3, 0xe7, 0x96, 0x1e, 0x2b, 0x8a, 0xaf, 0x3e, 0xb7, 0x6c, 0x56, 0xb9, 0xcf, 0x78,
+	0x03, 0xb9, 0x96, 0x89, 0x5e, 0xa6, 0x0f, 0x09, 0x7b, 0x37, 0xdd, 0x2b, 0xb7, 0x4f, 0x45, 0xa4,
+	0x6c, 0xa5, 0xe4, 0xdf, 0x62, 0xb3, 0x96, 0x35, 0xc6, 0x13, 0xaf, 0x2f, 0xed, 0x6b, 0xcf, 0x34,
+	0xe3, 0xa7, 0x06, 0x79, 0xfa, 0x15, 0xe8, 0x02, 0x2a, 0xca, 0xd0, 0xa2, 0xad, 0xb9, 0x8f, 0xa0,
+	0x04, 0xdc, 0x5e, 0xe0, 0x55, 0x91, 0xd1, 0x5b, 0x80, 0xf4, 0x2a, 0xd1, 0x83, 0x79, 0x5b, 0x57,
+	0xe2, 0x6d, 0xcd, 0x77, 0x66, 0xe0, 0xda, 0x50, 0x55, 0x6f, 0x06, 0x6d, 0xcf, 0x5f, 0x93, 0x12,
+	0x72, 0x67, 0x91, 0x5b, 0x05, 0xb5, 0x1e, 0x5f, 0xee, 0x0d, 0xdd, 0x70, 0x34, 0xeb, 0x1d, 0xd0,
+	0x71, 0x6e, 0x5c, 0x8f, 0x9d, 0xde, 0x53, 0xe2, 0x36, 0xb0, 0xe7, 0x45, 0x0d, 0xe5, 0x17, 0xae,
+	0x57, 0xe4, 0xbf, 0x6e, 0x87, 0xbf, 0x02, 0x00, 0x00, 0xff, 0xff, 0x6f, 0x6e, 0xa7, 0x1e, 0xd8,
+	0x09, 0x00, 0x00,
 }

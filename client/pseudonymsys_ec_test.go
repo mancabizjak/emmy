@@ -17,16 +17,7 @@
 
 package client
 
-import (
-	"math/big"
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/xlab-si/emmy/config"
-	"github.com/xlab-si/emmy/crypto/ec"
-	"github.com/xlab-si/emmy/ecpseudsys"
-)
-
+/*
 func TestPseudonymsysEC(t *testing.T) {
 	curveType := ec.P256
 	caClient, err := ecpseudsys.NewCAClient(testGrpcClientConn, curveType)
@@ -97,3 +88,4 @@ func TestPseudonymsysEC(t *testing.T) {
 	assert.Nil(t, sessionKey2, "Authentication should fail, and session key should be nil")
 	assert.NotNil(t, err, "Should produce an error")
 }
+*/

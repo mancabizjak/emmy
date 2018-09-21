@@ -22,18 +22,6 @@ package proto;
 import "messages.proto";
 import "google/protobuf/empty.proto";
 
-service PseudonymSystemCA {
-	rpc GenerateCertificate_EC(stream Message) returns (stream Message) {}
-}
-
-service PseudonymSystem {
-	rpc GenerateNym (stream Message) returns (stream Message) {}
-	rpc GenerateNym_EC (stream Message) returns (stream Message) {}
-	rpc ObtainCredential (stream Message) returns (stream Message) {}
-	rpc ObtainCredential_EC (stream Message) returns (stream Message) {}
-	rpc TransferCredential (stream Message) returns (stream Message) {}
-	rpc TransferCredential_EC (stream Message) returns (stream Message) {}
-}
 
 service Info {
 	rpc GetServiceInfo(google.protobuf.Empty) returns (ServiceInfo) {}

@@ -23,9 +23,9 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/xlab-si/emmy"
 	"github.com/xlab-si/emmy/config"
 	"github.com/xlab-si/emmy/pseudsys"
-	"github.com/xlab-si/emmy/server"
 )
 
 // TestPseudonymsys requires a running server (it is started in communication_test.go).
@@ -38,7 +38,7 @@ func TestPseudonymsys(t *testing.T) {
 	}
 
 	// usually the endpoint is different from the one used for CA:
-	c1, err := NewPseudonymsysClient(testGrpcClientConn, group)
+	c1, err := pseudsys.NewClient(testGrpcClientConn, group)
 	userSecret := c1.GenerateMasterKey()
 
 	masterNym := caClient.GenerateMasterNym(userSecret)
@@ -83,7 +83,7 @@ func TestPseudonymsys(t *testing.T) {
 	// c2 connects to the same server as c1, so what we're really testing here is
 	// using transferCredential to authenticate with the same organization and not
 	// transferring credentials to another organization
-	c2, err := NewPseudonymsysClient(testGrpcClientConn, group)
+	c2, err := pseudsys.NewClient(testGrpcClientConn, group)
 	nym2, err := c2.GenerateNym(userSecret, caCertificate1, "testRegKey2")
 	if err != nil {
 		t.Errorf(err.Error())
@@ -102,7 +102,7 @@ func TestPseudonymsys(t *testing.T) {
 }
 
 func insertTestRegistrationKeys() error {
-	registrationManager, err := server.NewRegistrationManager(config.LoadRegistrationDBAddress())
+	registrationManager, err := emmy.NewRegistrationManager(config.LoadRegistrationDBAddress())
 	if err != nil {
 		return err
 	}

@@ -19,21 +19,20 @@ package server
 
 import (
 	"fmt"
-	"io"
 	"math"
 	"net"
 	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/xlab-si/emmy"
 	"github.com/xlab-si/emmy/cl"
 	clpb "github.com/xlab-si/emmy/cl/pb"
 	"github.com/xlab-si/emmy/config"
 	"github.com/xlab-si/emmy/crypto/ec"
-	"github.com/xlab-si/emmy/ecpseudsys"
-	ecpsyspb "github.com/xlab-si/emmy/ecpseudsys/pb"
 	"github.com/xlab-si/emmy/log"
 	pb "github.com/xlab-si/emmy/proto"
-
+	"github.com/xlab-si/emmy/pseudsys"
+	psyspb "github.com/xlab-si/emmy/pseudsys/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -46,8 +45,8 @@ const (
 // EmmyServer is an interface composed of all the auto-generated server interfaces that
 // declare gRPC handler functions for emmy protocols and schemes.
 type EmmyServer interface {
-	pb.PseudonymSystemServer
-	pb.PseudonymSystemCAServer
+	//pb.PseudonymSystemServer
+	//pb.PseudonymSystemCAServer
 	pb.InfoServer
 }
 
@@ -57,11 +56,12 @@ type EmmyServer interface {
 type Server struct {
 	GrpcServer *grpc.Server
 	Logger     log.Logger
-	*SessionManager
-	*RegistrationManager
+	*emmy.SessionManager
+	*emmy.RegistrationManager
 	cl.Server
-	//*pseudsys.CAServer
-	*ecpseudsys.CAServer
+	*pseudsys.CAServer
+	*pseudsys.OrgServer
+	//*ecpseudsys.CAServer
 }
 
 // NewServer initializes an instance of the Server struct and returns a pointer.
@@ -79,12 +79,12 @@ func NewServer(certFile, keyFile, dbAddress string, logger log.Logger) (*Server,
 
 	logger.Infof("Successfully read certificate [%s] and key [%s]", certFile, keyFile)
 
-	sessionManager, err := newSessionManager(config.LoadSessionKeyMinByteLen())
+	sessionManager, err := emmy.NewSessionManager(config.LoadSessionKeyMinByteLen())
 	if err != nil {
 		logger.Warning(err)
 	}
 
-	registrationManager, err := NewRegistrationManager(dbAddress)
+	registrationManager, err := emmy.NewRegistrationManager(dbAddress)
 	if err != nil {
 		logger.Critical(err)
 		return nil, err
@@ -103,18 +103,26 @@ func NewServer(certFile, keyFile, dbAddress string, logger log.Logger) (*Server,
 		RegistrationManager: registrationManager,
 		// TODO fixme!!!
 		// TODO can't have both at the same time...
-		/*CAServer: pseudsys.NewCAServer(
+		CAServer: pseudsys.NewCAServer(
 			config.LoadSchnorrGroup(),
 			config.LoadPseudonymsysCASecret(),
 			config.LoadPseudonymsysCAPubKey(),
-		),*/
-
-		CAServer: ecpseudsys.NewCAServer(
+		),
+		OrgServer: pseudsys.NewOrgServer(
+			config.LoadSchnorrGroup(),
+			config.LoadPseudonymsysOrgSecrets("org1", "dlog"),
+			config.LoadPseudonymsysOrgPubKeys("org1"),
+			config.LoadPseudonymsysCAPubKey(),
+		),
+		/*CAServer: ecpseudsys.NewCAServer(
 			config.LoadPseudonymsysCASecret(),
 			config.LoadPseudonymsysCAPubKey(),
 			curve,
-		),
+		),*/
 	}
+
+	server.OrgServer.RegistrationManager = registrationManager
+	server.OrgServer.SessionHandler = sessionManager
 
 	// Disable tracing by default, as is used for debugging purposes.
 	// The user will be able to turn it on via Server's EnableTracing function.
@@ -171,36 +179,15 @@ func (s *Server) EnableTracing() {
 // provides implementations of these interfaces.
 func (s *Server) registerServices() {
 	pb.RegisterInfoServer(s.GrpcServer, s)
-	pb.RegisterPseudonymSystemServer(s.GrpcServer, s)
+	//pb.RegisterPseudonymSystemServer(s.GrpcServer, s)
 
-	//psyspb.RegisterCAServer(s.GrpcServer, s)
-	ecpsyspb.RegisterCAServer(s.GrpcServer, s)
+	psyspb.RegisterCAServer(s.GrpcServer, s)
+	psyspb.RegisterOrgServer(s.GrpcServer, s)
+
+	// ecpsyspb.RegisterOrgServer(s.GrpcServer, s)
+	//ecpsyspb.RegisterCAServer(s.GrpcServer, s)
 
 	clpb.RegisterAnonCredsServer(s.GrpcServer, s)
 
 	s.Logger.Notice("Registered gRPC Services")
-}
-
-func (s *Server) send(msg *pb.Message, stream pb.ServerStream) error {
-	if err := stream.Send(msg); err != nil {
-		return fmt.Errorf("error sending message: %v", err)
-	}
-
-	s.Logger.Infof("Successfully sent response of type %T", msg.Content)
-	s.Logger.Debugf("%+v", msg)
-
-	return nil
-}
-
-func (s *Server) receive(stream pb.ServerStream) (*pb.Message, error) {
-	resp, err := stream.Recv()
-	if err == io.EOF {
-		return nil, err
-	} else if err != nil {
-		return nil, fmt.Errorf("an error occurred: %v", err)
-	}
-	s.Logger.Infof("Received request of type %T from the stream", resp.Content)
-	s.Logger.Debugf("%+v", resp)
-
-	return resp, nil
 }

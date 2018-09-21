@@ -17,7 +17,8 @@
 
 syntax = "proto3";
 
-package pb;
+package pseudsys;
+option go_package = "github.com/xlab-si/emmy/pseudsys/pb";
 
 service CA {
     rpc GenerateCertificate(stream CARequest) returns (stream CAResponse) {}
@@ -51,9 +52,109 @@ message Cert {
     bytes S = 4;
 }
 
-/*
-service Organization {
-    rpc GenerateNym (stream Message) returns (stream Message) {}
-    rpc ObtainCredential (stream Message) returns (stream Message) {}
-    rpc TransferCredential (stream Message) returns (stream Message) {}
-}*/
+service Org {
+    rpc GenerateNym (stream GenerateNymRequest) returns (stream GenerateNymResponse) {}
+    rpc ObtainCred (stream ObtainCredRequest) returns (stream ObtainCredResponse) {}
+    rpc TransferCred (stream TransferCredRequest) returns (stream TransferCredResponse) {}
+}
+
+message GenerateNymRequest {
+    oneof type {
+        GenerateNymProofRandData proofRandData = 1;
+        bytes proofData = 2; // for schnorr proof
+    }
+}
+
+message GenerateNymResponse {
+    oneof type {
+        PedersenDecommitment decommitment = 1;
+        bool success = 2;
+    }
+}
+
+message ObtainCredRequest {
+    oneof type {
+        ProofRandData proofRandData = 1;
+        bytes proofData = 2;
+        BytesPair challenge = 3;
+    }
+}
+
+message ObtainCredResponse {
+    oneof type {
+        bytes challenge = 1;
+        ObtainCredProofRandData proofRandData = 2;
+        BytesPair proofData = 3;
+    }
+}
+
+message TransferCredRequest {
+    oneof type {
+        TransferCredProofRandData proofRandData = 1;
+        bytes proofData = 2;
+    }
+}
+
+message TransferCredResponse {
+    oneof type {
+        bytes challenge = 1;
+        string sessionKey = 2;
+    }
+}
+
+message GenerateNymProofRandData {
+    bytes X1 = 1;
+    bytes A1 = 2;
+    bytes B1 = 3;
+    bytes X2 = 4;
+    bytes A2 = 5;
+    bytes B2 = 6;
+    bytes R = 7;
+    bytes S = 8;
+    string regKey = 9;
+}
+
+message BytesPair {
+    bytes x = 1;
+    bytes y = 2;
+}
+
+// TODO remove?
+message PedersenDecommitment {
+    bytes X = 1;
+    bytes R = 2;
+}
+
+message Cred {
+    bytes SmallAToGamma = 1;
+    bytes SmallBToGamma = 2;
+    bytes AToGamma = 3;
+    bytes BToGamma = 4;
+    Transcript T1 = 5;
+    Transcript T2 = 6;
+}
+
+message Transcript {
+    bytes A = 1;
+    bytes B = 2;
+    bytes Hash = 3;
+    bytes ZAlpha = 4;
+}
+
+message ObtainCredProofRandData {
+    bytes X11 = 1;
+    bytes X12 = 2;
+    bytes X21 = 3;
+    bytes X22 = 4;
+    bytes A = 5;
+    bytes B = 6;
+}
+
+message TransferCredProofRandData {
+    string OrgName = 1;
+    bytes X1 = 2;
+    bytes X2 = 3;
+    bytes NymA = 4;
+    bytes NymB = 5;
+    Cred cred = 6;
+}

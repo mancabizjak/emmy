@@ -129,9 +129,9 @@ func (t *Transcript) getNativeType() (*schnorr.BlindedTrans, error) {
 	return transcript, nil
 }
 
-// PseudonymsysClient wraps around client.PseudonymsysClient to conform to
+// Client wraps around client.Client to conform to
 // type restrictions of Go language binding tools. It exposes the same set of methods as
-// client.PseudonymsysClient.
+// client.Client.
 type PseudonymsysClient struct {
 	*client.PseudonymsysClient
 }
@@ -173,7 +173,7 @@ func (c *PseudonymsysClient) GenerateNym(userSecret string,
 		return nil, err
 	}
 
-	// Call PseudonymsysClient client with translated parameters
+	// Call Client client with translated parameters
 	nym, err := c.PseudonymsysClient.GenerateNym(secret, certificate, regKey)
 	if err != nil {
 		return nil, err
@@ -205,7 +205,7 @@ func (c *PseudonymsysClient) ObtainCredential(userSecret string,
 		return nil, err
 	}
 
-	// Call PseudonymsysClient client with translated parameters
+	// Call Client client with translated parameters
 	credential, err := c.PseudonymsysClient.ObtainCredential(secret, pseudonym, pubKey)
 	if err != nil {
 		return nil, err
@@ -252,7 +252,7 @@ func (c *PseudonymsysClient) TransferCredential(orgName, userSecret string,
 		return "", err
 	}
 
-	// Call PseudonymsysClient client with translated parameters
+	// Call Client client with translated parameters
 	sessionKey, err := c.PseudonymsysClient.TransferCredential(orgName, secret, pseudonym,
 		credential)
 	if err != nil {

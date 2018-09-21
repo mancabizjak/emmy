@@ -15,7 +15,7 @@
  *
  */
 
-package server
+package emmy
 
 import (
 	"fmt"
