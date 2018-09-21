@@ -85,7 +85,7 @@ func (c *Client) IssueCredential(credManager *CredManager) (*Cred, error) {
 		return nil, err
 	}
 
-	credIssueNonceOrg := new(big.Int).SetBytes(resp.GetNonce().X1)
+	credIssueNonceOrg := new(big.Int).SetBytes(resp.GetNonce())
 	credReq, err := credManager.GetCredRequest(credIssueNonceOrg)
 	if err != nil {
 		return nil, err
@@ -240,7 +240,7 @@ func (c *Client) ProveCredential(credManager *CredManager, cred *Cred,
 	if err != nil {
 		return false, err
 	}
-	nonce := new(big.Int).SetBytes(resp.GetNonce().X1)
+	nonce := new(big.Int).SetBytes(resp.GetNonce())
 
 	randCred, proof, err := credManager.BuildProof(cred, revealedKnownAttrsIndices,
 		revealedCommitmentsOfAttrsIndices, nonce)
@@ -291,7 +291,7 @@ func (c *Client) ProveCredential(credManager *CredManager, cred *Cred,
 		return false, err
 	}
 
-	return resp.GetStatus().Success, nil
+	return resp.GetSuccess(), nil
 }
 
 func emptyRequest() *pb.Request {

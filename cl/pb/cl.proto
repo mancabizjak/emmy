@@ -19,8 +19,6 @@ syntax = "proto3";
 
 package pb;
 
-import "proto/messages.proto";
-
 service AnonCreds {
 	rpc Issue (stream Request) returns (stream Response) {}
 	rpc Update (CredUpdateRequest) returns (IssuedCred) {}
@@ -37,9 +35,9 @@ message Request {
 
 message Response {
     oneof type {
-        proto.BigInt nonce = 1;
+        bytes nonce = 1; // bytes?
 		IssuedCred issuedCred = 2;
-		proto.Status status = 3;
+		bool success = 3;
     }
 }
 

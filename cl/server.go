@@ -26,7 +26,6 @@ import (
 	"github.com/xlab-si/emmy/crypto/df"
 	"github.com/xlab-si/emmy/crypto/qr"
 	"github.com/xlab-si/emmy/crypto/schnorr"
-	"github.com/xlab-si/emmy/proto"
 	"golang.org/x/net/context"
 )
 
@@ -68,9 +67,7 @@ func (s *Server) Issue(stream pb.AnonCreds_IssueServer) error {
 	nonce := org.GetCredIssueNonce()
 	resp := &pb.Response{
 		Type: &pb.Response_Nonce{
-			Nonce: &proto.BigInt{
-				X1: nonce.Bytes(),
-			},
+			Nonce: nonce.Bytes(),
 		},
 	}
 
@@ -190,9 +187,7 @@ func (s *Server) Prove(stream pb.AnonCreds_ProveServer) error {
 	nonce := org.GetProveCredNonce()
 	resp := &pb.Response{
 		Type: &pb.Response_Nonce{
-			Nonce: &proto.BigInt{
-				X1: nonce.Bytes(),
-			},
+			Nonce: nonce.Bytes(),
 		},
 	}
 
@@ -247,13 +242,9 @@ func (s *Server) Prove(stream pb.AnonCreds_ProveServer) error {
 		return err
 	}
 
-	resp = &pb.Response{
-		Type: &pb.Response_Status{
-			Status: &proto.Status{
-				Success: verified,
-			},
+	return stream.Send(&pb.Response{
+		Type: &pb.Response_Success{
+			Success: verified,
 		},
-	}
-
-	return stream.Send(resp)
+	})
 }
