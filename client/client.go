@@ -15,7 +15,7 @@
  *
  */
 
-package anonauth
+package client
 
 import (
 	"github.com/emmyzkp/anonauth/log"

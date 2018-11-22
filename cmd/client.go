@@ -15,7 +15,7 @@
  *
  */
 
-package main
+package cmd
 
 import (
 	"fmt"
@@ -30,7 +30,7 @@ import (
 	"github.com/emmyzkp/anonauth/config"
 	"github.com/emmyzkp/anonauth/log"
 	"google.golang.org/grpc"
-	"github.com/emmyzkp/anonauth"
+	"github.com/emmyzkp/anonauth/client"
 )
 /*
 // logLevelFlag indicates the log level applied to client/server loggers.
@@ -132,17 +132,17 @@ func run(ctx, subCmdCtx *cli.Context, f func(ctx *cli.Context, conn *grpc.Client
 	if err != nil {
 		return cli.NewExitError(err.Error(), 2)
 	}
-	anonauth.SetLogger(logger)
+	client.SetLogger(logger)
 
 	// configure how clients will access anonauth server via TLS.
-	var connCfg []anonauth.ConnOption
+	var connCfg []client.ConnOption
 	if !ctx.Bool("syscertpool") {
 		caCert, err := ioutil.ReadFile(ctx.String("cacert"))
 		if err != nil {
 			return cli.NewExitError(err.Error(), 2)
 		}
 
-		connCfg = append(connCfg, anonauth.WithCACert(caCert))
+		connCfg = append(connCfg, client.WithCACert(caCert))
 	}
 
 	// conn is a connection to emmy server.
@@ -151,15 +151,15 @@ func run(ctx, subCmdCtx *cli.Context, f func(ctx *cli.Context, conn *grpc.Client
 	var conn *grpc.ClientConn
 
 	if ctx.IsSet("servername") {
-		connCfg = append(connCfg, anonauth.WithServerNameOverride(ctx.String("servername")))
+		connCfg = append(connCfg, client.WithServerNameOverride(ctx.String("servername")))
 	}
 
 	if ctx.IsSet("t") {
-		connCfg = append(connCfg, anonauth.WithTimeout(ctx.Int("t")))
+		connCfg = append(connCfg, client.WithTimeout(ctx.Int("t")))
 	}
 
 	// Establish a connection to emmy server
-	conn, err = anonauth.GetConnection(ctx.String("server"), connCfg...)
+	conn, err = client.GetConnection(ctx.String("server"), connCfg...)
 	if err != nil {
 		return cli.NewExitError(fmt.Sprintf("Cannot connect to gRPC server: %v", err), 2)
 	}

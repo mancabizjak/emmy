@@ -18,20 +18,24 @@
 package main
 
 import (
-	"os"
+	//"os"
 
-	"github.com/urfave/cli"
+    //"github.com/spf13/cobra"
+	"github.com/emmyzkp/anonauth/cmd"
 )
 
+/*
 // version marks the version of emmy.
 // Its value should be set externally at compile time, by appending
 // -ldflags "-X main.version=x.y.z" option to go build/run/install commands at compile time.
 // In case its value remains empty, the CLI simply contains no version information.
 var version string
+*/
+
 
 // main runs the emmy CLI app.
 func main() {
-	app := cli.NewApp()
+	/*app := cli.NewApp()
 	app.Name = "emmy"
 	app.Copyright = `(c) 2017 XLAB d.o.o.
 		Licensed under Apache License, Version 2.0.`
@@ -40,5 +44,7 @@ func main() {
 		and examples of proofs offered by the emmy library`
 	app.Commands = []cli.Command{ServerCmd, ClientCmd}
 
-	app.Run(os.Args)
+	app.Run(os.Args)*/
+
+    cmd.Execute()
 }

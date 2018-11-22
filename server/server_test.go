@@ -15,7 +15,7 @@
  *
  */
 
-package anonauth_test
+package server
 
 import (
 	"testing"

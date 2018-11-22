@@ -1,46 +1,43 @@
-/*
- * Copyright 2017 XLAB d.o.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-
-package config
+package cmd
 
 import (
-	"github.com/spf13/viper"
+	"github.com/spf13/cobra"
 	"fmt"
-	"path/filepath"
 	"os"
-	"github.com/emmyzkp/crypto/schnorr"
-	"math/big"
-	"github.com/emmyzkp/crypto/qr"
-	"github.com/emmyzkp/anonauth/schemes/pseudsys"
-	"github.com/emmyzkp/anonauth/schemes/ecpseudsys"
-	"github.com/emmyzkp/crypto/ec"
+	"github.com/spf13/viper"
 )
 
-/*
-// init loads the default config file
+var cfgFile string
+
 func init() {
 	// set reasonable defaults
-	setDefaults()
+	cobra.OnInitialize(setDefaults)
 
-	// override defaults with configuration read from configuration file
-	viper.AddConfigPath("$GOPATH/src/github.com/emmyzkp/anonauth/config")
-	err := loadConfig("defaults", "yml")
-	if err != nil {
-		fmt.Println(err)
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file")
+	viper.BindPFlag("config", rootCmd.PersistentFlags().Lookup("config"))
+
+	rootCmd.PersistentFlags().StringP("author", "a", "XLAB d.o.o.",
+		"Author of the application")
+
+	if cfgFile != "" {
+		viper.SetConfigFile(cfgFile)
+	} else {
+		/*home, err := homedir.Dir()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		viper.AddConfigPath(home)
+		viper.SetConfigName(".emmy")*/
+
+		// override defaults with configuration read from configuration file
+		viper.AddConfigPath("$GOPATH/src/github.com/emmyzkp/anonauth/config")
+		err := loadConfig("defaults", "yml")
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 	}
 }
 
@@ -88,109 +85,27 @@ func loadConfig(configName string, configType string) error {
 
 	return nil
 }
-*/
-// LoadServerPort returns the port where emmy server will be listening.
-func LoadServerPort() int {
-	return viper.GetInt("port")
+
+// version marks the version of emmy.
+// Its value should be set externally at compile time, by appending
+// -ldflags "-X main.version=x.y.z" option to go build/run/install commands at compile time.
+// In case its value remains empty, the CLI simply contains no version information.
+var version string
+
+var rootCmd = &cobra.Command{
+	Use: "emmy",
+	Short: "YES Emmy provides anonymous authentication",
+	Long: "Emmy is a library and application built on top of a library based" +
+		" on ZKPs",
+	Version: version,
+	Run: func(cmd *cobra.Command, args []string) {
+
+	},
 }
 
-// LoadServerEndpoint returns the endpoint of the emmy server where clients will be contacting it.
-func LoadServerEndpoint() string {
-	ip := viper.GetString("ip")
-	port := LoadServerPort()
-	return fmt.Sprintf("%v:%v", ip, port)
-}
-
-// LoadTimeout returns the specified number of seconds that clients wait before giving up
-// on connection to emmy server
-func LoadTimeout() int {
-	return viper.GetInt("timeout")
-}
-
-func LoadKeyDirFromConfig() string {
-	key_path := viper.GetString("key_folder")
-	return key_path
-}
-
-func LoadTestdataDir() string {
-	prefix := filepath.Join(os.Getenv("GOPATH"), "src", "github.com", "xlab-si", "emmy")
-	return filepath.Join(prefix, viper.GetString("testdata_dir"))
-}
-
-func LoadTestKeyDirFromConfig() string {
-	key_path := viper.GetString("key_folder")
-	return key_path
-}
-
-func LoadSchnorrGroup() *schnorr.Group {
-	groupMap := viper.GetStringMapString("schnorr_group")
-	p, _ := new(big.Int).SetString(groupMap["p"], 10)
-	g, _ := new(big.Int).SetString(groupMap["g"], 10)
-	q, _ := new(big.Int).SetString(groupMap["q"], 10)
-	return schnorr.NewGroupFromParams(p, g, q)
-}
-
-func LoadQRRSA() *qr.RSA {
-	x := viper.GetStringMapString("qr")
-	p, _ := new(big.Int).SetString(x["p"], 10)
-	q, _ := new(big.Int).SetString(x["q"], 10)
-	qr, err := qr.NewRSA(p, q)
-	if err != nil {
-		panic(fmt.Errorf("error when loading RSA group: %s\n", err))
+func Execute() {
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
 	}
-	return qr
-}
-
-func LoadPseudonymsysOrgSecrets(orgName, dlogType string) *pseudsys.SecKey {
-	org := viper.GetStringMap(fmt.Sprintf("pseudonymsys.%s.%s", orgName, dlogType))
-	s1, _ := new(big.Int).SetString(org["s1"].(string), 10)
-	s2, _ := new(big.Int).SetString(org["s2"].(string), 10)
-	return pseudsys.NewSecKey(s1, s2)
-}
-
-func LoadPseudonymsysOrgPubKeys(orgName string) *pseudsys.PubKey {
-	org := viper.GetStringMap(fmt.Sprintf("pseudonymsys.%s.%s", orgName, "dlog"))
-	h1, _ := new(big.Int).SetString(org["h1"].(string), 10)
-	h2, _ := new(big.Int).SetString(org["h2"].(string), 10)
-	return pseudsys.NewPubKey(h1, h2)
-}
-
-func LoadPseudonymsysOrgPubKeysEC(orgName string) *ecpseudsys.PubKey {
-	org := viper.GetStringMap(fmt.Sprintf("pseudonymsys.%s.%s", orgName, "ecdlog"))
-	h1X, _ := new(big.Int).SetString(org["h1x"].(string), 10)
-	h1Y, _ := new(big.Int).SetString(org["h1y"].(string), 10)
-	h2X, _ := new(big.Int).SetString(org["h2x"].(string), 10)
-	h2Y, _ := new(big.Int).SetString(org["h2y"].(string), 10)
-	return ecpseudsys.NewPubKey(
-		ec.NewGroupElement(h1X, h1Y),
-		ec.NewGroupElement(h2X, h2Y),
-	)
-}
-
-func LoadPseudonymsysCASecret() *big.Int {
-	ca := viper.GetStringMap("pseudonymsys.ca")
-	s, _ := new(big.Int).SetString(ca["d"].(string), 10)
-	return s
-}
-
-func LoadPseudonymsysCAPubKey() *pseudsys.PubKey {
-	ca := viper.GetStringMap("pseudonymsys.ca")
-	x, _ := new(big.Int).SetString(ca["x"].(string), 10)
-	y, _ := new(big.Int).SetString(ca["y1"].(string), 10)
-	return pseudsys.NewPubKey(x, y)
-}
-
-func LoadServiceInfo() (string, string, string) {
-	serviceName := viper.GetString("service_info.name")
-	serviceProvider := viper.GetString("service_info.provider")
-	serviceDescription := viper.GetString("service_info.description")
-	return serviceName, serviceProvider, serviceDescription
-}
-
-func LoadSessionKeyMinByteLen() int {
-	return viper.GetInt("session_key_bytelen")
-}
-
-func LoadRegistrationDBAddress() string {
-	return viper.GetString("registration_db_address")
 }

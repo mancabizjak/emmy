@@ -15,7 +15,7 @@
  *
  */
 
-package anonauth
+package client
 
 /*
 import (

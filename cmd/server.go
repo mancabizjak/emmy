@@ -15,7 +15,7 @@
  *
  */
 
-package main
+package cmd
 
 import (
 	"path/filepath"
@@ -28,7 +28,7 @@ import (
 	"github.com/emmyzkp/anonauth/registration"
 	"github.com/emmyzkp/anonauth/config"
 	"github.com/emmyzkp/anonauth/log"
-	"github.com/emmyzkp/anonauth"
+	"github.com/emmyzkp/anonauth/server"
 )
 
 var ServerCmd = cli.Command{
@@ -130,7 +130,7 @@ func startEmmyServer(port int, certPath, keyPath, dbAddress, logFilePath, logLev
 
 	recordManager := cl.NewRedisClient(c)
 
-	srv, err := anonauth.NewGrpcServer(certPath, keyPath, registrationManager,
+	srv, err := server.NewGrpcServer(certPath, keyPath, registrationManager,
 		recordManager, logger)
 	if err != nil {
 		return err

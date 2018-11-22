@@ -15,7 +15,7 @@
  *
  */
 
-package anonauth
+package server
 
 import (
 	"fmt"
