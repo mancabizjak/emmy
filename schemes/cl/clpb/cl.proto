@@ -18,7 +18,7 @@
 syntax = "proto3";
 
 package clpb;
-option go_package = "github.com/emmyzkp/anonauth/schemes/cl/clpb";
+option go_package = "github.com/emmyzkp/emmy/schemes/cl/clpb";
 
 service AnonCreds {
 	rpc Issue (stream Request) returns (stream Response) {}

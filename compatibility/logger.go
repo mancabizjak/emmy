@@ -18,8 +18,8 @@
 package compatibility
 
 import (
-	"github.com/emmyzkp/anonauth/log"
-	"github.com/emmyzkp/anonauth"
+	"github.com/emmyzkp/emmy/log"
+	"github.com/emmyzkp/emmy"
 )
 
 // Supported log levels.

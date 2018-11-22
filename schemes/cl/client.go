@@ -23,7 +23,7 @@ import (
 
 	"context"
 
-	pb "github.com/emmyzkp/anonauth/schemes/cl/clpb"
+	pb "github.com/emmyzkp/emmy/schemes/cl/clpb"
 	"github.com/emmyzkp/crypto/common"
 	"github.com/emmyzkp/crypto/qr"
 	"google.golang.org/grpc"

@@ -1,141 +1,79 @@
-/*
- * Copyright 2017 XLAB d.o.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
+// Copyright © 2018 NAME HERE <EMAIL ADDRESS>
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 package cmd
 
 import (
-	"path/filepath"
-
 	"fmt"
 
-	"github.com/go-redis/redis"
-	"github.com/urfave/cli"
-	"github.com/emmyzkp/anonauth/schemes/cl"
-	"github.com/emmyzkp/anonauth/registration"
-	"github.com/emmyzkp/anonauth/config"
-	"github.com/emmyzkp/anonauth/log"
-	"github.com/emmyzkp/anonauth/server"
+	"github.com/spf13/cobra"
 )
 
-var ServerCmd = cli.Command{
-	Name:  "server",
-	Usage: "A server (verifier) that verifies clients (provers)",
-	Subcommands: []cli.Command{
-		{
-			Name:  "start",
-			Usage: "Starts emmy server",
-			Flags: serverFlags,
-			Action: func(ctx *cli.Context) error {
-				err := startEmmyServer(
-					ctx.Int("port"),
-					ctx.String("cert"),
-					ctx.String("key"),
-					ctx.String("db"),
-					ctx.String("logfile"),
-					ctx.String("loglevel"))
-				if err != nil {
-					return cli.NewExitError(err, 1)
-				}
-				return nil
-			},
-		},
+// serverCmd represents the server command
+var serverCmd = &cobra.Command{
+	Use:   "server",
+	Short: "Starts emmy anonymous authentication server",
+	Long: `emmy server is a server (verifier) that verifies 
+clients (provers).`,
+}
+
+var serverCLCmd = &cobra.Command{
+	Use: "cl",
+	Short: "Configures emmy server to run Camenisch-Lysyanskaya scheme for" +
+		" anonymous authentication",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("running CL server")
 	},
 }
 
-// logLevelFlag indicates the log level applied to client/server loggers.
-var logLevelFlag = cli.StringFlag{
-	Name:  "loglevel, l",
-	Value: "info",
-	Usage: "debug|info|notice|error|critical",
+var serverPsysCmd = &cobra.Command{
+	Use: "psys",
+	Short: "Configures emmy server to run pseudonym system scheme for" +
+		" anonymous authentication. Uses modular arithmetic",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("running psys server")
+	},
 }
 
-// serverFlags are the flags used by the server CLI commands.
-var serverFlags = []cli.Flag{
-	// portFlag indicates the port where emmy server will listen.
-	cli.IntFlag{
-		Name:  "port, p",
-		Value: config.LoadServerPort(),
-		Usage: "`PORT` where emmy server will listen for client connections",
+var serverECPsysCmd = &cobra.Command{
+	Use: "ecpsys",
+	Short: "Configures emmy server to run pseudonym system scheme for" +
+		" anonymous authentication. Uses EC arithmetic.",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("running ecpsys server")
 	},
-	// certFlag keeps the path to server's certificate in PEM format
-	// (for establishing a secure channel with the server).
-	cli.StringFlag{
-		Name:  "cert",
-		Value: filepath.Join(config.LoadTestdataDir(), "server.pem"),
-		Usage: "`PATH` to servers certificate file",
-	},
-	// keyFlag keeps the path to server's private key in PEM format
-	// (for establishing a secure channel with the server).
-	cli.StringFlag{
-		Name:  "key",
-		Value: filepath.Join(config.LoadTestdataDir(), "server.key"),
-		Usage: "`PATH` to server key file",
-	},
-	// dbEndpointFlag points to the endpoint at which emmy server will contact redis database.
-	cli.StringFlag{
-		Name:  "db",
-		Value: config.LoadRegistrationDBAddress(),
-		Usage: "`URI` of redis database to hold registration keys, in the form redisHost:redisPort",
-	},
-	// logFilePathFlag indicates a path to the log file used by the server (optional).
-	cli.StringFlag{
-		Name:  "logfile",
-		Value: "",
-		Usage: "`PATH` to the file where server logs will be written (created if it doesn't exist)",
-	},
-	logLevelFlag,
 }
 
-// startEmmyServer configures and starts the gRPC server at the desired port
-func startEmmyServer(port int, certPath, keyPath, dbAddress, logFilePath, logLevel string) error {
-	var err error
-	var logger log.Logger
+func init() {
+	rootCmd.AddCommand(serverCmd)
 
-	if logFilePath == "" {
-		logger, err = log.NewStdoutLogger("server", logLevel, log.FORMAT_LONG)
-	} else {
-		logger, err = log.NewStdoutFileLogger("server", logFilePath, logLevel, log.FORMAT_LONG,
-			log.FORMAT_LONG_COLORLESS)
-	}
-	if err != nil {
-		return err
-	}
+	serverCmd.PersistentFlags().IntP("port", "p",
+		7007,
+		"Port where emmy server will listen for client connections")
+	serverCmd.PersistentFlags().StringP("cert", "",
+		".",
+		"Path to server's certificate file")
+	serverCmd.PersistentFlags().StringP("key", "",
+		".",
+		"Path to server's key file")
+	serverCmd.PersistentFlags().StringP("db", "",
+		"localhost:6666",
+		"URI of redis database to hold registration keys, in the form redisHost:redisPort")
+	serverCmd.PersistentFlags().StringP("logfile", "",
+		"",
+		"Path to the file where server logs will be written (" +
+		"created if it doesn't exist)")
 
-	c := redis.NewClient(&redis.Options{
-		Addr: dbAddress,
-	})
-	err = c.Ping().Err()
-	if err != nil {
-		return fmt.Errorf("unable to connect to redis database (%s)", err)
-	}
-
-	registrationManager := registration.NewRedisClient(c)
-	if err != nil {
-		return err
-	}
-
-	recordManager := cl.NewRedisClient(c)
-
-	srv, err := server.NewGrpcServer(certPath, keyPath, registrationManager,
-		recordManager, logger)
-	if err != nil {
-		return err
-	}
-
-	srv.EnableTracing()
-	return srv.Start(port)
+	serverCmd.AddCommand(serverCLCmd, serverPsysCmd, serverECPsysCmd)
 }

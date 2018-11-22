@@ -17,13 +17,6 @@
 
 package main
 
-import (
-	//"os"
-
-    //"github.com/spf13/cobra"
-	"github.com/emmyzkp/anonauth/cmd"
-)
-
 /*
 // version marks the version of emmy.
 // Its value should be set externally at compile time, by appending
@@ -32,7 +25,7 @@ import (
 var version string
 */
 
-
+/*
 // main runs the emmy CLI app.
 func main() {
 	/*app := cli.NewApp()
@@ -44,7 +37,7 @@ func main() {
 		and examples of proofs offered by the emmy library`
 	app.Commands = []cli.Command{ServerCmd, ClientCmd}
 
-	app.Run(os.Args)*/
+	app.Run(os.Args)
 
     cmd.Execute()
-}
+}*/

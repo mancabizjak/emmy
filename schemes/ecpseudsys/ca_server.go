@@ -20,8 +20,8 @@ package ecpseudsys
 import (
 	"math/big"
 
-	pb "github.com/emmyzkp/anonauth/schemes/ecpseudsys/ecpsyspb"
-	"github.com/emmyzkp/anonauth/schemes/pseudsys"
+	pb "github.com/emmyzkp/emmy/schemes/ecpseudsys/ecpsyspb"
+	"github.com/emmyzkp/emmy/schemes/pseudsys"
 	"github.com/emmyzkp/crypto/ec"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"

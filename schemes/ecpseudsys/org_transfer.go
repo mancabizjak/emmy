@@ -20,7 +20,7 @@ package ecpseudsys
 import (
 	"math/big"
 
-	"github.com/emmyzkp/anonauth/schemes/pseudsys"
+	"github.com/emmyzkp/emmy/schemes/pseudsys"
 	"github.com/emmyzkp/crypto/ec"
 	"github.com/emmyzkp/crypto/ecschnorr"
 )

@@ -22,7 +22,7 @@ import (
 
 	"math/big"
 
-	"github.com/emmyzkp/anonauth/schemes/cl/clpb"
+	"github.com/emmyzkp/emmy/schemes/cl/clpb"
 	"github.com/emmyzkp/crypto/df"
 	"github.com/emmyzkp/crypto/qr"
 	"github.com/emmyzkp/crypto/schnorr"

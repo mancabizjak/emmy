@@ -18,7 +18,7 @@
 syntax = "proto3";
 
 package psyspb;
-option go_package = "github.com/emmyzkp/anonauth/schemes/pseudsys/psyspb";
+option go_package = "github.com/emmyzkp/emmy/schemes/pseudsys/psyspb";
 
 service CA {
     rpc GenerateCertificate(stream CARequest) returns (stream CAResponse) {}

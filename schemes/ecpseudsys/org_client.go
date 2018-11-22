@@ -23,8 +23,8 @@ import (
 
 	"context"
 
-	pb "github.com/emmyzkp/anonauth/schemes/ecpseudsys/ecpsyspb"
-	"github.com/emmyzkp/anonauth/schemes/pseudsys/psyspb"
+	pb "github.com/emmyzkp/emmy/schemes/ecpseudsys/ecpsyspb"
+	"github.com/emmyzkp/emmy/schemes/pseudsys/psyspb"
 	"github.com/emmyzkp/crypto/common"
 	"github.com/emmyzkp/crypto/ec"
 	"github.com/emmyzkp/crypto/ecschnorr"

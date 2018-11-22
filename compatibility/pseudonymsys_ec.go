@@ -22,7 +22,7 @@ import (
 
 	"fmt"
 
-	"github.com/emmyzkp/anonauth/schemes/ecpseudsys"
+	"github.com/emmyzkp/emmy/schemes/ecpseudsys"
 	"github.com/emmyzkp/crypto/ec"
 	"github.com/emmyzkp/crypto/ecschnorr"
 )

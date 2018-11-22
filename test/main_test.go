@@ -26,11 +26,11 @@ import (
 	"time"
 
 	"github.com/go-redis/redis"
-	"github.com/emmyzkp/anonauth"
-	"github.com/emmyzkp/anonauth/schemes/cl"
-	"github.com/emmyzkp/anonauth/registration"
-	"github.com/emmyzkp/anonauth/log"
-	"github.com/emmyzkp/anonauth/mock"
+	"github.com/emmyzkp/emmy"
+	"github.com/emmyzkp/emmy/schemes/cl"
+	"github.com/emmyzkp/emmy/registration"
+	"github.com/emmyzkp/emmy/log"
+	"github.com/emmyzkp/emmy/mock"
 	"google.golang.org/grpc"
 	"github.com/xlab-si/emmy"
 )

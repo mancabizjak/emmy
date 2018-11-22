@@ -1,5 +1,10 @@
 package cmd
 
+/*import (
+	"github.com/spf13/viper"
+	"github.com/spf13/cobra"
+)
+
 import (
 	"github.com/spf13/cobra"
 	"fmt"
@@ -32,7 +37,7 @@ func init() {
 		viper.SetConfigName(".emmy")*/
 
 		// override defaults with configuration read from configuration file
-		viper.AddConfigPath("$GOPATH/src/github.com/emmyzkp/anonauth/config")
+		/*viper.AddConfigPath("$GOPATH/src/github.com/emmyzkp/emmy/config")
 		err := loadConfig("defaults", "yml")
 		if err != nil {
 			fmt.Println(err)
@@ -109,3 +114,4 @@ func Execute() {
 		os.Exit(1)
 	}
 }
+*/

@@ -20,11 +20,11 @@ package ecpseudsys
 import (
 	"math/big"
 
-	pb "github.com/emmyzkp/anonauth/schemes/ecpseudsys/ecpsyspb"
-	"github.com/emmyzkp/anonauth/schemes/pseudsys"
-	"github.com/emmyzkp/anonauth/schemes/pseudsys/psyspb"
-	"github.com/emmyzkp/anonauth/registration"
-	"github.com/emmyzkp/anonauth/session"
+	pb "github.com/emmyzkp/emmy/schemes/ecpseudsys/ecpsyspb"
+	"github.com/emmyzkp/emmy/schemes/pseudsys"
+	"github.com/emmyzkp/emmy/schemes/pseudsys/psyspb"
+	"github.com/emmyzkp/emmy/registration"
+	"github.com/emmyzkp/emmy/session"
 	"github.com/emmyzkp/crypto/ec"
 	"github.com/emmyzkp/crypto/ecschnorr"
 	"google.golang.org/grpc"

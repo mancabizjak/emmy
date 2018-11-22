@@ -14,7 +14,7 @@
 
 package main
 
-import "github.com/emmyzkp/anonauth/emmy/cmd"
+import "github.com/emmyzkp/emmy/cmd"
 
 func main() {
 	cmd.Execute()

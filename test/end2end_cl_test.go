@@ -22,7 +22,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/emmyzkp/anonauth/schemes/cl"
+	"github.com/emmyzkp/emmy/schemes/cl"
 )
 
 func toBigInts(s ...int) []*big.Int {

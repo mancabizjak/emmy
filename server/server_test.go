@@ -21,9 +21,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/emmyzkp/anonauth/log"
-	"github.com/emmyzkp/anonauth/mock"
-	"github.com/emmyzkp/anonauth"
+	"github.com/emmyzkp/emmy/log"
+	"github.com/emmyzkp/emmy/mock"
+	"github.com/emmyzkp/emmy"
 )
 
 func TestNewServer(t *testing.T) {

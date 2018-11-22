@@ -22,8 +22,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/emmyzkp/anonauth/schemes/pseudsys"
-	"github.com/emmyzkp/anonauth/config"
+	"github.com/emmyzkp/emmy/schemes/pseudsys"
+	"github.com/emmyzkp/emmy/config"
 )
 
 // TestPseudonymsys requires a running server (it is started in communication_test.go).

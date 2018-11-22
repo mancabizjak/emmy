@@ -18,7 +18,7 @@
 syntax = "proto3";
 
 package ecpsyspb;
-option go_package = "github.com/emmyzkp/anonauth/schemes/ecpseudsys/ecpsyspb";
+option go_package = "github.com/emmyzkp/emmy/schemes/ecpseudsys/ecpsyspb";
 
 import "schemes/pseudsys/psyspb/pseudsys.proto";
 

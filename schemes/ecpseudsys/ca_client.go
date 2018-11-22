@@ -22,7 +22,7 @@ import (
 
 	"context"
 
-	pb "github.com/emmyzkp/anonauth/schemes/ecpseudsys/ecpsyspb"
+	pb "github.com/emmyzkp/emmy/schemes/ecpseudsys/ecpsyspb"
 	"github.com/emmyzkp/crypto/ec"
 	"github.com/emmyzkp/crypto/ecschnorr"
 	"google.golang.org/grpc"

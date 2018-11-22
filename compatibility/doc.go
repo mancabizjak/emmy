@@ -16,7 +16,7 @@
  */
 
 // Package compatibility implements wrapper types, constants and functions around
-// github.com/emmyzkp/anonauth/client, making relevant functionality compatible with go language
+// github.com/emmyzkp/emmy/client, making relevant functionality compatible with go language
 // binding tools. All the constructs defined in this package are compatible with gobind tool that
 // generates language bindings for Java or Objective C in order to expose Go code to Android or
 // iOS mobile applications.
@@ -32,7 +32,7 @@
 // To generate Java bindings for use in an Android application,
 // read the overview of gomobile tool (https://godoc.org/golang.org/x/mobile/cmd/gomobile).
 // When you are all set, run:
-// 	gomobile bind -v -o emmy.aar github.com/emmyzkp/anonauth/client/compatibility
+// 	gomobile bind -v -o emmy.aar github.com/emmyzkp/emmy/client/compatibility
 // This command will produce an Android archive (.
 // AAR) named emmy.aar from compatibility package.
 // You can add generated AAR as a dependency to your Android application.

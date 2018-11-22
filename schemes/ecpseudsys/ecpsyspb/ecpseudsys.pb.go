@@ -29,7 +29,7 @@ package ecpsyspb
 import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
-import psyspb "github.com/emmyzkp/anonauth/schemes/pseudsys/psyspb"
+import psyspb "github.com/emmyzkp/emmy/schemes/pseudsys/psyspb"
 
 import (
 	context "golang.org/x/net/context"

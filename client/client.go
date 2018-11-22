@@ -18,7 +18,7 @@
 package client
 
 import (
-	"github.com/emmyzkp/anonauth/log"
+	"github.com/emmyzkp/emmy/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"crypto/x509"

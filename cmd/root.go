@@ -29,7 +29,7 @@ var cfgFile string
 var rootCmd = &cobra.Command{
 	Use:   "emmy",
 	Short: "emmy CLI app allows you to run emmy server and emmy clients",
-	Long: `Emmy provides various schemes for anonymous authentication of
+	Long: `emmy provides various schemes for anonymous authentication of
 clients to the server.
 
 Anonymous authentication typically comprises several steps in which the client 
@@ -52,12 +52,18 @@ func init() {
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.emmy.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "",
+		"config file (default is $HOME/.emmy.yaml)")
 	//	viper.BindPFlag("config", rootCmd.PersistentFlags().Lookup("config"))
 
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.PersistentFlags().StringP("loglevel", "l",
+		"info",
+		"One of debug|info|notice|error|critical")
+
+	/*rootCmd.PersistentFlags().StringP("scheme", "",
+		"",
+		"Anonymous authentication scheme. One of cl|pseudsys|ecpseudsys")
+	rootCmd.MarkPersistentFlagRequired("scheme")*/
 }
 
 // initConfig reads in config file and ENV variables if set.

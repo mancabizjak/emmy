@@ -22,7 +22,7 @@ import (
 
 	"fmt"
 
-	"github.com/emmyzkp/anonauth/schemes/pseudsys"
+	"github.com/emmyzkp/emmy/schemes/pseudsys"
 )
 
 // Pseudonym represents an equivalent of pseudsys.Nym, but has string

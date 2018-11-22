@@ -22,8 +22,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/emmyzkp/anonauth/schemes/ecpseudsys"
-	"github.com/emmyzkp/anonauth/config"
+	"github.com/emmyzkp/emmy/schemes/ecpseudsys"
+	"github.com/emmyzkp/emmy/config"
 	"github.com/emmyzkp/crypto/ec"
 )
 

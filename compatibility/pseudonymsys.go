@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/emmyzkp/anonauth/schemes/pseudsys"
+	"github.com/emmyzkp/emmy/schemes/pseudsys"
 	"github.com/emmyzkp/crypto/schnorr"
 )
 

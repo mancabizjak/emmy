@@ -18,7 +18,7 @@
 package ecpseudsys
 
 import (
-	"github.com/emmyzkp/anonauth/schemes/pseudsys"
+	"github.com/emmyzkp/emmy/schemes/pseudsys"
 	"github.com/emmyzkp/crypto/common"
 	"github.com/emmyzkp/crypto/ec"
 )

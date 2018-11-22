@@ -25,8 +25,8 @@ import (
 	"github.com/emmyzkp/crypto/schnorr"
 	"math/big"
 	"github.com/emmyzkp/crypto/qr"
-	"github.com/emmyzkp/anonauth/schemes/pseudsys"
-	"github.com/emmyzkp/anonauth/schemes/ecpseudsys"
+	"github.com/emmyzkp/emmy/schemes/pseudsys"
+	"github.com/emmyzkp/emmy/schemes/ecpseudsys"
 	"github.com/emmyzkp/crypto/ec"
 )
 
@@ -37,7 +37,7 @@ func init() {
 	setDefaults()
 
 	// override defaults with configuration read from configuration file
-	viper.AddConfigPath("$GOPATH/src/github.com/emmyzkp/anonauth/config")
+	viper.AddConfigPath("$GOPATH/src/github.com/emmyzkp/emmy/config")
 	err := loadConfig("defaults", "yml")
 	if err != nil {
 		fmt.Println(err)

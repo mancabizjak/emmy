@@ -23,7 +23,7 @@ import (
 	"io/ioutil"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/emmyzkp/anonauth"
+	"github.com/emmyzkp/emmy"
 )
 
 // TestConnectionTimeout tests whether timeout of initial connection to the server is reached.
