@@ -25,11 +25,11 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/viper"
-	"github.com/xlab-si/emmy/crypto/ec"
-	"github.com/xlab-si/emmy/crypto/ecpseudsys"
-	"github.com/xlab-si/emmy/crypto/pseudsys"
-	"github.com/xlab-si/emmy/crypto/qr"
-	"github.com/xlab-si/emmy/crypto/schnorr"
+	"github.com/emmyzkp/anonauth/schemes/ecpseudsys"
+	"github.com/emmyzkp/anonauth/schemes/pseudsys"
+	"github.com/emmyzkp/crypto/ec"
+	"github.com/emmyzkp/crypto/qr"
+	"github.com/emmyzkp/crypto/schnorr"
 )
 
 // init loads the default config file
@@ -38,7 +38,7 @@ func init() {
 	setDefaults()
 
 	// override defaults with configuration read from configuration file
-	viper.AddConfigPath("$GOPATH/src/github.com/xlab-si/emmy/config")
+	viper.AddConfigPath("$GOPATH/src/github.com/emmyzkp/crypto/config")
 	err := loadConfig("defaults", "yml")
 	if err != nil {
 		fmt.Println(err)

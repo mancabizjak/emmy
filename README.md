@@ -1,4 +1,4 @@
-# emmy - Library for zero-knowledge proofs [![Build Status](https://travis-ci.org/xlab-si/emmy.svg?branch=master)](https://travis-ci.org/xlab-si/emmy)
+# emmy - Library for zero-knowledge proofs [![Build Status](https://travis-ci.org/emmyzkp/crypto.svg?branch=master)](https://travis-ci.org/emmyzkp/crypto)
 
 Emmy is a library for building protocols/applications based on zero-knowledge proofs, for example anonymous credentials.
 Zero-knowledge proofs are **client-server protocols** (in crypto terms also *prover-verifier*, where the prover takes on 
@@ -204,7 +204,7 @@ _All components of Emmy cryptography library are a work in progress. At this poi
 To install emmy, run 
 
 ```
-$ go get github.com/xlab-si/emmy
+$ go get github.com/emmyzkp/crypto
 ```
 
 This should give you the `emmy` executable in your `$GOBIN`.
@@ -414,7 +414,6 @@ certificate store location beforehand.
   ```
 
 # Documentation
-* [A short overview of the theory Emmy is based on](./docs/theory.md) 
 * [Developing Emmy (draft)](./docs/develop.md) 
 
 # Roadmap

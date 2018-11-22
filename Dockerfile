@@ -20,10 +20,10 @@ LABEL maintainer="XLAB d.o.o" \
       description="This image starts the core Emmy server"
 
 # Create appropriate directory structure
-RUN mkdir -p $GOPATH/src/github.com/xlab-si/emmy
+RUN mkdir -p $GOPATH/src/github.com/emmyzkp/crypto
 
 # Run subsequent commands from the project root
-WORKDIR $GOPATH/src/github.com/xlab-si/emmy
+WORKDIR $GOPATH/src/github.com/emmyzkp/crypto
 
 # Copy project from host to project directory in container
 COPY ./ ./
