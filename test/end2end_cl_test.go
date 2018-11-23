@@ -33,20 +33,39 @@ func toBigInts(s ...int) []*big.Int {
 	return bigS
 }
 
-// TestCL requires a running server.
 func TestEndToEnd_CL(t *testing.T) {
-	params := cl.GetDefaultParamSizes()
+	tests := []struct{
+		desc string
+		params *cl.Params
+	}{
+		{ "Defaults", cl.GetDefaultParamSizes() },
+	}
 
-	pubKey := new(cl.PubKey)
-	cl.ReadGob("testdata/clPubKey.gob", pubKey)
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			testEndToEndCL(t, tt.params)
+		})
+	}
+}
 
-	masterSecret := pubKey.GenerateUserMasterSecret()
+// TestCL requires a running server.
+func testEndToEndCL(t *testing.T, params *cl.Params) {
+	/*pubKey := new(cl.PubKey)
+	cl.ReadGob("testdata/clPubKey.gob", pubKey)*/
+	keys, err := cl.GenerateKeyPair(params)
+	if err != nil {
+		t.Error("error generating keypair")
+	}
+
+	masterSecret := keys.Pub.GenerateUserMasterSecret()
+	//masterSecret := pubKey.GenerateUserMasterSecret()
+
 
 	knownAttrs := toBigInts(7, 6, 5, 22)
 	committedAttrs := toBigInts(9, 17)
 	hiddenAttrs := toBigInts(11, 13, 19)
-	credManager, err := cl.NewCredManager(params, pubKey, masterSecret, knownAttrs, committedAttrs,
-		hiddenAttrs)
+	credManager, err := cl.NewCredManager(params, keys.Pub, masterSecret,
+		knownAttrs, committedAttrs, hiddenAttrs)
 
 	if err != nil {
 		t.Errorf("error when creating a user: %v", err)
@@ -65,7 +84,8 @@ func TestEndToEnd_CL(t *testing.T) {
 	// create new CredManager (updating or proving usually does not happen at the same time
 	// as issuing)
 	credManager, err = cl.NewCredManagerFromExisting(credManager.Nym, credManager.V1,
-		credManager.CredReqNonce, params, pubKey, masterSecret, knownAttrs, committedAttrs, hiddenAttrs,
+		credManager.CredReqNonce, params, keys.Pub, masterSecret,
+		knownAttrs, committedAttrs, hiddenAttrs,
 		credManager.CommitmentsOfAttrs)
 	if err != nil {
 		t.Errorf("error when calling NewCredManagerFromExisting: %v", err)

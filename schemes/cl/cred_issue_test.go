@@ -106,7 +106,7 @@ func TestCL(t *testing.T) {
 	assert.Equal(t, true, userVerified, "credential update failed")
 
 	// Some other organization which would like to verify the credential can instantiate org without sec key.
-	// It only needs pub key of the organization that issued a credential.
+	// It only needs Pub key of the organization that issued a credential.
 	org, err = NewOrgFromParams(params, org.PubKey, nil)
 	if err != nil {
 		t.Errorf("error when generating CL org: %v", err)

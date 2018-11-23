@@ -23,13 +23,13 @@ import (
 	"io/ioutil"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/emmyzkp/emmy"
+	"github.com/emmyzkp/emmy/client"
 )
 
 // TestConnectionTimeout tests whether timeout of initial connection to the server is reached.
 func TestConnectionTimeout(t *testing.T) {
-	_, err := anonauth.GetConnection("localhost:4321",
-		anonauth.WithTimeout(100))
+	_, err := client.GetConnection("localhost:4321",
+		client.WithTimeout(100))
 	assert.NotNil(t, err, "there is no emmy server listening on a given address, "+
 		"timeout should be reached")
 }
@@ -38,10 +38,10 @@ func TestConnectionTimeout(t *testing.T) {
 // established despite byspassing the server hostname == server cert's CN check.
 func TestServerNameOverride(t *testing.T) {
 	caCert, _ := ioutil.ReadFile("testdata/server.pem")
-	_, err := anonauth.GetConnection(testAddr,
-		anonauth.WithCACert(caCert),
-		anonauth.WithServerNameOverride("localhost"),
-		anonauth.WithTimeout(500))
+	_, err := client.GetConnection(testAddr,
+		client.WithCACert(caCert),
+		client.WithServerNameOverride("localhost"),
+		client.WithTimeout(500))
 
 	assert.Nil(t, err, "connection should be established without errors")
 }
@@ -50,10 +50,10 @@ func TestServerNameOverride(t *testing.T) {
 // successfully established because serverNameOverride != server cert's CN.
 func TestWrongServerNameOverride(t *testing.T) {
 	caCert, _ := ioutil.ReadFile("testdata/server.pem")
-	_, err := anonauth.GetConnection(testAddr,
-		anonauth.WithCACert(caCert),
-		anonauth.WithServerNameOverride("not matching"),
-		anonauth.WithTimeout(500))
+	_, err := client.GetConnection(testAddr,
+		client.WithCACert(caCert),
+		client.WithServerNameOverride("not matching"),
+		client.WithTimeout(500))
 
 	assert.NotNil(t, err, "connection should not be established without an error")
 }
@@ -64,9 +64,9 @@ func TestWrongServerNameOverride(t *testing.T) {
 func TestValidCertificate(t *testing.T) {
 	// This caCert is different than the one used by the test server
 	caCert, _ := ioutil.ReadFile("testdata/server.pem")
-	_, err := anonauth.GetConnection(testAddr,
-		anonauth.WithCACert(caCert),
-		anonauth.WithTimeout(500))
+	_, err := client.GetConnection(testAddr,
+		client.WithCACert(caCert),
+		client.WithTimeout(500))
 
 	assert.Nil(t, err, "should finish without error")
 }
@@ -76,9 +76,9 @@ func TestValidCertificate(t *testing.T) {
 // server's certificate.
 func TestInvalidCertificate(t *testing.T) {
 	caCert, _ := ioutil.ReadFile("testdata/server2.pem")
-	_, err := anonauth.GetConnection(testAddr,
-		anonauth.WithCACert(caCert),
-		anonauth.WithTimeout(500))
+	_, err := client.GetConnection(testAddr,
+		client.WithCACert(caCert),
+		client.WithTimeout(500))
 
 	assert.NotNil(t, err, "should finish with error due to invalid certificate")
 }
@@ -88,9 +88,9 @@ func TestInvalidCertificate(t *testing.T) {
 func TestInvalidFormatCertificate(t *testing.T) {
 	// the caCert parameter to NewConnConfig will not be nil, but will be someting that
 	// does not conform to the PEM format
-	_, err := anonauth.GetConnection(testAddr,
-		anonauth.WithCACert(make([]byte, 0)),
-		anonauth.WithTimeout(500))
+	_, err := client.GetConnection(testAddr,
+		client.WithCACert(make([]byte, 0)),
+		client.WithTimeout(500))
 
 	assert.NotNil(t, err, "should finish with error because of PEM format issue")
 }
@@ -99,8 +99,8 @@ func TestInvalidFormatCertificate(t *testing.T) {
 // be established because certificate of the CA that signed test server's cert is not in the host
 // system's certificate pool.
 func TestNonexistingCertificateFromSysCertPool(t *testing.T) {
-	_, err := anonauth.GetConnection(testAddr,
-		anonauth.WithTimeout(500))
+	_, err := client.GetConnection(testAddr,
+		client.WithTimeout(500))
 
 	assert.NotNil(t, err, "should finish with error because server's test cert should"+
 		"not be in the host system's certificate pool")

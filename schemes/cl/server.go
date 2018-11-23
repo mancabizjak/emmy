@@ -28,6 +28,7 @@ import (
 	"github.com/emmyzkp/crypto/schnorr"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"github.com/pkg/errors"
 )
 
 type Server struct {
@@ -35,12 +36,13 @@ type Server struct {
 	*Org
 }
 
-func NewServer(recMgr ReceiverRecordManager, pubKeyPath,
-	secKeyPath string) (*Server, error) {
-	org, err := LoadOrg(pubKeyPath, secKeyPath)
+func NewServer(recMgr ReceiverRecordManager, keys *KeyPair) (*Server, error) {
+	params := GetDefaultParamSizes()
+	org, err := NewOrgFromParams(params, keys)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "error creating orgnization")
 	}
+
 	return &Server{
 		ReceiverRecordManager: recMgr,
 		Org:                   org,

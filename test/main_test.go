@@ -24,19 +24,20 @@ import (
 	"os"
 	"testing"
 	"time"
+	"net"
 
 	"github.com/go-redis/redis"
-	"github.com/emmyzkp/emmy"
+	"github.com/emmyzkp/emmy/client"
+	"github.com/emmyzkp/emmy/server"
 	"github.com/emmyzkp/emmy/schemes/cl"
 	"github.com/emmyzkp/emmy/registration"
 	"github.com/emmyzkp/emmy/log"
 	"github.com/emmyzkp/emmy/mock"
 	"google.golang.org/grpc"
-	"github.com/xlab-si/emmy"
 )
 
 var testAddr = "localhost:7008"
-var testSrv *anonauth.GrpcServer
+var testSrv testServer//*server.GrpcServer
 
 // testConn is re-used for all the test clients
 var testConn *grpc.ClientConn
@@ -56,9 +57,9 @@ func getTestConn(addr string) (*grpc.ClientConn, error) {
 	if err != nil {
 		return nil, err
 	}
-	conn, err := anonauth.GetConnection(addr,
-		anonauth.WithCACert(testCert),
-		anonauth.WithTimeout(500),
+	conn, err := client.GetConnection(addr,
+		client.WithCACert(testCert),
+		client.WithTimeout(500),
 	)
 	if err != nil {
 		return nil, err
@@ -74,8 +75,35 @@ var testEnd2End = flag.Bool(
 	"whether to run end-to-end tests (requires an instance of emmy server)",
 )*/
 
-type testRegDb struct {
+
+type testServer struct {
+	*grpc.Server
+	services []server.AnonAuthService
 }
+
+func newTestServer(services ...server.AnonAuthService) {
+	grpcSrv := grpc.NewServer()
+
+	for _, s := range services {
+		s.RegisterTo(grpcSrv)
+	}
+}
+
+func (s *testServer) start() {
+	lis, err := net.Listen("tcp", testAddr)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("stopping test server")
+	s.Server.Serve(lis)
+}
+
+func (s *testServer) teardown() {
+	fmt.Println("stopping test server")
+	s.Server.GracefulStop()
+}
+
+
 
 // TestMain is run implicitly and only once, before any of the tests defined in this file run.
 // It sets up a test gRPC server and establishes connection to the server. This gRPC client
@@ -124,20 +152,27 @@ func TestMain(m *testing.M) {
 		recDB = cl.NewMockRecordManager()
 	}
 
-	logger, _ := log.NewStdoutLogger("testServer", log.NOTICE, log.FORMAT_LONG)
-	testSrv, err = anonauth.NewGrpcServer("testdata/server.pem",
-		"testdata/server.key",
-		regKeyDB, recDB, logger)
+	/*logger, _ := log.NewStdoutLogger("testServer", log.NOTICE,
+	log.FORMAT_LONG)
+
+	testSrv, err = server.NewGrpcServer("testdata/server.pem",
+		"testdata/server.key", regKeyDB, recDB, logger)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
+	// we need to retrieve public key emitted by this function
+	// and capture it in tests
+	testSrv.RegisterCL(recDB)*/
+
 	// Configure a custom logger for the client package
 	clientLogger, _ := log.NewStdoutLogger("client", log.NOTICE, log.FORMAT_SHORT)
-	emmy.SetLogger(clientLogger)
+	client.SetLogger(clientLogger)
 
-	go testSrv.Start(7008)
+	testSrv = newTestServer(sCL, sPsys, sPsysCA, sPsysEC, sPsysECCA)
+	go testSrv.start()
+	//go testSrv.Start(7008)
 
 	time.Sleep(time.Second)
 
@@ -152,7 +187,8 @@ func TestMain(m *testing.M) {
 
 	// Cleanup - close connection, stop the server and exit
 	testConn.Close()
-	testSrv.Teardown()
+	//testSrv.Teardown()
+	testSrv.teardown()
 
 	os.Exit(ret)
 	//}

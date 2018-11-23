@@ -17,19 +17,6 @@
 
 package config
 
-import (
-	"github.com/spf13/viper"
-	"fmt"
-	"path/filepath"
-	"os"
-	"github.com/emmyzkp/crypto/schnorr"
-	"math/big"
-	"github.com/emmyzkp/crypto/qr"
-	"github.com/emmyzkp/emmy/schemes/pseudsys"
-	"github.com/emmyzkp/emmy/schemes/ecpseudsys"
-	"github.com/emmyzkp/crypto/ec"
-)
-
 /*
 // init loads the default config file
 func init() {
@@ -89,6 +76,7 @@ func loadConfig(configName string, configType string) error {
 	return nil
 }
 */
+/*
 // LoadServerPort returns the port where emmy server will be listening.
 func LoadServerPort() int {
 	return viper.GetInt("port")
@@ -194,3 +182,4 @@ func LoadSessionKeyMinByteLen() int {
 func LoadRegistrationDBAddress() string {
 	return viper.GetString("registration_db_address")
 }
+*/

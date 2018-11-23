@@ -17,15 +17,7 @@
 
 package test
 
-import (
-	"math/big"
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/emmyzkp/emmy/schemes/pseudsys"
-	"github.com/emmyzkp/emmy/config"
-)
-
+/*
 // TestPseudonymsys requires a running server (it is started in communication_test.go).
 func TestEndToEnd_Pseudonymsys(t *testing.T) {
 	group := config.LoadSchnorrGroup()
@@ -93,3 +85,4 @@ func TestEndToEnd_Pseudonymsys(t *testing.T) {
 	assert.Nil(t, sessionKey2, "Authentication should fail, and session key should be nil")
 	assert.NotNil(t, err, "Should produce an error")
 }
+*/

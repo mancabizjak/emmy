@@ -30,11 +30,12 @@ import (
 	"github.com/emmyzkp/emmy/schemes/pseudsys"
 	"github.com/emmyzkp/emmy/registration"
 	"github.com/emmyzkp/emmy/session"
-	"github.com/emmyzkp/emmy/config"
 	"github.com/emmyzkp/crypto/ec"
 	"github.com/emmyzkp/emmy/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"math/big"
+	"github.com/emmyzkp/crypto/schnorr"
 )
 
 type GrpcServer struct {
@@ -42,6 +43,16 @@ type GrpcServer struct {
 	Logger log.Logger
 
 	creds credentials.TransportCredentials
+	service AnonAuthService
+}
+
+type AnonAuthService interface {
+	Registrable
+	Configurable
+}
+
+type Configurable interface {
+	Configure(...interface{}) error
 }
 
 // Registrable registers a grpc service handler to
@@ -50,9 +61,25 @@ type Registrable interface {
 	RegisterTo(*grpc.Server)
 }
 
-func (s *GrpcServer) RegisterService(r Registrable) {
+func (s *GrpcServer) RegisterService(r Registrable) error {
+	if s.service != nil {
+		return fmt.Errorf("anonymous authentication service is" +
+			" already registered")
+	}
 	r.RegisterTo(s.Server)
+	return nil
 }
+
+func (s *GrpcServer) Use(srvs ...AnonAuthService) {
+	for _, srv := range srvs {
+		srv.Configure()
+		srv.RegisterTo(s.Server)
+	}
+}
+
+
+// FIXME
+// pass grpc.Server as an argument
 
 // NewGrpcServer initializes an instance of the GrpcServer struct and returns a pointer.
 // It performs some default configuration (tracing of gRPC communication and interceptors)
@@ -61,7 +88,7 @@ func (s *GrpcServer) RegisterService(r Registrable) {
 func NewGrpcServer(certFile, keyFile string, regMgr registration.Manager,
 	recMgr cl.ReceiverRecordManager, logger log.Logger) (*GrpcServer, error) {
 	// TODO check for nil logger?
-	logger.Info("Instantiating new s")
+	logger.Info("Instantiating new server")
 
 	// Obtain TLS credentials
 	creds, err := credentials.NewServerTLSFromFile(certFile, keyFile)
@@ -71,11 +98,12 @@ func NewGrpcServer(certFile, keyFile string, regMgr registration.Manager,
 
 	logger.Infof("Successfully read certificate [%s] and key [%s]", certFile, keyFile)
 
-	sessMgr, err := session.NewRandSessionKeyGen(config.
-		LoadSessionKeyMinByteLen())
+	// FIXME pass session manager
+	// config.LoadSessionKeyMinByteLen()
+	/*sessMgr, err := session.NewRandSessionKeyGen(64)
 	if err != nil {
 		logger.Warning(err)
-	}
+	}*/
 
 	// Allow as much concurrent streams as possible and register a gRPC stream interceptor
 	// for logging and monitoring purposes.
@@ -97,11 +125,12 @@ func NewGrpcServer(certFile, keyFile string, regMgr registration.Manager,
 	grpc.EnableTracing = false
 
 	// RegisterTo our services with the supporting gRPC s
-	s.registerCL(recMgr)
-	s.registerPsysCA()
-	s.registerPsysOrg(regMgr, sessMgr)
-	s.registerEcpsysCA()
-	s.registerEcpsysOrg(regMgr, sessMgr)
+	//s.registerCL(recMgr)
+	//s.registerPsysCA()
+	//s.registerPsysOrg(regMgr, sessMgr)
+
+	//s.registerEcpsysCA()
+	//s.registerEcpsysOrg(regMgr, sessMgr)
 	logger.Notice("Registered gRPC Services")
 
 	// Initialize gRPC metrics offered by Prometheus package
@@ -148,32 +177,39 @@ func (s *GrpcServer) EnableTracing() {
 	s.Logger.Notice("Enabled gRPC tracing")
 }
 
-func (s *GrpcServer) registerCL(recMgr cl.ReceiverRecordManager) {
-	pubKeyPath := "testdata/clPubKey.gob"
-	secKeyPath := "testdata/clSecKey.gob"
-	srv, err := cl.NewServer(recMgr, pubKeyPath, secKeyPath)
+func (s *GrpcServer) RegisterCL(recMgr cl.ReceiverRecordManager) (*cl.PubKey,
+	error) {
+	//pubKeyPath := "testdata/clPubKey.gob"
+	//secKeyPath := "testdata/clSecKey.gob"
+	params := cl.GetDefaultParamSizes()
+	keys, err := cl.GenerateKeyPair(params)
+	if err != nil {
+		return nil, err
+	}
+
+	srv, err := cl.NewServer(recMgr, keys)
 	if err != nil {
 		panic(err)
 	}
 	s.RegisterService(srv)
+
+	return keys.Pub, nil
 }
 
-func (s *GrpcServer) registerPsysCA() {
-	srv := pseudsys.NewCAServer(
-		config.LoadSchnorrGroup(),
-		config.LoadPseudonymsysCASecret(),
-		config.LoadPseudonymsysCAPubKey(),
-	)
+func (s *GrpcServer) registerPsysCA(g *schnorr.Group,
+	secKey *big.Int, pubKey *pseudsys.PubKey) {
+	srv := pseudsys.NewCAServer(g, secKey, pubKey)
 	s.RegisterService(srv)
 }
 
 func (s *GrpcServer) registerPsysOrg(regMgr registration.Manager,
-	sessionManager session.Manager) {
-	srv := pseudsys.NewOrgServer(
-		config.LoadSchnorrGroup(),
-		config.LoadPseudonymsysOrgSecrets("org1", "dlog"),
-		config.LoadPseudonymsysOrgPubKeys("org1"),
-		config.LoadPseudonymsysCAPubKey(),
+	sessionManager session.Manager, g *schnorr.Group,
+	orgSecrets *pseudsys.SecKey, orgPubKey *pseudsys.PubKey,
+	caPubKey *pseudsys.PubKey) {
+	srv := pseudsys.NewOrgServer(g,
+		orgSecrets,
+		orgPubKey,
+		caPubKey,
 	)
 	// Move to constructor
 	srv.RegMgr = regMgr
@@ -181,22 +217,25 @@ func (s *GrpcServer) registerPsysOrg(regMgr registration.Manager,
 	s.RegisterService(srv)
 }
 
-func (s *GrpcServer) registerEcpsysCA() {
+func (s *GrpcServer) registerEcpsysCA(caSecKey *big.Int,
+	caPubKey *pseudsys.PubKey, curve ec.Curve) {
 	srv := ecpseudsys.NewCAServer(
-		config.LoadPseudonymsysCASecret(),
-		config.LoadPseudonymsysCAPubKey(),
-		ec.P256,
+		caSecKey,
+		caPubKey,
+		curve,
 	)
 	s.RegisterService(srv)
 }
 
 func (s *GrpcServer) registerEcpsysOrg(regMgr registration.Manager,
-	sessionManager session.Manager) {
+	sessionManager session.Manager,
+	curve ec.Curve, orgSecrets *pseudsys.SecKey,
+	orgPubKeys *ecpseudsys.PubKey, caPubKey *pseudsys.PubKey) {
 	srv := ecpseudsys.NewOrgServer(
-		ec.P256,
-		config.LoadPseudonymsysOrgSecrets("org1", "ecdlog"),
-		config.LoadPseudonymsysOrgPubKeysEC("org1"),
-		config.LoadPseudonymsysCAPubKey(),
+		curve,
+		orgSecrets,
+		orgPubKeys,
+		caPubKey,
 	)
 	// Move to constructor
 	srv.RegMgr = regMgr
