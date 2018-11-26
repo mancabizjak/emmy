@@ -21,8 +21,8 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/emmyzkp/crypto/common"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCL(t *testing.T) {
@@ -33,13 +33,15 @@ func TestCL(t *testing.T) {
 		t.Errorf("error when generating CL org: %v", err)
 	}
 
-	masterSecret := org.PubKey.GenerateUserMasterSecret()
+	masterSecret := org.Keys.Pub.GenerateUserMasterSecret()
 
-	knownAttrs := []*big.Int{big.NewInt(7), big.NewInt(6), big.NewInt(5), big.NewInt(22)}
-	committedAttrs := []*big.Int{big.NewInt(9), big.NewInt(17)}
-	hiddenAttrs := []*big.Int{big.NewInt(11), big.NewInt(13), big.NewInt(19)}
-	credManager, err := NewCredManager(params, org.PubKey, masterSecret, knownAttrs, committedAttrs,
-		hiddenAttrs)
+	known := []*big.Int{big.NewInt(7), big.NewInt(6), big.NewInt(5), big.NewInt(22)}
+	committed := []*big.Int{big.NewInt(9), big.NewInt(17)}
+	hidden := []*big.Int{big.NewInt(11), big.NewInt(13), big.NewInt(19)}
+	attrs := NewAttrs(known, hidden, committed)
+
+	credManager, err := NewCredManager(params, org.Keys.Pub, masterSecret,
+		attrs)
 	if err != nil {
 		t.Errorf("error when creating a user: %v", err)
 	}
@@ -70,7 +72,7 @@ func TestCL(t *testing.T) {
 
 	// Before updating a credential, create a new Org object (obtaining and updating
 	// credential usually don't happen at the same time)
-	org, err = NewOrgFromParams(params, org.PubKey, org.SecKey)
+	org, err = NewOrgFromParams(params, org.Keys)
 	if err != nil {
 		t.Errorf("error when generating CL org: %v", err)
 	}
@@ -78,8 +80,7 @@ func TestCL(t *testing.T) {
 	// create new CredManager (updating or proving usually does not happen at the same time
 	// as issuing)
 	credManager, err = NewCredManagerFromExisting(credManager.Nym, credManager.V1, credManager.CredReqNonce,
-		params, org.PubKey, masterSecret, knownAttrs, committedAttrs, hiddenAttrs,
-		credManager.CommitmentsOfAttrs)
+		params, org.Keys.Pub, masterSecret, attrs, credManager.CommitmentsOfAttrs)
 	if err != nil {
 		t.Errorf("error when calling NewCredManagerFromExisting: %v", err)
 	}
@@ -107,7 +108,7 @@ func TestCL(t *testing.T) {
 
 	// Some other organization which would like to verify the credential can instantiate org without sec key.
 	// It only needs Pub key of the organization that issued a credential.
-	org, err = NewOrgFromParams(params, org.PubKey, nil)
+	org, err = NewOrgFromParams(params, org.Keys)
 	if err != nil {
 		t.Errorf("error when generating CL org: %v", err)
 	}
@@ -117,7 +118,7 @@ func TestCL(t *testing.T) {
 
 	revealedKnownAttrs := []*big.Int{}
 	revealedCommitmentsOfAttrs := []*big.Int{}
-	for i := 0; i < len(knownAttrs); i++ {
+	for i := 0; i < len(known); i++ {
 		if common.Contains(revealedKnownAttrsIndices, i) {
 			revealedKnownAttrs = append(revealedKnownAttrs, newKnownAttrs[i])
 		}

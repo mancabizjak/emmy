@@ -42,10 +42,8 @@ type CredManager struct {
 	nymCommitter       *pedersen.Committer // nym is actually a commitment to masterSecret
 	Nym                *big.Int
 	masterSecret       *big.Int
-	KnownAttrs         []*big.Int // attributes that are known to the credential receiver and issuer
-	committedAttrs     []*big.Int // attributes for which the issuer knows only commitment
+	Attrs              *Attrs
 	CommitmentsOfAttrs []*big.Int // commitments of committedAttrs
-	hiddenAttrs        []*big.Int // attributes which are known only to the credential receiver
 	// V1 is a random element in credential - it is generated in GetCredRequest and needed when
 	// proving the possesion of a credential - this is why it is stored in User and not in UserCredentialReceiver
 	V1                        *big.Int            // v1 is random element in U; U = S^v1 * R_i^m_i where m_i are hidden attributes
@@ -54,16 +52,50 @@ type CredManager struct {
 	CredReqNonce              *big.Int
 }
 
-func NewCredManager(params *Params, pubKey *PubKey, masterSecret *big.Int, knownAttrs, committedAttrs,
-	hiddenAttrs []*big.Int) (*CredManager, error) {
-	if !checkAttrsLen(knownAttrs, params) || !checkAttrsLen(committedAttrs, params) ||
-		!checkAttrsLen(hiddenAttrs, params) {
+type Attrs struct {
+	// attributes that are known to the credential receiver and issuer
+	Known []*big.Int
+	// attributes which are known only to the credential receiver
+	Hidden []*big.Int
+	// attributes for which the issuer knows only commitment
+	Committed []*big.Int
+}
+
+func NewAttrs(known, hidden, committed []*big.Int) *Attrs {
+	return &Attrs{
+		Known:     known,
+		Hidden:    hidden,
+		Committed: committed,
+	}
+}
+
+func (a *Attrs) join() []*big.Int {
+	all := make([]*big.Int, 0)
+	all = append(all, a.Known...)
+	all = append(all, a.Hidden...)
+	all = append(all, a.Committed...)
+	return all
+}
+
+func checkBitLen(s []*big.Int, len int) bool {
+	for _, ss := range s {
+		if ss.BitLen() > len {
+			return false
+		}
+	}
+
+	return true
+}
+
+func NewCredManager(params *Params, pubKey *PubKey, masterSecret *big.Int,
+	attrs *Attrs) (*CredManager, error) {
+	if !checkBitLen(attrs.join(), params.AttrBitLen) {
 		return nil, fmt.Errorf("attributes length not ok")
 	}
 
-	attrsCommitters := make([]*df.Committer, len(committedAttrs))
-	commitmentsOfAttrs := make([]*big.Int, len(committedAttrs))
-	for i, attr := range committedAttrs {
+	attrsCommitters := make([]*df.Committer, len(attrs.Committed))
+	commitmentsOfAttrs := make([]*big.Int, len(attrs.Committed))
+	for i, attr := range attrs.Committed {
 		committer := df.NewCommitter(pubKey.N1, pubKey.G, pubKey.H,
 			pubKey.N1, params.SecParam)
 		com, err := committer.GetCommitMsg(attr)
@@ -82,9 +114,7 @@ func NewCredManager(params *Params, pubKey *PubKey, masterSecret *big.Int, known
 	credManager := CredManager{
 		Params:                    params,
 		PubKey:                    pubKey,
-		KnownAttrs:                knownAttrs,
-		committedAttrs:            committedAttrs,
-		hiddenAttrs:               hiddenAttrs,
+		Attrs:                     attrs,
 		CommitmentsOfAttrs:        commitmentsOfAttrs,
 		attrsCommitters:           attrsCommitters,
 		commitmentsOfAttrsProvers: commitmentsOfAttrsProvers,
@@ -96,7 +126,7 @@ func NewCredManager(params *Params, pubKey *PubKey, masterSecret *big.Int, known
 }
 
 func NewCredManagerFromExisting(nym, v1, credReqNonce *big.Int, params *Params, pubKey *PubKey, masterSecret *big.Int,
-	knownAttrs, committedAttrs, hiddenAttrs, commitmentsOfAttrs []*big.Int) (*CredManager, error) {
+	attrs *Attrs, commitmentsOfAttrs []*big.Int) (*CredManager, error) {
 
 	// nymCommitter is needed only for IssueCred (when proving that nym can be opened), so we do not need it here
 	// the same for attrsCommitters
@@ -104,9 +134,7 @@ func NewCredManagerFromExisting(nym, v1, credReqNonce *big.Int, params *Params, 
 	return &CredManager{
 		Params:             params,
 		PubKey:             pubKey,
-		KnownAttrs:         knownAttrs,
-		committedAttrs:     committedAttrs,
-		hiddenAttrs:        hiddenAttrs,
+		Attrs:              attrs,
 		CommitmentsOfAttrs: commitmentsOfAttrs,
 		masterSecret:       masterSecret,
 		Nym:                nym,
@@ -154,7 +182,7 @@ func (m *CredManager) GetCredRequest(nonceOrg *big.Int) (*CredRequest, error) {
 		return nil, err
 	}
 
-	return NewCredRequest(m.Nym, m.KnownAttrs, m.CommitmentsOfAttrs,
+	return NewCredRequest(m.Nym, m.Attrs.Known, m.CommitmentsOfAttrs,
 		schnorr.NewProof(nymProver.GetProofRandomData(), challenge,
 			nymProver.GetProofData(challenge)), U,
 		qr.NewRepresentationProof(uProofRandomData, challenge,
@@ -183,18 +211,18 @@ func (m *CredManager) Verify(cred *Cred, AProof *qr.RepresentationProof) (bool, 
 	group := qr.NewRSApecialPublic(m.PubKey.N)
 	// denom = S^v * R_1^attr_1 * ... * R_j^attr_j
 	denom := group.Exp(m.PubKey.S, v) // s^v
-	for i := 0; i < len(m.KnownAttrs); i++ {
-		t1 := group.Exp(m.PubKey.RsKnown[i], m.KnownAttrs[i])
+	for i := 0; i < len(m.Attrs.Known); i++ {
+		t1 := group.Exp(m.PubKey.RsKnown[i], m.Attrs.Known[i])
 		denom = group.Mul(denom, t1)
 	}
 
-	for i := 0; i < len(m.committedAttrs); i++ {
+	for i := 0; i < len(m.Attrs.Committed); i++ {
 		t1 := group.Exp(m.PubKey.RsCommitted[i], m.CommitmentsOfAttrs[i])
 		denom = group.Mul(denom, t1)
 	}
 
-	for i := 0; i < len(m.hiddenAttrs); i++ {
-		t1 := group.Exp(m.PubKey.RsHidden[i], m.hiddenAttrs[i])
+	for i := 0; i < len(m.Attrs.Hidden); i++ {
+		t1 := group.Exp(m.PubKey.RsHidden[i], m.Attrs.Hidden[i])
 		denom = group.Mul(denom, t1)
 	}
 
@@ -222,7 +250,7 @@ func (m *CredManager) Verify(cred *Cred, AProof *qr.RepresentationProof) (bool, 
 
 // Update updates credential.
 func (m *CredManager) Update(knownAttrs []*big.Int) {
-	m.KnownAttrs = knownAttrs
+	m.Attrs.Known = knownAttrs
 }
 
 // randomize randomizes credential cred, and returns the
@@ -264,10 +292,10 @@ func (m *CredManager) BuildProof(cred *Cred, revealedKnownAttrsIndices,
 	bases := []*big.Int{}
 	unrevealedKnownAttrs := []*big.Int{}
 	unrevealedCommitmentsOfAttrs := []*big.Int{}
-	for i := 0; i < len(m.KnownAttrs); i++ {
+	for i := 0; i < len(m.Attrs.Known); i++ {
 		if !common.Contains(revealedKnownAttrsIndices, i) {
 			bases = append(bases, m.PubKey.RsKnown[i])
-			unrevealedKnownAttrs = append(unrevealedKnownAttrs, m.KnownAttrs[i])
+			unrevealedKnownAttrs = append(unrevealedKnownAttrs, m.Attrs.Known[i])
 		}
 	}
 	for i := 0; i < len(m.CommitmentsOfAttrs); i++ {
@@ -281,20 +309,20 @@ func (m *CredManager) BuildProof(cred *Cred, revealedKnownAttrsIndices,
 	bases = append(bases, m.PubKey.S)
 
 	secrets := append(unrevealedKnownAttrs, unrevealedCommitmentsOfAttrs...)
-	secrets = append(secrets, m.hiddenAttrs...)
+	secrets = append(secrets, m.Attrs.Hidden...)
 	secrets = append(secrets, rCred.E)
 	v := new(big.Int).Add(rCred.V11, m.V1)
 	secrets = append(secrets, v)
 
 	denom := big.NewInt(1)
-	for i := 0; i < len(m.KnownAttrs); i++ {
+	for i := 0; i < len(m.Attrs.Known); i++ {
 		if common.Contains(revealedKnownAttrsIndices, i) {
-			t1 := group.Exp(m.PubKey.RsKnown[i], m.KnownAttrs[i])
+			t1 := group.Exp(m.PubKey.RsKnown[i], m.Attrs.Known[i])
 			denom = group.Mul(denom, t1)
 		}
 	}
 
-	for i := 0; i < len(m.committedAttrs); i++ {
+	for i := 0; i < len(m.Attrs.Committed); i++ {
 		if common.Contains(revealedCommitmentsOfAttrsIndices, i) {
 			t1 := group.Exp(m.PubKey.RsCommitted[i], m.CommitmentsOfAttrs[i])
 			denom = group.Mul(denom, t1)
@@ -335,14 +363,4 @@ func (m *CredManager) BuildProof(cred *Cred, revealedKnownAttrsIndices,
 	proofData := prover.GetProofData(challenge)
 
 	return rCred, qr.NewRepresentationProof(proofRandomData, challenge, proofData), nil
-}
-
-func checkAttrsLen(attributes []*big.Int, params *Params) bool {
-	for _, attr := range attributes {
-		if attr.BitLen() > params.AttrBitLen {
-			return false
-		}
-	}
-
-	return true
 }

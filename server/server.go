@@ -46,22 +46,23 @@ type GrpcServer struct {
 	service AnonAuthService
 }
 
-type AnonAuthService interface {
-	Registrable
+/*type AnonAuthService interface {
 	Configurable
 }
 
 type Configurable interface {
 	Configure(...interface{}) error
-}
+}*/
 
-// Registrable registers a grpc service handler to
+// AnonAuthService registers a grpc service handler to
 // a grpc.GrpcServer passed as argument.
-type Registrable interface {
+type AnonAuthService interface {
 	RegisterTo(*grpc.Server)
 }
 
-func (s *GrpcServer) RegisterService(r Registrable) error {
+// RegisterService registers a AnonAuthService service to the underlying
+// gRPC server. It returns an error if a service is already registered.
+func (s *GrpcServer) RegisterService(r AnonAuthService) error {
 	if s.service != nil {
 		return fmt.Errorf("anonymous authentication service is" +
 			" already registered")
@@ -70,12 +71,13 @@ func (s *GrpcServer) RegisterService(r Registrable) error {
 	return nil
 }
 
+/*
 func (s *GrpcServer) Use(srvs ...AnonAuthService) {
 	for _, srv := range srvs {
-		srv.Configure()
+		//srv.Configure()
 		srv.RegisterTo(s.Server)
 	}
-}
+}*/
 
 
 // FIXME

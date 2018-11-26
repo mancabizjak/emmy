@@ -42,14 +42,14 @@ func NewCredRequest(nym *big.Int, knownAttrs, commitmentsOfAttrs []*big.Int, nym
 	U *big.Int, UProof *qr.RepresentationProof,
 	commitmentsOfAttrsProofs []*df.OpeningProof, nonce *big.Int) *CredRequest {
 	return &CredRequest{
-		Nym:                      nym,
-		KnownAttrs:               knownAttrs,
-		CommitmentsOfAttrs:       commitmentsOfAttrs,
-		NymProof:                 nymProof,
-		U:                        U,
-		UProof:                   UProof,
+		Nym:                nym,
+		KnownAttrs:         knownAttrs,
+		CommitmentsOfAttrs: commitmentsOfAttrs,
+		NymProof:           nymProof,
+		U:                  U,
+		UProof:             UProof,
 		CommitmentsOfAttrsProofs: commitmentsOfAttrsProofs,
-		Nonce:                    nonce,
+		Nonce: nonce,
 	}
 }
 
@@ -63,7 +63,7 @@ func (m *CredManager) computeU() (*big.Int, *big.Int) {
 	group := qr.NewRSApecialPublic(m.PubKey.N)
 	U := group.Exp(m.PubKey.S, v1)
 
-	for i, attr := range m.hiddenAttrs {
+	for i, attr := range m.Attrs.Hidden {
 		t := group.Exp(m.PubKey.RsHidden[i], attr) // R_i^m_i
 		U = group.Mul(U, t)
 	}
@@ -93,7 +93,7 @@ func (m *CredManager) getNymProver() (*schnorr.Prover, error) {
 func (m *CredManager) getUProver(U *big.Int) *qr.RepresentationProver {
 	group := qr.NewRSApecialPublic(m.PubKey.N)
 	// secrets are [attr_1, ..., attr_L, v1]
-	secrets := append(m.hiddenAttrs, m.V1)
+	secrets := append(m.Attrs.Hidden, m.V1)
 
 	// bases are [R_1, ..., R_L, S]
 	bases := append(m.PubKey.RsHidden, m.PubKey.S)

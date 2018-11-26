@@ -21,8 +21,10 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"fmt"
+
 	"github.com/emmyzkp/emmy/schemes/cl"
+	"github.com/stretchr/testify/assert"
 )
 
 func toBigInts(s ...int) []*big.Int {
@@ -34,11 +36,11 @@ func toBigInts(s ...int) []*big.Int {
 }
 
 func TestEndToEnd_CL(t *testing.T) {
-	tests := []struct{
-		desc string
+	tests := []struct {
+		desc   string
 		params *cl.Params
 	}{
-		{ "Defaults", cl.GetDefaultParamSizes() },
+		{"Defaults", cl.GetDefaultParamSizes()},
 	}
 
 	for _, tt := range tests {
@@ -60,13 +62,12 @@ func testEndToEndCL(t *testing.T, params *cl.Params) {
 	masterSecret := keys.Pub.GenerateUserMasterSecret()
 	//masterSecret := pubKey.GenerateUserMasterSecret()
 
-
-	knownAttrs := toBigInts(7, 6, 5, 22)
-	committedAttrs := toBigInts(9, 17)
-	hiddenAttrs := toBigInts(11, 13, 19)
-	credManager, err := cl.NewCredManager(params, keys.Pub, masterSecret,
-		knownAttrs, committedAttrs, hiddenAttrs)
-
+	known := toBigInts(7, 6, 5, 22)
+	hidden := toBigInts(11, 13, 19)
+	committed := toBigInts(9, 17)
+	attrs := cl.NewAttrs(known, hidden, committed)
+	fmt.Println("ATTRS", attrs)
+	credManager, err := cl.NewCredManager(params, keys.Pub, masterSecret, attrs)
 	if err != nil {
 		t.Errorf("error when creating a user: %v", err)
 	}
@@ -84,8 +85,7 @@ func testEndToEndCL(t *testing.T, params *cl.Params) {
 	// create new CredManager (updating or proving usually does not happen at the same time
 	// as issuing)
 	credManager, err = cl.NewCredManagerFromExisting(credManager.Nym, credManager.V1,
-		credManager.CredReqNonce, params, keys.Pub, masterSecret,
-		knownAttrs, committedAttrs, hiddenAttrs,
+		credManager.CredReqNonce, params, keys.Pub, masterSecret, attrs,
 		credManager.CommitmentsOfAttrs)
 	if err != nil {
 		t.Errorf("error when calling NewCredManagerFromExisting: %v", err)
@@ -94,7 +94,7 @@ func testEndToEndCL(t *testing.T, params *cl.Params) {
 	revealedKnownAttrsIndices := []int{1, 2}      // reveal only the second and third known attribute
 	revealedCommitmentsOfAttrsIndices := []int{0} // reveal only the commitment of the first attribute (of those of which only commitments are known)
 
-	proved, err := client.ProveCredential(credManager, cred, knownAttrs, revealedKnownAttrsIndices,
+	proved, err := client.ProveCredential(credManager, cred, known, revealedKnownAttrsIndices,
 		revealedCommitmentsOfAttrsIndices)
 	if err != nil {
 		t.Errorf("error when proving possession of a credential: %v", err)

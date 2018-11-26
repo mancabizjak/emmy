@@ -21,23 +21,23 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
 	"testing"
 	"time"
-	"net"
 
-	"github.com/go-redis/redis"
 	"github.com/emmyzkp/emmy/client"
-	"github.com/emmyzkp/emmy/server"
-	"github.com/emmyzkp/emmy/schemes/cl"
-	"github.com/emmyzkp/emmy/registration"
 	"github.com/emmyzkp/emmy/log"
 	"github.com/emmyzkp/emmy/mock"
+	"github.com/emmyzkp/emmy/registration"
+	"github.com/emmyzkp/emmy/schemes/cl"
+	"github.com/emmyzkp/emmy/server"
+	"github.com/go-redis/redis"
 	"google.golang.org/grpc"
 )
 
 var testAddr = "localhost:7008"
-var testSrv testServer//*server.GrpcServer
+var testSrv *testServer //*server.GrpcServer
 
 // testConn is re-used for all the test clients
 var testConn *grpc.ClientConn
@@ -51,8 +51,8 @@ var testRedis = flag.Bool(
 	"whether to use a real redis server in integration test",
 )
 
-// getTestConn establishes a connection to previously started server.
-func getTestConn(addr string) (*grpc.ClientConn, error) {
+// getTestSecureConn establishes a connection to previously started server.
+func getTestSecureConn(addr string) (*grpc.ClientConn, error) {
 	testCert, err := ioutil.ReadFile("testdata/server.pem")
 	if err != nil {
 		return nil, err
@@ -75,18 +75,18 @@ var testEnd2End = flag.Bool(
 	"whether to run end-to-end tests (requires an instance of emmy server)",
 )*/
 
-
 type testServer struct {
 	*grpc.Server
 	services []server.AnonAuthService
 }
 
-func newTestServer(services ...server.AnonAuthService) {
+func newTestServer(services ...server.AnonAuthService) *testServer {
 	grpcSrv := grpc.NewServer()
 
 	for _, s := range services {
 		s.RegisterTo(grpcSrv)
 	}
+	return &testServer{grpcSrv, services}
 }
 
 func (s *testServer) start() {
@@ -103,7 +103,8 @@ func (s *testServer) teardown() {
 	s.Server.GracefulStop()
 }
 
-
+// TODO TestMain should determine, based on flags,
+// which anonymous authentication services it should test
 
 // TestMain is run implicitly and only once, before any of the tests defined in this file run.
 // It sets up a test gRPC server and establishes connection to the server. This gRPC client
@@ -170,13 +171,27 @@ func TestMain(m *testing.M) {
 	clientLogger, _ := log.NewStdoutLogger("client", log.NOTICE, log.FORMAT_SHORT)
 	client.SetLogger(clientLogger)
 
-	testSrv = newTestServer(sCL, sPsys, sPsysCA, sPsysEC, sPsysECCA)
+	params := cl.GetDefaultParamSizes()
+	keys, err := cl.GenerateKeyPair(params)
+	if err != nil {
+		panic(err)
+	}
+
+	srv, err := cl.NewServer(recDB, keys)
+	if err != nil {
+		panic(err)
+	}
+
+	testSrv = newTestServer(srv)
+	//, sPsys, sPsysCA, sPsysEC, sPsysECCA
+
 	go testSrv.start()
 	//go testSrv.Start(7008)
 
 	time.Sleep(time.Second)
 
-	testConn, err = getTestConn(testAddr)
+	//testConn, err = getTestSecureConn(testAddr)
+	testConn, err = grpc.Dial(testAddr, grpc.WithInsecure())
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
