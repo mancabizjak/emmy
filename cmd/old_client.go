@@ -17,21 +17,6 @@
 
 package cmd
 
-import (
-	"fmt"
-	"sync"
-	"time"
-
-	"io/ioutil"
-
-	"path/filepath"
-
-	"github.com/urfave/cli"
-	"github.com/emmyzkp/emmy/config"
-	"github.com/emmyzkp/emmy/log"
-	"google.golang.org/grpc"
-	"github.com/emmyzkp/emmy/client"
-)
 /*
 // logLevelFlag indicates the log level applied to client/server loggers.
 var logLevelFlag = cli.StringFlag{
@@ -40,6 +25,7 @@ var logLevelFlag = cli.StringFlag{
 	Usage: "debug|info|notice|error|critical",
 }*/
 
+/*
 var ClientCmd = cli.Command{
 	Name:  "client",
 	Usage: "A client (prover) that wants to prove something to the server (verifier)",
@@ -191,3 +177,4 @@ func run(ctx, subCmdCtx *cli.Context, f func(ctx *cli.Context, conn *grpc.Client
 	fmt.Printf("***Time: %v seconds***\n", elapsed.Seconds())
 	return nil
 }
+*/

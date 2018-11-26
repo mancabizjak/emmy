@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/emmyzkp/emmy/schemes/pseudsys"
 	"github.com/emmyzkp/crypto/schnorr"
+	"github.com/emmyzkp/emmy/anauth/pseudsys"
 )
 
 // Credential represents an equivalent of pseudsys.Cred,

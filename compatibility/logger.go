@@ -18,8 +18,8 @@
 package compatibility
 
 import (
+	"github.com/emmyzkp/emmy/anauth"
 	"github.com/emmyzkp/emmy/log"
-	"github.com/emmyzkp/emmy"
 )
 
 // Supported log levels.
@@ -52,5 +52,5 @@ func NewLogger(logLevel string) (*Logger, error) {
 
 // SetLogger propagates the given *Logger to client package, around which this package wraps.
 func SetLogger(logger *Logger) {
-	anonauth.SetLogger(logger.StdoutLogger)
+	anauth.SetLogger(logger.StdoutLogger)
 }

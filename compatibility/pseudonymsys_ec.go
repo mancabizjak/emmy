@@ -22,9 +22,9 @@ import (
 
 	"fmt"
 
-	"github.com/emmyzkp/emmy/schemes/ecpseudsys"
 	"github.com/emmyzkp/crypto/ec"
 	"github.com/emmyzkp/crypto/ecschnorr"
+	"github.com/emmyzkp/emmy/anauth/ecpseudsys"
 )
 
 // PubKeyEC represents an equivalent of ecpseudsys.PubKeyEC,

@@ -22,8 +22,8 @@ import (
 
 	"fmt"
 
-	"github.com/emmyzkp/emmy/schemes/ecpseudsys"
 	"github.com/emmyzkp/crypto/ec"
+	"github.com/emmyzkp/emmy/anauth/ecpseudsys"
 )
 
 // Representations of specific elliptic curves to be used in elliptic cryptography based schemes.

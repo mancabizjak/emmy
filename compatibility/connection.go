@@ -18,8 +18,8 @@
 package compatibility
 
 import (
+	"github.com/emmyzkp/emmy/anauth"
 	"google.golang.org/grpc"
-	"github.com/emmyzkp/emmy/client"
 )
 
 // ConnectionConfig wraps client.ConnectionConfig that holds connection information.
@@ -53,10 +53,10 @@ type Connection struct {
 // NewConnection accepts *ConnectionConfig and uses the provided configuration information to
 // establish connection to the server.
 func NewConnection(cfg *ConnectionConfig) (*Connection, error) {
-	conn, err := client.GetConnection(cfg.Endpoint, []client.ConnOption{
-		client.WithCACert(cfg.CACertificate),
-		client.WithServerNameOverride(cfg.ServerNameOverride),
-		client.WithTimeout(cfg.TimeoutMillis)}...)
+	conn, err := anauth.GetConnection(cfg.Endpoint, []anauth.ConnOption{
+		anauth.WithCACert(cfg.CACertificate),
+		anauth.WithServerNameOverride(cfg.ServerNameOverride),
+		anauth.WithTimeout(cfg.TimeoutMillis)}...)
 
 	if err != nil {
 		return nil, err

@@ -17,6 +17,7 @@
 
 package cmd
 
+/*
 import (
 	"path/filepath"
 
@@ -139,3 +140,4 @@ func startEmmyServer(port int, certPath, keyPath, dbAddress, logFilePath, logLev
 	srv.EnableTracing()
 	return srv.Start(port)
 }
+*/
