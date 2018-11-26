@@ -34,14 +34,14 @@ import (
 	"google.golang.org/grpc"
 )
 
-var testAddr = "localhost:7008"
-var testSrv *testServer //*server.GrpcServer
+var (
+	testAddr = "localhost:7008"
+	//testSrv  *testServer
+	//testConn *grpc.ClientConn
 
-// testConn is re-used for all the test clients
-var testConn *grpc.ClientConn
-
-var recDB cl.ReceiverRecordManager
-var regKeyDB anauth.RegManager
+	recDB    cl.ReceiverRecordManager
+	regKeyDB anauth.RegManager
+)
 
 var testRedis = flag.Bool(
 	"db",
@@ -50,12 +50,12 @@ var testRedis = flag.Bool(
 )
 
 // getTestSecureConn establishes a connection to previously started server.
-func getTestSecureConn(addr string) (*grpc.ClientConn, error) {
+func getTestSecureConn() (*grpc.ClientConn, error) {
 	testCert, err := ioutil.ReadFile("testdata/server.pem")
 	if err != nil {
 		return nil, err
 	}
-	conn, err := anauth.GetConnection(addr,
+	conn, err := anauth.GetConnection(testAddr,
 		anauth.WithCACert(testCert),
 		anauth.WithTimeout(500),
 	)
@@ -64,6 +64,17 @@ func getTestSecureConn(addr string) (*grpc.ClientConn, error) {
 	}
 
 	return conn, nil
+}
+
+func getTestConn() (*grpc.ClientConn, error) {
+	//if testConn == nil { // FIXME
+	//	fmt.Println("creating fresh conn")
+	return grpc.Dial(testAddr,
+		grpc.WithInsecure(),
+		grpc.WithBlock(),
+	)
+	//}
+	//	return testConn, nil
 }
 
 /*
@@ -80,13 +91,12 @@ type testServer struct {
 
 func newTestServer() *testServer {
 	grpcSrv := grpc.NewServer()
-
 	return &testServer{grpcSrv, nil}
 }
 
 func (s *testServer) addService(as anauth.Service) {
-	fmt.Println("registered service", as)
 	as.RegisterTo(s.Server)
+	fmt.Println("registered service")
 }
 
 func (s *testServer) start() {
@@ -100,7 +110,7 @@ func (s *testServer) start() {
 
 func (s *testServer) teardown() {
 	fmt.Println("stopping test server")
-	s.Server.GracefulStop()
+	s.Server.Stop()
 }
 
 // TODO TestMain should determine, based on flags,
@@ -117,7 +127,6 @@ func (s *testServer) teardown() {
 func TestMain(m *testing.M) {
 	flag.Parse()
 
-	var err error
 	testRegKeys := []string{"testRegKey1", "testRegKey2", "testRegKey3", "testRegKey4"}
 
 	//if *testEnd2End {
@@ -171,27 +180,8 @@ func TestMain(m *testing.M) {
 	clientLogger, _ := log.NewStdoutLogger("client", log.NOTICE, log.FORMAT_SHORT)
 	anauth.SetLogger(clientLogger)
 
-	testSrv = newTestServer()
-
-	//go testSrv.start()
-	//go testSrv.Start(7008)
-	//time.Sleep(time.Second)
-
-	//testConn, err = getTestSecureConn(testAddr)
-	testConn, err = grpc.Dial(testAddr, grpc.WithInsecure())
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
 	// At this point all the tests will actually run
 	ret := m.Run()
 
-	// Cleanup - close connection, stop the server and exit
-	testConn.Close()
-	//testSrv.Teardown()
-	testSrv.teardown()
-
 	os.Exit(ret)
-	//}
 }

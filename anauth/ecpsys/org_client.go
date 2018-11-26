@@ -15,7 +15,7 @@
  *
  */
 
-package ecpseudsys
+package ecpsys
 
 import (
 	"fmt"
@@ -26,8 +26,8 @@ import (
 	"github.com/emmyzkp/crypto/common"
 	"github.com/emmyzkp/crypto/ec"
 	"github.com/emmyzkp/crypto/ecschnorr"
-	pb "github.com/emmyzkp/emmy/anauth/ecpseudsys/ecpsyspb"
-	"github.com/emmyzkp/emmy/anauth/pseudsys/psyspb"
+	pb "github.com/emmyzkp/emmy/anauth/ecpsys/ecpsyspb"
+	"github.com/emmyzkp/emmy/anauth/psys/psyspb"
 	"google.golang.org/grpc"
 )
 
@@ -149,6 +149,7 @@ func (c *Client) ObtainCredential(userSecret *big.Int,
 	// with this organization. Authentication is done via Schnorr.
 	prover := ecschnorr.NewProver(c.curve)
 
+	fmt.Println("PROVER", prover)
 	x := prover.GetProofRandomData(userSecret, nym.A)
 
 	if err := stream.Send(

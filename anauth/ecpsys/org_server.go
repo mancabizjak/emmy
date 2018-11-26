@@ -15,7 +15,7 @@
  *
  */
 
-package ecpseudsys
+package ecpsys
 
 import (
 	"math/big"
@@ -23,9 +23,9 @@ import (
 	"github.com/emmyzkp/crypto/ec"
 	"github.com/emmyzkp/crypto/ecschnorr"
 	"github.com/emmyzkp/emmy/anauth"
-	pb "github.com/emmyzkp/emmy/anauth/ecpseudsys/ecpsyspb"
-	"github.com/emmyzkp/emmy/anauth/pseudsys"
-	"github.com/emmyzkp/emmy/anauth/pseudsys/psyspb"
+	pb "github.com/emmyzkp/emmy/anauth/ecpsys/ecpsyspb"
+	"github.com/emmyzkp/emmy/anauth/psys"
+	"github.com/emmyzkp/emmy/anauth/psys/psyspb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -46,7 +46,7 @@ type OrgServer struct {
 	RegMgr  anauth.RegManager
 }
 
-func NewOrgServer(c ec.Curve, secKey *pseudsys.SecKey, pubKey *PubKey, caPubKey *pseudsys.PubKey) *OrgServer {
+func NewOrgServer(c ec.Curve, secKey *psys.SecKey, pubKey *PubKey, caPubKey *psys.PubKey) *OrgServer {
 	return &OrgServer{
 		pubKey:       pubKey,
 		NymGenerator: NewNymGenerator(caPubKey, c),

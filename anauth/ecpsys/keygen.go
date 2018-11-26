@@ -15,38 +15,29 @@
  *
  */
 
-package pseudsys
+package ecpsys
 
 import (
-	"math/big"
-
 	"github.com/emmyzkp/crypto/common"
-	"github.com/emmyzkp/crypto/schnorr"
+	"github.com/emmyzkp/crypto/ec"
+	"github.com/emmyzkp/emmy/anauth/psys"
 )
 
-type SecKey struct {
-	S1, S2 *big.Int
-}
-
-func NewSecKey(s1, s2 *big.Int) *SecKey {
-	return &SecKey{s1, s2}
-}
-
 type PubKey struct {
-	H1, H2 *big.Int
+	H1, H2 *ec.GroupElement
 }
 
-func NewPubKey(h1, h2 *big.Int) *PubKey {
+func NewPubKey(h1, h2 *ec.GroupElement) *PubKey {
 	return &PubKey{h1, h2}
 }
 
-// GenerateKeyPair takes a schnorr group and constructs a pair of secret and public key for
-// pseudonym system scheme.
-func GenerateKeyPair(group *schnorr.Group) (*SecKey, *PubKey) {
+// GenerateKeyPair takes EC group and constructs a public key for pseudonym system scheme in EC
+// arithmetic.
+func GenerateKeyPair(group *ec.Group) (*psys.SecKey, *PubKey) {
 	s1 := common.GetRandomInt(group.Q)
 	s2 := common.GetRandomInt(group.Q)
-	h1 := group.Exp(group.G, s1)
-	h2 := group.Exp(group.G, s2)
+	h1 := group.ExpBaseG(s1)
+	h2 := group.ExpBaseG(s2)
 
-	return NewSecKey(s1, s2), NewPubKey(h1, h2)
+	return psys.NewSecKey(s1, s2), NewPubKey(h1, h2)
 }

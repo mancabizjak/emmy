@@ -15,7 +15,7 @@
  *
  */
 
-package ecpseudsys
+package psys
 
 import (
 	"crypto/ecdsa"
@@ -25,26 +25,24 @@ import (
 
 	"github.com/emmyzkp/crypto/common"
 	"github.com/emmyzkp/crypto/ec"
-	"github.com/emmyzkp/crypto/ecschnorr"
-	"github.com/emmyzkp/emmy/anauth/pseudsys"
+	"github.com/emmyzkp/crypto/schnorr"
 )
 
 type CA struct {
-	group      *ec.Group
-	verifier   *ecschnorr.Verifier
-	a          *ec.GroupElement
-	b          *ec.GroupElement
+	verifier   *schnorr.Verifier
+	a          *big.Int
+	b          *big.Int
 	privateKey *ecdsa.PrivateKey
 }
 
 type CACert struct {
-	BlindedA *ec.GroupElement
-	BlindedB *ec.GroupElement
+	BlindedA *big.Int
+	BlindedB *big.Int
 	R        *big.Int
 	S        *big.Int
 }
 
-func NewCACert(blindedA, blindedB *ec.GroupElement, r, s *big.Int) *CACert {
+func NewCACert(blindedA, blindedB, r, s *big.Int) *CACert {
 	return &CACert{
 		BlindedA: blindedA,
 		BlindedB: blindedB,
@@ -53,43 +51,51 @@ func NewCACert(blindedA, blindedB *ec.GroupElement, r, s *big.Int) *CACert {
 	}
 }
 
-func NewCA(d *big.Int, caPubKey *pseudsys.PubKey, curve ec.Curve) *CA {
-	c := ec.GetCurve(curve)
+// FIXME add curve constant, because its fixed
+const CA_CURVE = ec.P256
+
+func NewCA(group *schnorr.Group, d *big.Int, caPubKey *PubKey) *CA {
+	c := ec.GetCurve(CA_CURVE)
 	pubKey := ecdsa.PublicKey{Curve: c, X: caPubKey.H1, Y: caPubKey.H2}
 	privateKey := ecdsa.PrivateKey{PublicKey: pubKey, D: d}
 
-	return &CA{
-		verifier:   ecschnorr.NewVerifier(curve),
+	schnorrVerifier := schnorr.NewVerifier(group)
+	ca := CA{
+		verifier:   schnorrVerifier,
 		privateKey: &privateKey,
 	}
+
+	return &ca
 }
 
-func (ca *CA) GetChallenge(a, b, x *ec.GroupElement) *big.Int {
+func (ca *CA) GetChallenge(a, b, x *big.Int) *big.Int {
 	// TODO: check if b is really a valuable external user's public master key; if not, close the session
 
 	ca.a = a
 	ca.b = b
-	ca.verifier.SetProofRandomData(x, a, b)
-
-	return ca.verifier.GetChallenge()
+	base := []*big.Int{a} // only one base
+	ca.verifier.SetProofRandomData(x, base, b)
+	challenge := ca.verifier.GetChallenge()
+	return challenge
 }
 
 func (ca *CA) Verify(z *big.Int) (*CACert, error) {
-	if verified := ca.verifier.Verify(z); !verified {
+	verified := ca.verifier.Verify([]*big.Int{z})
+	if verified {
+		r := common.GetRandomInt(ca.verifier.Group.Q)
+		blindedA := ca.verifier.Group.Exp(ca.a, r)
+		blindedB := ca.verifier.Group.Exp(ca.b, r)
+		// blindedA, blindedB must be used only once (never use the same pair for two
+		// different organizations)
+
+		hashed := common.HashIntoBytes(blindedA, blindedB)
+		r, s, err := ecdsa.Sign(rand.Reader, ca.privateKey, hashed)
+		if err != nil {
+			return nil, err
+		} else {
+			return NewCACert(blindedA, blindedB, r, s), nil
+		}
+	} else {
 		return nil, fmt.Errorf("knowledge of secret was not verified")
 	}
-
-	r := common.GetRandomInt(ca.verifier.Group.Q)
-	blindedA := ca.verifier.Group.Exp(ca.a, r)
-	blindedB := ca.verifier.Group.Exp(ca.b, r)
-	// blindedA, blindedB must be used only once (never use the same pair for two
-	// different organizations)
-
-	hashed := common.HashIntoBytes(blindedA.X, blindedA.Y, blindedB.X, blindedB.Y)
-	r, s, err := ecdsa.Sign(rand.Reader, ca.privateKey, hashed)
-	if err != nil {
-		return nil, err
-	}
-
-	return NewCACert(blindedA, blindedB, r, s), nil
 }

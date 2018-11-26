@@ -17,15 +17,7 @@
 
 package test
 
-import (
-	"testing"
-
-	"io/ioutil"
-
-	"github.com/emmyzkp/emmy/anauth"
-	"github.com/stretchr/testify/assert"
-)
-
+/*
 // TestConnectionTimeout tests whether timeout of initial connection to the server is reached.
 func TestConnectionTimeout(t *testing.T) {
 	_, err := anauth.GetConnection("localhost:4321",
@@ -105,3 +97,4 @@ func TestNonexistingCertificateFromSysCertPool(t *testing.T) {
 	assert.NotNil(t, err, "should finish with error because server's test cert should"+
 		"not be in the host system's certificate pool")
 }
+*/

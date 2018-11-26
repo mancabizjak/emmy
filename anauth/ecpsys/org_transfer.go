@@ -15,18 +15,18 @@
  *
  */
 
-package ecpseudsys
+package ecpsys
 
 import (
 	"math/big"
 
 	"github.com/emmyzkp/crypto/ec"
 	"github.com/emmyzkp/crypto/ecschnorr"
-	"github.com/emmyzkp/emmy/anauth/pseudsys"
+	"github.com/emmyzkp/emmy/anauth/psys"
 )
 
 type CredVerifier struct {
-	secKey *pseudsys.SecKey
+	secKey *psys.SecKey
 
 	verifier *ecschnorr.EqualityVerifier
 	a        *ec.GroupElement
@@ -34,7 +34,7 @@ type CredVerifier struct {
 	curve    ec.Curve
 }
 
-func NewCredVerifier(secKey *pseudsys.SecKey, c ec.Curve) *CredVerifier {
+func NewCredVerifier(secKey *psys.SecKey, c ec.Curve) *CredVerifier {
 	return &CredVerifier{
 		secKey:   secKey,
 		verifier: ecschnorr.NewEqualityVerifier(c),
@@ -63,11 +63,11 @@ func (v *CredVerifier) Verify(z *big.Int,
 	g := ec.NewGroupElement(v.verifier.Group.Curve.Params().Gx,
 		v.verifier.Group.Curve.Params().Gy)
 
-	valid1 := credential.T1.Verify(ec.P256, g, orgPubKeys.H2,
+	valid1 := credential.T1.Verify(v.curve, g, orgPubKeys.H2,
 		credential.SmallBToGamma, credential.AToGamma)
 
 	aAToGamma := v.verifier.Group.Mul(credential.SmallAToGamma, credential.AToGamma)
-	valid2 := credential.T2.Verify(ec.P256, g, orgPubKeys.H1,
+	valid2 := credential.T2.Verify(v.curve, g, orgPubKeys.H1,
 		aAToGamma, credential.BToGamma)
 
 	return valid1 && valid2

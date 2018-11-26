@@ -23,7 +23,7 @@ import (
 	"fmt"
 
 	"github.com/emmyzkp/crypto/ec"
-	"github.com/emmyzkp/emmy/anauth/ecpseudsys"
+	"github.com/emmyzkp/emmy/anauth/ecpsys"
 )
 
 // Representations of specific elliptic curves to be used in elliptic cryptography based schemes.
@@ -76,7 +76,7 @@ func NewPseudonymEC(a, b *ECGroupElement) *PseudonymEC {
 }
 
 // getNativeType translates compatibility PseudonymEC to emmy's native pseudonymsys.PseudonymEC.
-func (p *PseudonymEC) getNativeType() (*ecpseudsys.Nym, error) {
+func (p *PseudonymEC) getNativeType() (*ecpsys.Nym, error) {
 	a, err := p.A.getNativeType()
 	if err != nil {
 		return nil, fmt.Errorf("nym.A: %s", ArgsConversionError)
@@ -85,7 +85,7 @@ func (p *PseudonymEC) getNativeType() (*ecpseudsys.Nym, error) {
 	if err != nil {
 		return nil, fmt.Errorf("nym.B: %s", ArgsConversionError)
 	}
-	pseudonym := ecpseudsys.NewNym(a, b)
+	pseudonym := ecpsys.NewNym(a, b)
 	return pseudonym, nil
 }
 
@@ -108,7 +108,7 @@ func NewCACertificateEC(bA, bB *ECGroupElement, r, s string) *CACertificateEC {
 }
 
 // getNativeType translates compatibility CACertificateEC to emmy's native pseudonymsys.CACertificateEC.
-func (c *CACertificateEC) getNativeType() (*ecpseudsys.CACert, error) {
+func (c *CACertificateEC) getNativeType() (*ecpsys.CACert, error) {
 	blindedA, err := c.BlindedA.getNativeType()
 	if err != nil {
 		return nil, fmt.Errorf("cert.BlindedA: %s", ArgsConversionError)
@@ -125,7 +125,7 @@ func (c *CACertificateEC) getNativeType() (*ecpseudsys.CACert, error) {
 	if !sOk {
 		return nil, fmt.Errorf("cert.S (%s): %s", c.S, ArgsConversionError)
 	}
-	certificate := ecpseudsys.NewCACert(blindedA, blindedB, r, s)
+	certificate := ecpsys.NewCACert(blindedA, blindedB, r, s)
 	return certificate, nil
 }
 
@@ -133,11 +133,11 @@ func (c *CACertificateEC) getNativeType() (*ecpseudsys.CACert, error) {
 // type restrictions of Go language binding tools. It exposes the same set of methods as
 // client.CAClient.
 type PseudonymsysCAClientEC struct {
-	*ecpseudsys.CAClient
+	*ecpsys.CAClient
 }
 
 func NewPseudonymsysCAClientEC(conn *Connection, curve int) (*PseudonymsysCAClientEC, error) {
-	c, err := ecpseudsys.NewCAClient(conn.ClientConn, ec.Curve(curve))
+	c, err := ecpsys.NewCAClient(conn.ClientConn, ec.Curve(curve))
 	if err != nil {
 		return nil, err
 	}

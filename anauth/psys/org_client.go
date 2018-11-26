@@ -15,7 +15,7 @@
  *
  */
 
-package pseudsys
+package psys
 
 import (
 	"fmt"
@@ -25,7 +25,7 @@ import (
 
 	"github.com/emmyzkp/crypto/common"
 	"github.com/emmyzkp/crypto/schnorr"
-	pb "github.com/emmyzkp/emmy/anauth/pseudsys/psyspb"
+	pb "github.com/emmyzkp/emmy/anauth/psys/psyspb"
 	"google.golang.org/grpc"
 )
 

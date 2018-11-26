@@ -15,7 +15,7 @@
  *
  */
 
-package ecpseudsys
+package ecpsys
 
 import (
 	"crypto/ecdsa"
@@ -25,7 +25,7 @@ import (
 	"github.com/emmyzkp/crypto/common"
 	"github.com/emmyzkp/crypto/ec"
 	"github.com/emmyzkp/crypto/ecschnorr"
-	"github.com/emmyzkp/emmy/anauth/pseudsys"
+	"github.com/emmyzkp/emmy/anauth/psys"
 )
 
 // Nym represents a pseudonym in the pseudonym system scheme.
@@ -43,11 +43,11 @@ func NewNym(a, b *ec.GroupElement) *Nym {
 
 type NymGenerator struct {
 	verifier  *ecschnorr.EqualityVerifier
-	caPubKey  *pseudsys.PubKey
+	caPubKey  *psys.PubKey
 	curveType ec.Curve
 }
 
-func NewNymGenerator(pubKey *pseudsys.PubKey, c ec.Curve) *NymGenerator {
+func NewNymGenerator(pubKey *psys.PubKey, c ec.Curve) *NymGenerator {
 	return &NymGenerator{
 		verifier:  ecschnorr.NewEqualityVerifier(c),
 		caPubKey:  pubKey,

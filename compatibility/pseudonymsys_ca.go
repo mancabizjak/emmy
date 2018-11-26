@@ -22,7 +22,7 @@ import (
 
 	"fmt"
 
-	"github.com/emmyzkp/emmy/anauth/pseudsys"
+	"github.com/emmyzkp/emmy/anauth/psys"
 )
 
 // Pseudonym represents an equivalent of pseudsys.Nym, but has string
@@ -40,14 +40,14 @@ func NewPseudonym(a, b string) *Pseudonym {
 }
 
 // getNativeType translates compatibility Nym to emmy's native pseudsys.Nym.
-func (p *Pseudonym) getNativeType() (*pseudsys.Nym, error) {
+func (p *Pseudonym) getNativeType() (*psys.Nym, error) {
 	a, aOk := new(big.Int).SetString(p.A, 10)
 	b, bOk := new(big.Int).SetString(p.B, 10)
 	if !aOk || !bOk {
 		return nil, fmt.Errorf("nym.A or nym.B: %s", ArgsConversionError)
 	}
 
-	pseudonym := pseudsys.NewNym(a, b)
+	pseudonym := psys.NewNym(a, b)
 	return pseudonym, nil
 }
 
@@ -69,7 +69,7 @@ func NewCACertificate(blindedA, blindedB, r, s string) *CACertificate {
 	}
 }
 
-func (c *CACertificate) toNativeType() (*pseudsys.CACert, error) {
+func (c *CACertificate) toNativeType() (*psys.CACert, error) {
 	blindedA, blindedAOk := new(big.Int).SetString(c.BlindedA, 10)
 	blindedB, blindedBOk := new(big.Int).SetString(c.BlindedB, 10)
 	r, rOk := new(big.Int).SetString(c.R, 10)
@@ -79,7 +79,7 @@ func (c *CACertificate) toNativeType() (*pseudsys.CACert, error) {
 			ArgsConversionError)
 	}
 
-	certificate := pseudsys.NewCACert(blindedA, blindedB, r, s)
+	certificate := psys.NewCACert(blindedA, blindedB, r, s)
 	return certificate, nil
 }
 
@@ -87,7 +87,7 @@ func (c *CACertificate) toNativeType() (*pseudsys.CACert, error) {
 // type restrictions of Go language binding tools. It exposes the same set of methods as
 // client.CAClient.
 type PseudonymsysCAClient struct {
-	*pseudsys.CAClient
+	*psys.CAClient
 }
 
 func NewPseudonymsysCAClient(conn *Connection, g *SchnorrGroup) (*PseudonymsysCAClient, error) {
@@ -97,7 +97,7 @@ func NewPseudonymsysCAClient(conn *Connection, g *SchnorrGroup) (*PseudonymsysCA
 		return nil, err
 	}
 
-	c, err := pseudsys.NewCAClient(conn.ClientConn, group)
+	c, err := psys.NewCAClient(conn.ClientConn, group)
 	if err != nil {
 		return nil, err
 	}

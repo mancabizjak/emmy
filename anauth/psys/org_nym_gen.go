@@ -15,7 +15,7 @@
  *
  */
 
-package pseudsys
+package psys
 
 import (
 	"crypto/ecdsa"

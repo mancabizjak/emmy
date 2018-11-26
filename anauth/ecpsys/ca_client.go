@@ -15,67 +15,61 @@
  *
  */
 
-package pseudsys
+package ecpsys
 
 import (
 	"math/big"
 
 	"context"
 
-	"github.com/emmyzkp/crypto/schnorr"
-	pb "github.com/emmyzkp/emmy/anauth/pseudsys/psyspb"
+	"github.com/emmyzkp/crypto/ec"
+	"github.com/emmyzkp/crypto/ecschnorr"
+	pb "github.com/emmyzkp/emmy/anauth/ecpsys/ecpsyspb"
 	"google.golang.org/grpc"
 )
 
 type CAClient struct {
-	pb.CAClient
-	group *schnorr.Group
-	//prover *schnorr.Prover // TODO do we need it?
+	pb.CA_ECClient
+	curve  ec.Curve
+	prover *ecschnorr.Prover
 }
 
-func NewCAClient(conn *grpc.ClientConn,
-	group *schnorr.Group) (*CAClient, error) {
+func NewCAClient(conn *grpc.ClientConn, curve ec.Curve) (*CAClient, error) {
 	return &CAClient{
-		CAClient: pb.NewCAClient(conn),
-		group:    group,
-		// prover?
+		CA_ECClient: pb.NewCA_ECClient(conn),
+		curve:       curve,
+		prover:      ecschnorr.NewProver(curve),
 	}, nil
 }
 
 // GenerateMasterNym generates a master pseudonym to be used with GenerateCertificate.
 func (c *CAClient) GenerateMasterNym(secret *big.Int) *Nym {
-	p := c.group.Exp(c.group.G, secret)
-	return NewNym(c.group.G, p)
+	group := ec.NewGroup(c.curve)
+	a := ec.NewGroupElement(group.Curve.Params().Gx, group.Curve.Params().Gy)
+	b := group.Exp(a, secret)
+	return NewNym(a, b)
 }
 
 // GenerateCertificate provides a certificate from trusted CA to the user. Note that CA
 // needs to know the user. The certificate is then used for registering pseudonym (nym).
 // The certificate contains blinded user's master key pair and a signature of it.
-func (c *CAClient) GenerateCertificate(userSecret *big.Int, nym *Nym) (
-	*CACert, error) {
-	stream, err := c.CAClient.GenerateCertificate(context.Background())
+func (c *CAClient) GenerateCertificate(userSecret *big.Int, nym *Nym) (*CACert, error) {
+	stream, err := c.CA_ECClient.GenerateCertificate(context.Background())
 	if err != nil {
 		return nil, err
 	}
 
-	prover, err := schnorr.NewProver(c.group, []*big.Int{userSecret}, []*big.Int{nym.A}, nym.B)
-	if err != nil {
-		return nil, err
-	}
-	//c.prover = prover
-	x := prover.GetProofRandomData()
-	b := prover.Group.Exp(nym.A, userSecret)
+	x := c.prover.GetProofRandomData(userSecret, nym.A)
 
-	if err := stream.Send(
-		&pb.CARequest{
-			Type: &pb.CARequest_ProofRandData{
-				ProofRandData: &pb.ProofRandData{
-					X: x.Bytes(),
-					A: nym.A.Bytes(),
-					B: b.Bytes(),
-				},
+	if err := stream.Send(&pb.CARequest{
+		Type: &pb.CARequest_ProofRandData{
+			ProofRandData: &pb.ProofRandData{
+				X: toPbECGroupElement(x),
+				A: toPbECGroupElement(nym.A),
+				B: toPbECGroupElement(nym.B),
 			},
-		}); err != nil {
+		},
+	}); err != nil {
 		return nil, err
 	}
 
@@ -84,8 +78,8 @@ func (c *CAClient) GenerateCertificate(userSecret *big.Int, nym *Nym) (
 		return nil, err
 	}
 
-	challenge := new(big.Int).SetBytes(resp.GetChallenge())
-	z := prover.GetProofData(challenge)[0]
+	ch := new(big.Int).SetBytes(resp.GetChallenge())
+	z := c.prover.GetProofData(ch)
 
 	if err := stream.Send(&pb.CARequest{
 		Type: &pb.CARequest_ProofData{
@@ -100,14 +94,22 @@ func (c *CAClient) GenerateCertificate(userSecret *big.Int, nym *Nym) (
 		return nil, err
 	}
 
+	// TODO does it affect recv?
 	if err := stream.CloseSend(); err != nil {
 		return nil, err
 	}
 
 	cert := resp.GetCert()
 	return NewCACert(
-		new(big.Int).SetBytes(cert.BlindedA),
-		new(big.Int).SetBytes(cert.BlindedB),
+		toECGroupElement(cert.BlindedA),
+		toECGroupElement(cert.BlindedB),
 		new(big.Int).SetBytes(cert.R),
 		new(big.Int).SetBytes(cert.S)), nil
+}
+
+func toPbECGroupElement(el *ec.GroupElement) *pb.ECGroupElement {
+	return &pb.ECGroupElement{
+		X: el.X.Bytes(),
+		Y: el.Y.Bytes(),
+	}
 }

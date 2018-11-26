@@ -15,7 +15,7 @@
  *
  */
 
-package pseudsys
+package psys
 
 import (
 	"math/big"

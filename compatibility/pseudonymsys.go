@@ -22,7 +22,7 @@ import (
 	"math/big"
 
 	"github.com/emmyzkp/crypto/schnorr"
-	"github.com/emmyzkp/emmy/anauth/pseudsys"
+	"github.com/emmyzkp/emmy/anauth/psys"
 )
 
 // Credential represents an equivalent of pseudsys.Cred,
@@ -50,7 +50,7 @@ func NewCredential(aToGamma, bToGamma, AToGamma, BToGamma string,
 }
 
 // getNativeType translates compatibility Credential to emmy's native pseudsys.Cred.
-func (c *Credential) getNativeType() (*pseudsys.Cred, error) {
+func (c *Credential) getNativeType() (*psys.Cred, error) {
 	atG, atGOk := new(big.Int).SetString(c.SmallAToGamma, 10)
 	btG, btGOk := new(big.Int).SetString(c.SmallBToGamma, 10)
 	AtG, AtGOk := new(big.Int).SetString(c.AToGamma, 10)
@@ -67,7 +67,7 @@ func (c *Credential) getNativeType() (*pseudsys.Cred, error) {
 		return nil, fmt.Errorf("credential.T2: %s", err)
 	}
 
-	cred := pseudsys.NewCred(atG, btG, AtG, BtG, t1, t2)
+	cred := psys.NewCred(atG, btG, AtG, BtG, t1, t2)
 	return cred, nil
 }
 
@@ -86,14 +86,14 @@ func NewPubKey(h1, h2 string) *PubKey {
 }
 
 // getNativeType translates compatibility PubKey to emmy's native pseudsys.PubKey.
-func (k *PubKey) getNativeType() (*pseudsys.PubKey, error) {
+func (k *PubKey) getNativeType() (*psys.PubKey, error) {
 	h1, h1Ok := new(big.Int).SetString(k.H1, 10)
 	h2, h2Ok := new(big.Int).SetString(k.H2, 10)
 	if !h1Ok || !h2Ok {
 		return nil, fmt.Errorf("pubKey.h1 or pubKey.h2: %s", ArgsConversionError)
 	}
 
-	return pseudsys.NewPubKey(h1, h2), nil
+	return psys.NewPubKey(h1, h2), nil
 }
 
 // Transcript represents an equivalent of schnorr.BlindedTrans, but has string
@@ -132,7 +132,7 @@ func (t *Transcript) getNativeType() (*schnorr.BlindedTrans, error) {
 // type restrictions of Go language binding tools. It exposes the same set of methods as
 // client.Client.
 type PseudonymsysClient struct {
-	*pseudsys.Client
+	*psys.Client
 }
 
 func NewPseudonymsysClient(conn *Connection, g *SchnorrGroup) (*PseudonymsysClient, error) {
@@ -142,7 +142,7 @@ func NewPseudonymsysClient(conn *Connection, g *SchnorrGroup) (*PseudonymsysClie
 		return nil, err
 	}
 
-	c, err := pseudsys.NewClient(conn.ClientConn, group)
+	c, err := psys.NewClient(conn.ClientConn, group)
 	if err != nil {
 		return nil, err
 	}

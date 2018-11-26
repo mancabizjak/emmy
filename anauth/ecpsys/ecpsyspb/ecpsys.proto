@@ -18,9 +18,9 @@
 syntax = "proto3";
 
 package ecpsyspb;
-option go_package = "github.com/emmyzkp/emmy/schemes/ecpseudsys/ecpsyspb";
+option go_package = "github.com/emmyzkp/emmy/anauth/ecpsys/ecpsyspb";
 
-import "schemes/pseudsys/psyspb/pseudsys.proto";
+import "anauth/psys/psyspb/psys.proto";
 
 service CA_EC {
     rpc GenerateCertificate(stream CARequest) returns (stream CAResponse) {}

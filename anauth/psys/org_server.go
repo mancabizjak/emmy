@@ -15,14 +15,14 @@
  *
  */
 
-package pseudsys
+package psys
 
 import (
 	"math/big"
 
 	"github.com/emmyzkp/crypto/schnorr"
 	"github.com/emmyzkp/emmy/anauth"
-	pb "github.com/emmyzkp/emmy/anauth/pseudsys/psyspb"
+	pb "github.com/emmyzkp/emmy/anauth/psys/psyspb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

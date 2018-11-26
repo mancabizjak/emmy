@@ -15,7 +15,7 @@
  *
  */
 
-package ecpseudsys
+package ecpsys
 
 import (
 	"math/big"
@@ -24,7 +24,7 @@ import (
 
 	"github.com/emmyzkp/crypto/ec"
 	"github.com/emmyzkp/crypto/ecschnorr"
-	"github.com/emmyzkp/emmy/anauth/pseudsys"
+	"github.com/emmyzkp/emmy/anauth/psys"
 )
 
 type Cred struct {
@@ -49,7 +49,7 @@ func NewCred(aToGamma, bToGamma, AToGamma, BToGamma *ec.GroupElement,
 }
 
 type CredIssuer struct {
-	secKey *pseudsys.SecKey
+	secKey *psys.SecKey
 
 	// the following fields are needed for issuing a credential
 	verifier *ecschnorr.Verifier
@@ -59,7 +59,7 @@ type CredIssuer struct {
 	b        *ec.GroupElement
 }
 
-func NewCredIssuer(secKey *pseudsys.SecKey, curveType ec.Curve) *CredIssuer {
+func NewCredIssuer(secKey *psys.SecKey, curveType ec.Curve) *CredIssuer {
 	// g1 = a_tilde, t1 = b_tilde,
 	// g2 = a, t2 = b
 	return &CredIssuer{

@@ -24,7 +24,7 @@ import (
 
 	"github.com/emmyzkp/crypto/ec"
 	"github.com/emmyzkp/crypto/ecschnorr"
-	"github.com/emmyzkp/emmy/anauth/ecpseudsys"
+	"github.com/emmyzkp/emmy/anauth/ecpsys"
 )
 
 // PubKeyEC represents an equivalent of ecpseudsys.PubKeyEC,
@@ -42,7 +42,7 @@ func NewPubKeyEC(h1, h2 *ECGroupElement) *PubKeyEC {
 }
 
 // getNativeType translates compatibility PubKeyEC to emmy's native ecpseudsys.PubKeyEC.
-func (k *PubKeyEC) getNativeType() (*ecpseudsys.PubKey, error) {
+func (k *PubKeyEC) getNativeType() (*ecpsys.PubKey, error) {
 	h1, err := k.H1.getNativeType()
 	if err != nil {
 		return nil, fmt.Errorf("pubKey.H1: %s", err)
@@ -52,7 +52,7 @@ func (k *PubKeyEC) getNativeType() (*ecpseudsys.PubKey, error) {
 		return nil, fmt.Errorf("pubKey.H2: %s", err)
 	}
 
-	return ecpseudsys.NewPubKey(h1, h2), nil
+	return ecpsys.NewPubKey(h1, h2), nil
 }
 
 // TranscriptEC represents an equivalent of ecschnorr.BlindedTrans, but has string
@@ -118,7 +118,7 @@ func NewCredentialEC(aToGamma, bToGamma, AToGamma, BToGamma *ECGroupElement,
 }
 
 // getNativeType translates compatibility CredentialEC to emmy's native ecpseudsys.Cred.
-func (c *CredentialEC) getNativeType() (*ecpseudsys.Cred, error) {
+func (c *CredentialEC) getNativeType() (*ecpsys.Cred, error) {
 	aTg, err := c.SmallAToGamma.getNativeType()
 	if err != nil {
 		return nil, fmt.Errorf("credential.SmallAToGamma: %s", err)
@@ -147,7 +147,7 @@ func (c *CredentialEC) getNativeType() (*ecpseudsys.Cred, error) {
 	if err != nil {
 		return nil, fmt.Errorf("credential.T2: %s", err)
 	}
-	cred := ecpseudsys.NewCred(aTg, bTg, ATg, BTg, t1, t2)
+	cred := ecpsys.NewCred(aTg, bTg, ATg, BTg, t1, t2)
 	return cred, nil
 }
 
@@ -155,11 +155,11 @@ func (c *CredentialEC) getNativeType() (*ecpseudsys.Cred, error) {
 // type restrictions of Go language binding tools. It exposes the same set of methods as
 // client.Client.
 type PseudonymsysClientEC struct {
-	*ecpseudsys.Client
+	*ecpsys.Client
 }
 
 func NewPseudonymsysClientEC(conn *Connection, curve int) (*PseudonymsysClientEC, error) {
-	c, err := ecpseudsys.NewClient(conn.ClientConn, ec.Curve(curve))
+	c, err := ecpsys.NewClient(conn.ClientConn, ec.Curve(curve))
 	if err != nil {
 		return nil, err
 	}

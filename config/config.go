@@ -17,7 +17,12 @@
 
 package config
 
-/*
+import (
+	"fmt"
+
+	"github.com/spf13/viper"
+)
+
 // init loads the default config file
 func init() {
 	// set reasonable defaults
@@ -75,8 +80,9 @@ func loadConfig(configName string, configType string) error {
 
 	return nil
 }
-*/
+
 /*
+
 // LoadServerPort returns the port where emmy server will be listening.
 func LoadServerPort() int {
 	return viper.GetInt("port")
@@ -109,15 +115,9 @@ func LoadTestKeyDirFromConfig() string {
 	key_path := viper.GetString("key_folder")
 	return key_path
 }
+*/
 
-func LoadSchnorrGroup() *schnorr.Group {
-	groupMap := viper.GetStringMapString("schnorr_group")
-	p, _ := new(big.Int).SetString(groupMap["p"], 10)
-	g, _ := new(big.Int).SetString(groupMap["g"], 10)
-	q, _ := new(big.Int).SetString(groupMap["q"], 10)
-	return schnorr.NewGroupFromParams(p, g, q)
-}
-
+/*
 func LoadQRRSA() *qr.RSA {
 	x := viper.GetStringMapString("qr")
 	p, _ := new(big.Int).SetString(x["p"], 10)
@@ -127,47 +127,9 @@ func LoadQRRSA() *qr.RSA {
 		panic(fmt.Errorf("error when loading RSA group: %s\n", err))
 	}
 	return qr
-}
+}*/
 
-func LoadPseudonymsysOrgSecrets(orgName, dlogType string) *pseudsys.SecKey {
-	org := viper.GetStringMap(fmt.Sprintf("pseudonymsys.%s.%s", orgName, dlogType))
-	s1, _ := new(big.Int).SetString(org["s1"].(string), 10)
-	s2, _ := new(big.Int).SetString(org["s2"].(string), 10)
-	return pseudsys.NewSecKey(s1, s2)
-}
-
-func LoadPseudonymsysOrgPubKeys(orgName string) *pseudsys.PubKey {
-	org := viper.GetStringMap(fmt.Sprintf("pseudonymsys.%s.%s", orgName, "dlog"))
-	h1, _ := new(big.Int).SetString(org["h1"].(string), 10)
-	h2, _ := new(big.Int).SetString(org["h2"].(string), 10)
-	return pseudsys.NewPubKey(h1, h2)
-}
-
-func LoadPseudonymsysOrgPubKeysEC(orgName string) *ecpseudsys.PubKey {
-	org := viper.GetStringMap(fmt.Sprintf("pseudonymsys.%s.%s", orgName, "ecdlog"))
-	h1X, _ := new(big.Int).SetString(org["h1x"].(string), 10)
-	h1Y, _ := new(big.Int).SetString(org["h1y"].(string), 10)
-	h2X, _ := new(big.Int).SetString(org["h2x"].(string), 10)
-	h2Y, _ := new(big.Int).SetString(org["h2y"].(string), 10)
-	return ecpseudsys.NewPubKey(
-		ec.NewGroupElement(h1X, h1Y),
-		ec.NewGroupElement(h2X, h2Y),
-	)
-}
-
-func LoadPseudonymsysCASecret() *big.Int {
-	ca := viper.GetStringMap("pseudonymsys.ca")
-	s, _ := new(big.Int).SetString(ca["d"].(string), 10)
-	return s
-}
-
-func LoadPseudonymsysCAPubKey() *pseudsys.PubKey {
-	ca := viper.GetStringMap("pseudonymsys.ca")
-	x, _ := new(big.Int).SetString(ca["x"].(string), 10)
-	y, _ := new(big.Int).SetString(ca["y1"].(string), 10)
-	return pseudsys.NewPubKey(x, y)
-}
-
+/*
 func LoadServiceInfo() (string, string, string) {
 	serviceName := viper.GetString("service_info.name")
 	serviceProvider := viper.GetString("service_info.provider")
@@ -181,5 +143,4 @@ func LoadSessionKeyMinByteLen() int {
 
 func LoadRegistrationDBAddress() string {
 	return viper.GetString("registration_db_address")
-}
-*/
+}*/
