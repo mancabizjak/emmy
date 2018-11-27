@@ -95,6 +95,7 @@ func testEndToEndPsys(t *testing.T, conn *grpc.ClientConn, g *schnorr.Group,
 
 	nym1, err := c1.GenerateNym(userSecret, caCert, "testRegKey1")
 	if err != nil {
+		fmt.Println("STUFF NOT WORKING - GENERATE NIM", err)
 		t.Errorf(err.Error())
 	}
 
