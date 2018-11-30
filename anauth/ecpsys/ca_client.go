@@ -18,6 +18,7 @@
 package ecpsys
 
 import (
+	"fmt"
 	"math/big"
 
 	"context"
@@ -34,12 +35,16 @@ type CAClient struct {
 	prover *ecschnorr.Prover
 }
 
-func NewCAClient(conn *grpc.ClientConn, curve ec.Curve) (*CAClient, error) {
+func NewCAClient(curve ec.Curve) *CAClient {
 	return &CAClient{
-		CA_ECClient: pb.NewCA_ECClient(conn),
-		curve:       curve,
-		prover:      ecschnorr.NewProver(curve),
-	}, nil
+		curve:  curve,
+		prover: ecschnorr.NewProver(curve),
+	}
+}
+
+func (c *CAClient) Connect(conn *grpc.ClientConn) *CAClient {
+	c.CA_ECClient = pb.NewCA_ECClient(conn)
+	return c
 }
 
 // GenerateMasterNym generates a master pseudonym to be used with GenerateCertificate.
@@ -54,6 +59,10 @@ func (c *CAClient) GenerateMasterNym(secret *big.Int) *Nym {
 // needs to know the user. The certificate is then used for registering pseudonym (nym).
 // The certificate contains blinded user's master key pair and a signature of it.
 func (c *CAClient) GenerateCertificate(userSecret *big.Int, nym *Nym) (*CACert, error) {
+	if c.CA_ECClient == nil {
+		return nil, fmt.Errorf("client is not connected")
+	}
+
 	stream, err := c.CA_ECClient.GenerateCertificate(context.Background())
 	if err != nil {
 		return nil, err

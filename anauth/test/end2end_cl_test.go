@@ -82,10 +82,7 @@ func testEndToEndCL(t *testing.T, params *cl.Params, attrs *cl.Attrs) {
 	if err != nil {
 		t.Errorf("cannot establish connection to test server: %v", err)
 	}
-	client, err := cl.NewClient(conn)
-	if err != nil {
-		t.Errorf("Error when initializing NewClient")
-	}
+	client := cl.NewClient(conn)
 
 	cred, err := client.IssueCredential(cm)
 	if err != nil {

@@ -70,16 +70,15 @@ func testEndToEndECPsys(t *testing.T, c ec.Curve, caSk *big.Int,
 		t.Errorf("cannot establish connection to test server: %v", err)
 	}
 
-	caClient, err := ecpsys.NewCAClient(conn, c)
-	if err != nil {
-		t.Errorf("Error when initializing NewPseudonymsysCAClientEC")
-	}
+	caClient := ecpsys.NewCAClient(c)
 
 	// usually the endpoint is different from the one used for CA:
 	c1, _ := ecpsys.NewClient(conn, c)
 	userSecret := c1.GenerateMasterKey()
 
 	masterNym := caClient.GenerateMasterNym(userSecret)
+
+	caClient.Connect(conn)
 	caCert, err := caClient.GenerateCertificate(userSecret, masterNym)
 	if err != nil {
 		t.Errorf("Error when registering with CA: %s", err.Error())
@@ -107,11 +106,8 @@ func testEndToEndECPsys(t *testing.T, c ec.Curve, caSk *big.Int,
 
 	// register with org2
 	// create a client to communicate with org2
-	caClient1, _ := ecpsys.NewCAClient(conn, c)
+	caClient1 := ecpsys.NewCAClient(c).Connect(conn)
 	caCert1, err := caClient1.GenerateCertificate(userSecret, masterNym)
-	if err != nil {
-		t.Errorf("Error when registering with CA")
-	}
 
 	// c2 connects to the same server as c1, so what we're really testing here is
 	// using transferCredential to authenticate with the same organization and not

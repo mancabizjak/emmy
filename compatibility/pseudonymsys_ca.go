@@ -90,21 +90,20 @@ type PseudonymsysCAClient struct {
 	*psys.CAClient
 }
 
-func NewPseudonymsysCAClient(conn *Connection, g *SchnorrGroup) (*PseudonymsysCAClient, error) {
+func NewPseudonymsysCAClient(g *SchnorrGroup) (*PseudonymsysCAClient, error) {
 	// Translate SchnorrGroup
 	group, err := g.toNativeType()
 	if err != nil {
 		return nil, err
 	}
 
-	c, err := psys.NewCAClient(conn.ClientConn, group)
-	if err != nil {
-		return nil, err
-	}
-
 	return &PseudonymsysCAClient{
-		CAClient: c,
+		CAClient: psys.NewCAClient(group),
 	}, nil
+}
+
+func (c *PseudonymsysCAClient) Connect(conn *Connection) {
+	c.CAClient.Connect(conn.ClientConn)
 }
 
 func (c *PseudonymsysCAClient) GenerateMasterNym(secret string) (*Pseudonym, error) {

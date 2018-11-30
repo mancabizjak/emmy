@@ -74,16 +74,15 @@ func TestEndToEnd_Psys(t *testing.T) {
 func testEndToEndPsys(t *testing.T, conn *grpc.ClientConn, g *schnorr.Group,
 	pk *psys.PubKey) {
 
-	caClient, err := psys.NewCAClient(conn, g)
-	if err != nil {
-		t.Errorf("Error when initializing CAClient")
-	}
+	caClient := psys.NewCAClient(g)
 
 	// usually the endpoint is different from the one used for CA:
 	c1, err := psys.NewClient(conn, g)
 	userSecret := c1.GenerateMasterKey()
 
 	masterNym := caClient.GenerateMasterNym(userSecret)
+
+	caClient.Connect(conn)
 	caCert, err := caClient.GenerateCertificate(userSecret, masterNym)
 	if err != nil {
 		t.Errorf("Error when registering with CA")
@@ -111,7 +110,7 @@ func testEndToEndPsys(t *testing.T, conn *grpc.ClientConn, g *schnorr.Group,
 
 	// register with org2
 	// create a client to communicate with org2
-	caClient1, err := psys.NewCAClient(conn, g)
+	caClient1 := psys.NewCAClient(g).Connect(conn)
 	caCert1, err := caClient1.GenerateCertificate(userSecret, masterNym)
 	if err != nil {
 		t.Errorf("Error when registering with CA: %s", err.Error())

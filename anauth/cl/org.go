@@ -41,7 +41,7 @@ type Org struct {
 	nymVerifier        *schnorr.Verifier
 	U                  *big.Int
 	UVerifier          *qr.RepresentationVerifier
-	Keys 			   *KeyPair
+	Keys               *KeyPair
 	commitmentsOfAttrs []*big.Int
 	knownAttrs         []*big.Int
 	attrsVerifiers     []*df.OpeningVerifier // user proves the knowledge of commitment opening (committedAttrs)
@@ -77,7 +77,7 @@ func NewOrgFromParams(params *Params, keys *KeyPair) (*Org, error) {
 
 	return &Org{
 		Params:           params,
-		Keys: 			  keys,
+		Keys:             keys,
 		Group:            group,
 		pedersenReceiver: pedersenReceiver,
 	}, nil
@@ -312,6 +312,7 @@ type Cred struct {
 }
 
 func NewCred(A, e, v11 *big.Int) *Cred {
+	A.Bytes()
 	return &Cred{
 		A:   A,
 		E:   e,

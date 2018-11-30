@@ -21,54 +21,28 @@ import (
 	"fmt"
 	"math/big"
 
-	"context"
-
 	"github.com/emmyzkp/crypto/common"
 	"github.com/emmyzkp/crypto/qr"
 	pb "github.com/emmyzkp/emmy/anauth/cl/clpb"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 
 type Client struct {
-	pb.AnonCredsClient
+	pb.AnonCredsClient // TODO fix my name
 }
 
-func NewClient(conn *grpc.ClientConn) (*Client, error) {
+func NewClient(conn *grpc.ClientConn) *Client {
 	return &Client{
 		AnonCredsClient: pb.NewAnonCredsClient(conn),
-	}, nil
+	}
 }
 
-func filterSlice(s []*big.Int, revealed []int) []*big.Int {
-	var res []*big.Int
-	for i := 0; i < len(s); i++ {
-		if common.Contains(revealed, i) {
-			res = append(res, s[i])
-		}
+func (c *Client) IssueCredential(cm *CredManager) (*Cred, error) {
+	if c.AnonCredsClient == nil {
+		return nil, fmt.Errorf("client is not connected")
 	}
 
-	return res
-}
-
-func toByteSlices(s []*big.Int) [][]byte {
-	res := make([][]byte, len(s))
-	for i, si := range s {
-		res[i] = si.Bytes()
-	}
-
-	return res
-}
-
-func toStringSlices(s []*big.Int) []string {
-	res := make([]string, len(s))
-	for i, p := range s {
-		res[i] = p.String()
-	}
-
-	return res
-}
-
-func (c *Client) IssueCredential(credManager *CredManager) (*Cred, error) {
 	stream, err := c.AnonCredsClient.Issue(context.Background())
 	if err != nil {
 		return nil, err
@@ -84,7 +58,7 @@ func (c *Client) IssueCredential(credManager *CredManager) (*Cred, error) {
 	}
 
 	credIssueNonceOrg := new(big.Int).SetBytes(resp.GetNonce())
-	credReq, err := credManager.GetCredRequest(credIssueNonceOrg)
+	credReq, err := cm.GetCredRequest(credIssueNonceOrg)
 	if err != nil {
 		return nil, err
 	}
@@ -160,7 +134,7 @@ func (c *Client) IssueCredential(credManager *CredManager) (*Cred, error) {
 		return nil, err
 	}
 
-	userVerified, err := credManager.Verify(cred, AProof)
+	userVerified, err := cm.Verify(cred, AProof)
 	if err != nil {
 		return nil, err
 	}
@@ -176,13 +150,17 @@ func (c *Client) IssueCredential(credManager *CredManager) (*Cred, error) {
 	return nil, fmt.Errorf("credential not valid")
 }
 
-func (c *Client) UpdateCredential(credManager *CredManager, newKnownAttrs []*big.Int) (*Cred,
+func (c *Client) UpdateCredential(cm *CredManager, newKnownAttrs []*big.Int) (*Cred,
 	error) {
-	credManager.Update(newKnownAttrs)
+	if c.AnonCredsClient == nil {
+		return nil, fmt.Errorf("client is not connected")
+	}
+
+	cm.Update(newKnownAttrs)
 
 	req := &pb.CredUpdateRequest{
-		Nym:           credManager.Nym.Bytes(),
-		Nonce:         credManager.CredReqNonce.Bytes(),
+		Nym:           cm.Nym.Bytes(),
+		Nonce:         cm.CredReqNonce.Bytes(),
 		NewKnownAttrs: toByteSlices(newKnownAttrs),
 	}
 
@@ -207,7 +185,7 @@ func (c *Client) UpdateCredential(credManager *CredManager, newKnownAttrs []*big
 		[]*big.Int{si},
 	)
 
-	userVerified, err := credManager.Verify(cred, AProof)
+	userVerified, err := cm.Verify(cred, AProof)
 	if err != nil {
 		return nil, err
 	}
@@ -223,8 +201,12 @@ func (c *Client) UpdateCredential(credManager *CredManager, newKnownAttrs []*big
 // to reveal. Which knownAttrs and commitmentsOfAttrs are to be revealed are given by revealedKnownAttrsIndices and
 // revealedCommitmentsOfAttrsIndices parameters. All knownAttrs and commitmentsOfAttrs should be passed into
 // ProveCred - only those which are revealed are then passed to the server.
-func (c *Client) ProveCredential(credManager *CredManager, cred *Cred,
+func (c *Client) ProveCredential(cm *CredManager, cred *Cred,
 	knownAttrs []*big.Int, revealedKnownAttrsIndices, revealedCommitmentsOfAttrsIndices []int) (bool, error) {
+	if c.AnonCredsClient == nil {
+		return false, fmt.Errorf("client is not connected")
+	}
+
 	stream, err := c.AnonCredsClient.Prove(context.Background())
 	if err != nil {
 		return false, err
@@ -240,14 +222,14 @@ func (c *Client) ProveCredential(credManager *CredManager, cred *Cred,
 	}
 	nonce := new(big.Int).SetBytes(resp.GetNonce())
 
-	randCred, proof, err := credManager.BuildProof(cred, revealedKnownAttrsIndices,
+	randCred, proof, err := cm.BuildProof(cred, revealedKnownAttrsIndices,
 		revealedCommitmentsOfAttrsIndices, nonce)
 	if err != nil {
 		return false, fmt.Errorf("error when building credential proof: %v", err)
 	}
 
 	filteredKnownAttrs := filterSlice(knownAttrs, revealedKnownAttrsIndices)
-	filteredCommitmentsOfAttrs := filterSlice(credManager.CommitmentsOfAttrs, revealedCommitmentsOfAttrsIndices)
+	filteredCommitmentsOfAttrs := filterSlice(cm.CommitmentsOfAttrs, revealedCommitmentsOfAttrsIndices)
 
 	revealedKnownAttrs := make([]int32, len(revealedKnownAttrsIndices))
 	for i, a := range revealedKnownAttrsIndices {
@@ -298,4 +280,33 @@ func emptyRequest() *pb.Request {
 			Empty: &pb.Empty{},
 		},
 	}
+}
+
+func filterSlice(s []*big.Int, revealed []int) []*big.Int {
+	var res []*big.Int
+	for i := 0; i < len(s); i++ {
+		if common.Contains(revealed, i) {
+			res = append(res, s[i])
+		}
+	}
+
+	return res
+}
+
+func toByteSlices(s []*big.Int) [][]byte {
+	res := make([][]byte, len(s))
+	for i, si := range s {
+		res[i] = si.Bytes()
+	}
+
+	return res
+}
+
+func toStringSlices(s []*big.Int) []string {
+	res := make([]string, len(s))
+	for i, p := range s {
+		res[i] = p.String()
+	}
+
+	return res
 }

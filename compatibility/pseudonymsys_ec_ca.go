@@ -136,15 +136,14 @@ type PseudonymsysCAClientEC struct {
 	*ecpsys.CAClient
 }
 
-func NewPseudonymsysCAClientEC(conn *Connection, curve int) (*PseudonymsysCAClientEC, error) {
-	c, err := ecpsys.NewCAClient(conn.ClientConn, ec.Curve(curve))
-	if err != nil {
-		return nil, err
-	}
-
+func NewPseudonymsysCAClientEC(curve int) *PseudonymsysCAClientEC {
 	return &PseudonymsysCAClientEC{
-		CAClient: c,
-	}, nil
+		CAClient: ecpsys.NewCAClient(ec.Curve(curve)),
+	}
+}
+
+func (c *PseudonymsysCAClientEC) Connect(conn *Connection) {
+	c.CAClient.Connect(conn.ClientConn)
 }
 
 func (c *PseudonymsysCAClientEC) GenerateMasterNym(secret string, curve int) (*PseudonymEC,

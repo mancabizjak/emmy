@@ -18,6 +18,7 @@
 package psys
 
 import (
+	"fmt"
 	"math/big"
 
 	"context"
@@ -33,13 +34,17 @@ type CAClient struct {
 	//prover *schnorr.Prover // TODO do we need it?
 }
 
-func NewCAClient(conn *grpc.ClientConn,
-	group *schnorr.Group) (*CAClient, error) {
+func NewCAClient(g *schnorr.Group) *CAClient {
 	return &CAClient{
-		CAClient: pb.NewCAClient(conn),
-		group:    group,
+		group: g,
 		// prover?
-	}, nil
+	}
+}
+
+func (c *CAClient) Connect(conn *grpc.ClientConn) *CAClient {
+	c.CAClient = pb.NewCAClient(conn)
+	return c
+
 }
 
 // GenerateMasterNym generates a master pseudonym to be used with GenerateCertificate.
@@ -53,6 +58,10 @@ func (c *CAClient) GenerateMasterNym(secret *big.Int) *Nym {
 // The certificate contains blinded user's master key pair and a signature of it.
 func (c *CAClient) GenerateCertificate(userSecret *big.Int, nym *Nym) (
 	*CACert, error) {
+	if c.CAClient == nil {
+		return nil, fmt.Errorf("client is not connected")
+	}
+
 	stream, err := c.CAClient.GenerateCertificate(context.Background())
 	if err != nil {
 		return nil, err
