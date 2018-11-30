@@ -15,7 +15,7 @@
  *
  */
 
-package compatibility
+package compat
 
 import (
 	"github.com/emmyzkp/emmy/anauth"

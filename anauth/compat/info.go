@@ -15,7 +15,7 @@
  *
  */
 
-package compatibility
+package compat
 
 // ServiceInfo holds information about the secure service provider and its service offering.
 type ServiceInfo struct {

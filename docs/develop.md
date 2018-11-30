@@ -146,4 +146,4 @@ your Android application. Then, you will be able to import exposed classes from 
  of the Android application by importing a subset of Java package *compatibility*. 
  
 Please refer to 
- [compatibility package documentation](../compatibility/doc.go) for more details.
+ [compatibility package documentation](../anauth/compat/doc.go) for more details.

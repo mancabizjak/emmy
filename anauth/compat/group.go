@@ -15,7 +15,7 @@
  *
  */
 
-package compatibility
+package compat
 
 import (
 	"fmt"

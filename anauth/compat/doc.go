@@ -71,4 +71,4 @@
 //	TranscriptEC
 // 	Pseudonym
 // 	PseudonymEC
-package compatibility
+package compat
