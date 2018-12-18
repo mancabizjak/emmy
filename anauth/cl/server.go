@@ -20,6 +20,11 @@ package cl
 import (
 	"fmt"
 
+	"github.com/emmyzkp/emmy/anauth"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"math/big"
 
 	"github.com/emmyzkp/crypto/df"
@@ -34,6 +39,9 @@ import (
 type Server struct {
 	ReceiverRecordManager
 	*Org
+
+	SessMgr anauth.SessManager
+	RegMgr  anauth.RegManager
 }
 
 func NewServer(recMgr ReceiverRecordManager, keys *KeyPair) (*Server, error) {
@@ -53,32 +61,17 @@ func (s *Server) RegisterTo(grpcSrv *grpc.Server) {
 	clpb.RegisterAnonCredsServer(grpcSrv, s)
 }
 
-func fromByteSlices(s [][]byte) []*big.Int {
-	res := make([]*big.Int, len(s))
-	for i, si := range s {
-		res[i] = new(big.Int).SetBytes(si)
-	}
-
-	return res
-}
-
-func fromStringSlices(s []string) ([]*big.Int, error) {
-	res := make([]*big.Int, len(s))
-	for i, si := range s {
-		x, ok := new(big.Int).SetString(si, 10)
-		if !ok {
-			return nil, fmt.Errorf("error when initializing big.Int from string")
-		}
-		res[i] = x
-	}
-
-	return res, nil
-}
-
 func (s *Server) Issue(stream clpb.AnonCreds_IssueServer) error {
 	req, err := stream.Recv()
 	if err != nil {
 		return err
+	}
+
+	regKeyOk, err := s.RegMgr.CheckRegistrationKey(req.GetRegKey())
+	if !regKeyOk || err != nil {
+		//s.Logger.Debugf("registration key %s ok=%t, error=%v",
+		//	proofRandData.RegKey, regKeyOk, err)
+		return status.Error(codes.NotFound, "registration key verification failed")
 	}
 
 	nonce := s.GetCredIssueNonce()
@@ -270,9 +263,43 @@ func (s *Server) Prove(stream clpb.AnonCreds_ProveServer) error {
 		return err
 	}
 
-	return stream.Send(&clpb.Response{
-		Type: &clpb.Response_Success{
-			Success: verified,
-		},
-	})
+	if !verified {
+		//s.Logger.Debug("User authentication failed")
+		return status.Error(codes.Unauthenticated, "user authentication failed")
+	}
+
+	sessKey, err := s.SessMgr.GenerateSessionKey()
+	if err != nil {
+		//s.Logger.Debug(err)
+		return status.Error(codes.Internal, "failed to obtain session key")
+	}
+
+	return stream.Send(
+		&clpb.Response{
+			Type: &clpb.Response_SessionKey{
+				SessionKey: *sessKey,
+			},
+		})
+}
+
+func fromByteSlices(s [][]byte) []*big.Int {
+	res := make([]*big.Int, len(s))
+	for i, si := range s {
+		res[i] = new(big.Int).SetBytes(si)
+	}
+
+	return res
+}
+
+func fromStringSlices(s []string) ([]*big.Int, error) {
+	res := make([]*big.Int, len(s))
+	for i, si := range s {
+		x, ok := new(big.Int).SetString(si, 10)
+		if !ok {
+			return nil, fmt.Errorf("error when initializing big.Int from string")
+		}
+		res[i] = x
+	}
+
+	return res, nil
 }

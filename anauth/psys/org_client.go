@@ -322,7 +322,7 @@ func (c *Client) TransferCredential(orgName string, userSecret *big.Int,
 		return nil, err
 	}
 
-	sessionKey := resp.GetSessionKey()
+	sessKey := resp.GetSessionKey()
 
-	return &sessionKey, nil
+	return &sessKey, nil
 }

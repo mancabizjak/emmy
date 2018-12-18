@@ -17,19 +17,12 @@
 
 package anauth
 
-import (
-	"testing"
-
-	"github.com/emmyzkp/emmy/log"
-	"github.com/emmyzkp/emmy/mock"
-	"github.com/stretchr/testify/assert"
-)
-
+/*
 func TestNewServer(t *testing.T) {
 	regMgr := mock.RegKeyDB{}
 	_, err := NewGrpcServer("", "", &regMgr, nil, log.NewNullLogger())
 	assert.Error(t, err)
-}
+}*/
 
 /*
 func TestNewConfigurableServer(t *testing.T) {

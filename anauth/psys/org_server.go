@@ -241,7 +241,7 @@ func (s *OrgServer) TransferCred(stream pb.Org_TransferCredServer) error {
 		return status.Error(codes.Unauthenticated, "user authentication failed")
 	}
 
-	sessionKey, err := s.SessMgr.GenerateSessionKey()
+	sessKey, err := s.SessMgr.GenerateSessionKey()
 	if err != nil {
 		//s.Logger.Debug(err)
 		return status.Error(codes.Internal, "failed to obtain session key")
@@ -250,7 +250,7 @@ func (s *OrgServer) TransferCred(stream pb.Org_TransferCredServer) error {
 	return stream.Send(
 		&pb.TransferCredResponse{
 			Type: &pb.TransferCredResponse_SessionKey{
-				SessionKey: *sessionKey,
+				SessionKey: *sessKey,
 			},
 		})
 }

@@ -38,7 +38,8 @@ func NewClient(conn *grpc.ClientConn) *Client {
 	}
 }
 
-func (c *Client) IssueCredential(cm *CredManager) (*Cred, error) {
+func (c *Client) IssueCredential(cm *CredManager, regKey string) (*Cred,
+	error) {
 	if c.AnonCredsClient == nil {
 		return nil, fmt.Errorf("client is not connected")
 	}
@@ -48,7 +49,12 @@ func (c *Client) IssueCredential(cm *CredManager) (*Cred, error) {
 		return nil, err
 	}
 
-	if err := stream.Send(emptyRequest()); err != nil {
+	if err := stream.Send(
+		&pb.Request{
+			Type: &pb.Request_RegKey{
+				RegKey: regKey,
+			},
+		}); err != nil {
 		return nil, err
 	}
 
@@ -202,30 +208,31 @@ func (c *Client) UpdateCredential(cm *CredManager, newKnownAttrs []*big.Int) (*C
 // revealedCommitmentsOfAttrsIndices parameters. All knownAttrs and commitmentsOfAttrs should be passed into
 // ProveCred - only those which are revealed are then passed to the server.
 func (c *Client) ProveCredential(cm *CredManager, cred *Cred,
-	knownAttrs []*big.Int, revealedKnownAttrsIndices, revealedCommitmentsOfAttrsIndices []int) (bool, error) {
+	knownAttrs []*big.Int, revealedKnownAttrsIndices,
+	revealedCommitmentsOfAttrsIndices []int) (*string, error) {
 	if c.AnonCredsClient == nil {
-		return false, fmt.Errorf("client is not connected")
+		return nil, fmt.Errorf("client is not connected")
 	}
 
 	stream, err := c.AnonCredsClient.Prove(context.Background())
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
 	if err := stream.Send(emptyRequest()); err != nil {
-		return false, err
+		return nil, err
 	}
 
 	resp, err := stream.Recv()
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 	nonce := new(big.Int).SetBytes(resp.GetNonce())
 
 	randCred, proof, err := cm.BuildProof(cred, revealedKnownAttrsIndices,
 		revealedCommitmentsOfAttrsIndices, nonce)
 	if err != nil {
-		return false, fmt.Errorf("error when building credential proof: %v", err)
+		return nil, fmt.Errorf("error when building credential proof: %v", err)
 	}
 
 	filteredKnownAttrs := filterSlice(knownAttrs, revealedKnownAttrsIndices)
@@ -259,19 +266,21 @@ func (c *Client) ProveCredential(cm *CredManager, cred *Cred,
 	}
 
 	if err := stream.Send(proveMsg); err != nil {
-		return false, err
+		return nil, err
 	}
 
 	resp, err = stream.Recv()
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
 	if err := stream.CloseSend(); err != nil {
-		return false, err
+		return nil, err
 	}
 
-	return resp.GetSuccess(), nil
+	sessKey := resp.GetSessionKey()
+
+	return &sessKey, nil
 }
 
 func emptyRequest() *pb.Request {

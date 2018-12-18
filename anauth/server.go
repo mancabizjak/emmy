@@ -23,7 +23,6 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/emmyzkp/emmy/anauth/cl"
 	"github.com/emmyzkp/emmy/log"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
@@ -56,12 +55,13 @@ func (s *GrpcServer) RegisterService(r Service) error {
 	return nil
 }
 
+// recMgr cl.ReceiverRecordManager
+
 // NewGrpcServer initializes an instance of the GrpcServer struct and returns a pointer.
 // It performs some default configuration (tracing of gRPC communication and interceptors)
 // and registers RPC server handlers with gRPC server. It requires TLS cert and keyfile
 // in order to establish a secure channel with clients.
-func NewGrpcServer(certFile, keyFile string, regMgr RegManager,
-	recMgr cl.ReceiverRecordManager, logger log.Logger) (*GrpcServer, error) {
+func NewGrpcServer(certFile, keyFile string, regMgr RegManager, logger log.Logger) (*GrpcServer, error) {
 	// TODO check for nil logger?
 	logger.Info("Instantiating new server")
 

@@ -18,7 +18,7 @@
 syntax = "proto3";
 
 package clpb;
-option go_package = "github.com/emmyzkp/emmy/schemes/cl/clpb";
+option go_package = "github.com/emmyzkp/emmy/anauth/cl/clpb";
 
 service AnonCreds {
 	rpc Issue (stream Request) returns (stream Response) {}
@@ -29,8 +29,9 @@ service AnonCreds {
 message Request {
     oneof type {
         Empty empty = 1;
-		CredIssueRequest credIssue = 2;
-        CredProof credProve = 3;
+		string regKey = 2;
+		CredIssueRequest credIssue = 3;
+        CredProof credProve = 4;
     }
 }
 
@@ -38,7 +39,7 @@ message Response {
     oneof type {
         bytes nonce = 1; // bytes?
 		IssuedCred issuedCred = 2;
-		bool success = 3;
+		string sessionKey = 3;
     }
 }
 
@@ -53,6 +54,7 @@ message CredIssueRequest {
 	FiatShamirAlsoNeg UProof = 6;
 	repeated FiatShamir CommitmentsOfAttrsProofs = 7;
 	bytes Nonce = 8;
+	string RegKey = 9;
 }
 
 message Cred {
