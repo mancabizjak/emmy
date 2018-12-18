@@ -140,9 +140,6 @@ func (c *Client) ObtainCredential(userSecret *big.Int,
 
 	// First we need to authenticate - prove that we know dlog_a(b) where (a, b) is a nym registered
 	// with this organization. Authentication is done via Schnorr.
-	fmt.Println("group", c.group)
-	fmt.Println("userSecret", userSecret)
-	fmt.Println("nym", nym)
 	prover, err := schnorr.NewProver(c.group, []*big.Int{userSecret}, []*big.Int{nym.A}, nym.B)
 	if err != nil {
 		return nil, err

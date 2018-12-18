@@ -149,7 +149,6 @@ func (c *Client) ObtainCredential(userSecret *big.Int,
 	// with this organization. Authentication is done via Schnorr.
 	prover := ecschnorr.NewProver(c.curve)
 
-	fmt.Println("PROVER", prover)
 	x := prover.GetProofRandomData(userSecret, nym.A)
 
 	if err := stream.Send(

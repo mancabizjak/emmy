@@ -92,7 +92,6 @@ func newTestSrv() *testSrv {
 // addService registers a handler to testSrv.
 func (s *testSrv) addService(as anauth.Service) {
 	as.RegisterTo(s.Server)
-	fmt.Println("registered service")
 }
 
 // start starts testSrv
@@ -101,13 +100,11 @@ func (s *testSrv) start() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("starting test server")
 	s.Server.Serve(lis)
 }
 
 // teardown stops testSrv.
 func (s *testSrv) teardown() {
-	fmt.Println("stopping test server")
 	s.Server.Stop()
 }
 
@@ -172,31 +169,3 @@ func TestMain(m *testing.M) {
 
 	os.Exit(ret)
 }
-
-/*logger, _ := log.NewStdoutLogger("testSrv", log.NOTICE,
-log.FORMAT_LONG)
-
-testSrv, err = server.NewGrpcServer("testdata/server.pem",
-	"testdata/server.key", regKeyDB, recDB, logger)
-if err != nil {
-	fmt.Println(err)
-	os.Exit(1)
-}
-
-// we need to retrieve public key emitted by this function
-// and capture it in tests
-testSrv.RegisterCL(recDB)*/
-
-// insert test registration keys
-/*
-	testRegKeys := []string{"testRegKey1", "testRegKey2", "testRegKey3", "testRegKey4"}
-
-
-for _, regKey := range testRegKeys {
-	err = c.Set(regKey, regKey, time.Minute).Err()
-	if err != nil {
-		fmt.Println("cannot insert test registration keys to redis:", err)
-		os.Exit(1)
-	}
-}*/
-//db.Insert(testRegKeys)
