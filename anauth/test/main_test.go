@@ -24,7 +24,6 @@ import (
 	"net"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/emmyzkp/emmy/anauth"
 	"github.com/emmyzkp/emmy/anauth/cl"
@@ -36,11 +35,11 @@ import (
 
 var (
 	testAddr = "localhost:7008"
-	//testSrv  *testServer
+	//testSrv  *testSrv
 	//testConn *grpc.ClientConn
 
 	recDB    cl.ReceiverRecordManager
-	regKeyDB anauth.RegManager
+	regKeyDB testDb
 )
 
 var testRedis = flag.Bool(
@@ -66,15 +65,12 @@ func getTestSecureConn() (*grpc.ClientConn, error) {
 	return conn, nil
 }
 
+// getTestConn returns an insecure blocking connection to test server.
 func getTestConn() (*grpc.ClientConn, error) {
-	//if testConn == nil { // FIXME
-	//	fmt.Println("creating fresh conn")
 	return grpc.Dial(testAddr,
 		grpc.WithInsecure(),
 		grpc.WithBlock(),
 	)
-	//}
-	//	return testConn, nil
 }
 
 /*
@@ -84,22 +80,23 @@ var testEnd2End = flag.Bool(
 	"whether to run end-to-end tests (requires an instance of emmy server)",
 )*/
 
-type testServer struct {
+type testSrv struct {
 	*grpc.Server
 	services []anauth.Service
 }
 
-func newTestServer() *testServer {
-	grpcSrv := grpc.NewServer()
-	return &testServer{grpcSrv, nil}
+func newTestSrv() *testSrv {
+	return &testSrv{grpc.NewServer(), nil}
 }
 
-func (s *testServer) addService(as anauth.Service) {
+// addService registers a handler to testSrv.
+func (s *testSrv) addService(as anauth.Service) {
 	as.RegisterTo(s.Server)
 	fmt.Println("registered service")
 }
 
-func (s *testServer) start() {
+// start starts testSrv
+func (s *testSrv) start() {
 	lis, err := net.Listen("tcp", testAddr)
 	if err != nil {
 		panic(err)
@@ -108,9 +105,26 @@ func (s *testServer) start() {
 	s.Server.Serve(lis)
 }
 
-func (s *testServer) teardown() {
+// teardown stops testSrv.
+func (s *testSrv) teardown() {
 	fmt.Println("stopping test server")
 	s.Server.Stop()
+}
+
+// testDb allows us to insert registration keys.
+type testDb interface {
+	Insert(key string)
+	CheckRegistrationKey(key string) (bool, error)
+}
+
+// testRedisClient wraps anauth.RedisClient and extends it
+// with capability to insert registration keys.
+type testRedisClient struct {
+	*anauth.RedisClient
+}
+
+func (c *testRedisClient) Insert(key string) {
+	c.Client.Set(key, key, 0)
 }
 
 // TODO TestMain should determine, based on flags,
@@ -127,8 +141,6 @@ func (s *testServer) teardown() {
 func TestMain(m *testing.M) {
 	flag.Parse()
 
-	testRegKeys := []string{"testRegKey1", "testRegKey2", "testRegKey3", "testRegKey4"}
-
 	//if *testEnd2End {
 	if *testRedis { // use real redis instance
 		fmt.Println("Using a redis instance for storage")
@@ -142,39 +154,14 @@ func TestMain(m *testing.M) {
 			os.Exit(1)
 		}
 
-		// insert test registration keys
-		for _, regKey := range testRegKeys {
-			err = c.Set(regKey, regKey, time.Minute).Err()
-			if err != nil {
-				fmt.Println("cannot insert test registration keys to redis:", err)
-				os.Exit(1)
-			}
-		}
-
-		regKeyDB = anauth.NewRedisClient(c)
+		regKeyDB = &testRedisClient{anauth.NewRedisClient(c)}
 		recDB = cl.NewRedisClient(c)
 	} else { // use mock storage
 		fmt.Println("Using mock storage")
 		// prepare mocks
-		db := &mock.RegKeyDB{}
-		db.Insert(testRegKeys...)
-		regKeyDB = db
+		regKeyDB = &mock.RegKeyDB{}
 		recDB = cl.NewMockRecordManager()
 	}
-
-	/*logger, _ := log.NewStdoutLogger("testServer", log.NOTICE,
-	log.FORMAT_LONG)
-
-	testSrv, err = server.NewGrpcServer("testdata/server.pem",
-		"testdata/server.key", regKeyDB, recDB, logger)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
-	// we need to retrieve public key emitted by this function
-	// and capture it in tests
-	testSrv.RegisterCL(recDB)*/
 
 	// Configure a custom logger for the client package
 	clientLogger, _ := log.NewStdoutLogger("client", log.NOTICE, log.FORMAT_SHORT)
@@ -185,3 +172,31 @@ func TestMain(m *testing.M) {
 
 	os.Exit(ret)
 }
+
+/*logger, _ := log.NewStdoutLogger("testSrv", log.NOTICE,
+log.FORMAT_LONG)
+
+testSrv, err = server.NewGrpcServer("testdata/server.pem",
+	"testdata/server.key", regKeyDB, recDB, logger)
+if err != nil {
+	fmt.Println(err)
+	os.Exit(1)
+}
+
+// we need to retrieve public key emitted by this function
+// and capture it in tests
+testSrv.RegisterCL(recDB)*/
+
+// insert test registration keys
+/*
+	testRegKeys := []string{"testRegKey1", "testRegKey2", "testRegKey3", "testRegKey4"}
+
+
+for _, regKey := range testRegKeys {
+	err = c.Set(regKey, regKey, time.Minute).Err()
+	if err != nil {
+		fmt.Println("cannot insert test registration keys to redis:", err)
+		os.Exit(1)
+	}
+}*/
+//db.Insert(testRegKeys)

@@ -21,6 +21,8 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/emmyzkp/crypto/ec"
+
 	"fmt"
 
 	"github.com/emmyzkp/crypto/schnorr"
@@ -38,11 +40,11 @@ func TestEndToEnd_Psys(t *testing.T) {
 		// Generate input data for the test
 		g, err := schnorr.NewGroup(tt)
 		if err != nil {
-			t.Errorf("error generating schnorr group: %v", err)
-		} // quit if encounter error?
-		caSk, caPk, err := psys.GenerateCAKeyPair()
+			t.Fatalf("error generating schnorr group: %v", err)
+		}
+		caSk, caPk, err := psys.GenerateCAKeyPair(ec.P256)
 		if err != nil {
-			t.Errorf("error generating CA keypair: %v", err)
+			t.Fatalf("error generating CA keypair: %v", err)
 		}
 		sk, pk := psys.GenerateKeyPair(g)
 
@@ -52,14 +54,14 @@ func TestEndToEnd_Psys(t *testing.T) {
 		org.RegMgr = regKeyDB
 		org.SessMgr, _ = anauth.NewRandSessionKeyGen(32)
 
-		testSrv := newTestServer()
+		testSrv := newTestSrv()
 		testSrv.addService(ca)
 		testSrv.addService(org)
 		go testSrv.start()
 
 		conn, err := getTestConn()
 		if err != nil {
-			t.Errorf("cannot establish connection to test server: %v", err)
+			t.Fatalf("cannot establish connection to test server: %v", err)
 		}
 
 		t.Run(fmt.Sprintf("qBitLen%d", tt), func(t *testing.T) {
@@ -92,20 +94,21 @@ func testEndToEndPsys(t *testing.T, conn *grpc.ClientConn, g *schnorr.Group,
 	_, err = c1.GenerateNym(userSecret, caCert, "029uywfh9udni")
 	assert.NotNil(t, err, "Should produce an error")
 
-	nym1, err := c1.GenerateNym(userSecret, caCert, "testRegKey1")
+	regKey := "key1"
+	regKeyDB.Insert(regKey)
+	nym1, err := c1.GenerateNym(userSecret, caCert, regKey)
 	if err != nil {
-		fmt.Println("STUFF NOT WORKING - GENERATE NIM", err)
-		t.Errorf(err.Error())
+		t.Fatal(err.Error())
 	}
 
 	//nym generation should fail the second time with the same registration key
-	_, err = c1.GenerateNym(userSecret, caCert, "testRegKey1")
+	_, err = c1.GenerateNym(userSecret, caCert, regKey)
 	assert.NotNil(t, err, "Should produce an error")
 
 	orgName := "org1"
 	cred, err := c1.ObtainCredential(userSecret, nym1, pk)
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Fatal(err.Error())
 	}
 
 	// register with org2
@@ -113,16 +116,18 @@ func testEndToEndPsys(t *testing.T, conn *grpc.ClientConn, g *schnorr.Group,
 	caClient1 := psys.NewCAClient(g).Connect(conn)
 	caCert1, err := caClient1.GenerateCertificate(userSecret, masterNym)
 	if err != nil {
-		t.Errorf("Error when registering with CA: %s", err.Error())
+		t.Fatalf("Error when registering with CA: %s", err.Error())
 	}
 
 	// c2 connects to the same server as c1, so what we're really testing here is
 	// using transferCredential to authenticate with the same organization and not
 	// transferring credentials to another organization
 	c2, err := psys.NewClient(conn, g)
-	nym2, err := c2.GenerateNym(userSecret, caCert1, "testRegKey2")
+	regKey = "key2"
+	regKeyDB.Insert(regKey)
+	nym2, err := c2.GenerateNym(userSecret, caCert1, regKey)
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Fatal(err.Error())
 	}
 
 	// Authentication should succeed

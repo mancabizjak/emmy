@@ -23,20 +23,18 @@ type RegKeyDB struct {
 	data []string
 }
 
-// insert inserts multiple registration keys to RegKeyDB,
-// skipping the ones that are already present.
-func (m *RegKeyDB) Insert(keys ...string) {
-	for _, keyToInsert := range keys {
-		alreadyPresent := false
-		for _, key := range m.data {
-			if key == keyToInsert {
-				alreadyPresent = true
-				break
-			}
+// insert inserts a registration key to RegKeyDB,
+// if it's not already present.
+func (m *RegKeyDB) Insert(key string) {
+	alreadyPresent := false
+	for _, k := range m.data {
+		if k == key {
+			alreadyPresent = true
+			break
 		}
-		if !alreadyPresent {
-			m.data = append(m.data, keyToInsert)
-		}
+	}
+	if !alreadyPresent {
+		m.data = append(m.data, key)
 	}
 }
 

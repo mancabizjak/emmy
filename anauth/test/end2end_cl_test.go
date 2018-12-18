@@ -67,7 +67,7 @@ func testEndToEndCL(t *testing.T, params *cl.Params, attrs *cl.Attrs) {
 		t.Errorf("error creating cl server: %v", err)
 	}
 
-	testSrv := newTestServer()
+	testSrv := newTestSrv()
 	testSrv.addService(clSrv)
 	go testSrv.start()
 

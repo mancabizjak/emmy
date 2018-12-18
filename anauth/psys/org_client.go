@@ -41,7 +41,6 @@ func NewClient(conn *grpc.ClientConn, group *schnorr.Group) (*Client, error) {
 	}, nil
 }
 
-// FIXME, also for ca client
 // GenerateMasterKey generates a master secret key, representing a random integer betweeen
 // 0 and order of the group. This key will be used subsequently by all the protocols in the scheme.
 func (c *Client) GenerateMasterKey() *big.Int {

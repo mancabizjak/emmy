@@ -51,7 +51,6 @@ func NewCACert(blindedA, blindedB, r, s *big.Int) *CACert {
 	}
 }
 
-// FIXME add curve constant, because its fixed
 const CA_CURVE = ec.P256
 
 func NewCA(group *schnorr.Group, d *big.Int, caPubKey *PubKey) *CA {

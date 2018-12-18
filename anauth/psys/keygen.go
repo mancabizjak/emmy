@@ -20,10 +20,10 @@ package psys
 import (
 	"math/big"
 
+	"github.com/emmyzkp/crypto/ec"
+
 	"crypto/ecdsa"
 	"crypto/rand"
-
-	"crypto/elliptic"
 
 	"github.com/emmyzkp/crypto/common"
 	"github.com/emmyzkp/crypto/schnorr"
@@ -45,9 +45,8 @@ func NewPubKey(h1, h2 *big.Int) *PubKey {
 	return &PubKey{h1, h2}
 }
 
-func GenerateCAKeyPair() (*big.Int, *PubKey, error) {
-	// FIXME
-	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+func GenerateCAKeyPair(c ec.Curve) (*big.Int, *PubKey, error) {
+	key, err := ecdsa.GenerateKey(ec.GetCurve(c), rand.Reader)
 	if err != nil {
 		return nil, nil, err
 	}

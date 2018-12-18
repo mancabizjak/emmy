@@ -21,8 +21,11 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/emmyzkp/crypto/ec"
+	"google.golang.org/grpc"
+
 	"github.com/emmyzkp/emmy/anauth"
+
+	"github.com/emmyzkp/crypto/ec"
 	"github.com/emmyzkp/emmy/anauth/ecpsys"
 	"github.com/emmyzkp/emmy/anauth/psys"
 	"github.com/stretchr/testify/assert"
@@ -33,42 +36,47 @@ func TestEndToEnd_ECPsys(t *testing.T) {
 		desc  string
 		curve ec.Curve
 	}{
-		//{"P224", ec.P224}, // FIXME
+		{"P224", ec.P224},
 		{"P256", ec.P256},
-		//{"P384", ec.P384},  // FIXME
+		{"P384", ec.P384},
 	}
 
 	for _, tt := range tests {
 		g := ec.NewGroup(tt.curve)
-		caSk, caPk, err := psys.GenerateCAKeyPair()
+		caSk, caPk, err := psys.GenerateCAKeyPair(tt.curve)
 		if err != nil {
 			t.Errorf("error generating CA keypair: %v", err)
 		}
 		sk, pk := ecpsys.GenerateKeyPair(g)
 
+		ca := ecpsys.NewCAServer(caSk, caPk, tt.curve)
+		org := ecpsys.NewOrgServer(tt.curve, sk, pk, caPk)
+
+		// FIXME
+		org.RegMgr = regKeyDB
+		org.SessMgr, _ = anauth.NewRandSessionKeyGen(32)
+
+		testSrv := newTestSrv()
+		testSrv.addService(ca)
+		testSrv.addService(org)
+		go testSrv.start()
+
+		conn, err := getTestConn()
+		if err != nil {
+			t.Fatalf("cannot establish connection to test server: %v", err)
+		}
+
 		t.Run(tt.desc, func(t *testing.T) {
-			testEndToEndECPsys(t, tt.curve, caSk, caPk, sk, pk)
+			testEndToEndECPsys(t, conn, tt.curve, pk)
 		})
+
+		conn.Close()
+		testSrv.teardown()
 	}
 }
 
-func testEndToEndECPsys(t *testing.T, c ec.Curve, caSk *big.Int,
-	caPk *psys.PubKey, sk *psys.SecKey, pk *ecpsys.PubKey) {
-	ca := ecpsys.NewCAServer(caSk, caPk, c)
-	org := ecpsys.NewOrgServer(c, sk, pk, caPk)
-	// FIXME
-	org.RegMgr = regKeyDB
-	org.SessMgr, _ = anauth.NewRandSessionKeyGen(32)
-
-	testSrv := newTestServer()
-	testSrv.addService(ca)
-	testSrv.addService(org)
-	go testSrv.start()
-
-	conn, err := getTestConn()
-	if err != nil {
-		t.Errorf("cannot establish connection to test server: %v", err)
-	}
+func testEndToEndECPsys(t *testing.T, conn *grpc.ClientConn, c ec.Curve,
+	pk *ecpsys.PubKey) {
 
 	caClient := ecpsys.NewCAClient(c)
 
@@ -81,27 +89,29 @@ func testEndToEndECPsys(t *testing.T, c ec.Curve, caSk *big.Int,
 	caClient.Connect(conn)
 	caCert, err := caClient.GenerateCertificate(userSecret, masterNym)
 	if err != nil {
-		t.Errorf("Error when registering with CA: %s", err.Error())
+		t.Fatalf("Error when registering with CA: %s", err.Error())
 	}
 
 	//nym generation should fail with invalid registration key
 	_, err = c1.GenerateNym(userSecret, caCert, "029uywfh9udni")
 	assert.NotNil(t, err, "Should produce an error")
 
-	nym1, err := c1.GenerateNym(userSecret, caCert, "testRegKey3")
+	regKey := "ecKey1"
+	regKeyDB.Insert(regKey)
+	nym1, err := c1.GenerateNym(userSecret, caCert, regKey)
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Fatalf(err.Error())
 	}
 
 	//nym generation should fail the second time with the same registration key
-	_, err = c1.GenerateNym(userSecret, caCert, "testRegKey3")
+	_, err = c1.GenerateNym(userSecret, caCert, regKey)
 	assert.NotNil(t, err, "Should produce an error")
 
 	orgName := "org1" // FIXME remove
 
 	cred, err := c1.ObtainCredential(userSecret, nym1, pk)
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Fatalf(err.Error())
 	}
 
 	// register with org2
@@ -113,9 +123,11 @@ func testEndToEndECPsys(t *testing.T, c ec.Curve, caSk *big.Int,
 	// using transferCredential to authenticate with the same organization and not
 	// transferring credentials to another organization
 	c2, _ := ecpsys.NewClient(conn, c)
-	nym2, err := c2.GenerateNym(userSecret, caCert1, "testRegKey4")
+	regKey = "ecKey2"
+	regKeyDB.Insert(regKey)
+	nym2, err := c2.GenerateNym(userSecret, caCert1, regKey)
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Fatalf(err.Error())
 	}
 
 	// Authentication should succeed
@@ -128,7 +140,4 @@ func testEndToEndECPsys(t *testing.T, c ec.Curve, caSk *big.Int,
 	sessKey, err := c2.TransferCredential(orgName, wrongUserSecret, nym2, cred)
 	assert.Nil(t, sessKey, "Authentication should fail, and session key should be nil")
 	assert.NotNil(t, err, "Should produce an error")
-
-	conn.Close()
-	testSrv.teardown()
 }
