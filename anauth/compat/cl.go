@@ -101,13 +101,22 @@ type CLOrgPubKey struct {
 	N              []byte
 	S              []byte
 	Z              []byte
-	RsKnown        [][]byte
-	RsCommitted    [][]byte
-	RsHidden       [][]byte
-	PedersenParams PedersenParams
+	RsKnown        [][]byte       // UNSUPPORTED
+	RsCommitted    [][]byte       // UNSUPPORTED
+	RsHidden       [][]byte       // UNSUPPORTED
+	PedersenParams PedersenParams // UNSUPPORTED?
 	N1             []byte
 	G              []byte
 	H              []byte
+}
+
+func (k *CLOrgPubKey) GetUserMasterSecret() ([]byte, error) {
+	// FIXME avoid conversion, do wrapping instead
+	key, err := k.getNativeType()
+	if err != nil {
+		return nil, err
+	}
+	return key.GenerateUserMasterSecret().Bytes(), nil
 }
 
 func (k *CLOrgPubKey) getNativeType() (*cl.PubKey, error) {
@@ -153,9 +162,9 @@ type CLCredManager struct {
 }
 
 type CLAttrs struct {
-	Known     [][]byte
-	Hidden    [][]byte
-	Committed [][]byte
+	Known     [][]byte // UNSUPPORTED
+	Hidden    [][]byte // UNSUPPORTED
+	Committed [][]byte // UNSUPPORTED
 }
 
 func (a *CLAttrs) getNativeType() *cl.Attrs {

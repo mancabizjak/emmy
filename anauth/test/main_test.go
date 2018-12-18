@@ -152,12 +152,12 @@ func TestMain(m *testing.M) {
 		}
 
 		regKeyDB = &testRedisClient{anauth.NewRedisClient(c)}
-		recDB = cl.NewRedisClient(c)
+		recDB = cl.NewRedisClient(c) // TODO MOVE
 	} else { // use mock storage
 		fmt.Println("Using mock storage")
 		// prepare mocks
 		regKeyDB = &mock.RegKeyDB{}
-		recDB = cl.NewMockRecordManager()
+		recDB = cl.NewMockRecordManager() // TODO MOVE
 	}
 
 	// Configure a custom logger for the client package

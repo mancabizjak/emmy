@@ -35,7 +35,7 @@ var clientCLCmd = &cobra.Command{
 	Short: "Configures emmy client to run Camenisch-Lysyanskaya scheme for" +
 		" anonymous authentication",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("running CL server")
+		fmt.Println("running CL client")
 	},
 }
 
@@ -75,7 +75,7 @@ func init() {
 	// the value indicated by the flag.
 	clientCmd.PersistentFlags().StringP("servername", "",
 		"",
-		"Name of emmy server for overriding the server name stated in cert" +
+		"Name of emmy server for overriding the server name stated in cert"+
 			"'s CN")
 	// Whether to run clients concurrently. Relevant only when nclients > 1.
 	clientCmd.PersistentFlags().BoolP("concurrent", "",

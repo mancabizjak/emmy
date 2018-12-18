@@ -16,9 +16,19 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+
+	"github.com/emmyzkp/emmy/mock"
+
+	"github.com/emmyzkp/emmy/anauth/cl"
+
+	"github.com/emmyzkp/emmy/anauth"
+	"github.com/emmyzkp/emmy/log"
 
 	"github.com/spf13/cobra"
 )
+
+var srv *anauth.GrpcServer
 
 // serverCmd represents the server command
 var serverCmd = &cobra.Command{
@@ -26,6 +36,27 @@ var serverCmd = &cobra.Command{
 	Short: "Starts emmy anonymous authentication server",
 	Long: `emmy server is a server (verifier) that verifies 
 clients (provers).`,
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		// FIXME make everything configurable
+		lgr, err := log.NewStdoutLogger("cl", log.DEBUG, log.FORMAT_LONG)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		// FIXME
+		srv, err = anauth.NewGrpcServer(
+			"anauth/test/testdata/server.pem",
+			"anauth/test/testdata/server.key",
+			lgr,
+		)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+	},
+	PersistentPostRun: func(cmd *cobra.Command, args []string) {
+		srv.Start(7007) // FIXME
+	},
 }
 
 var serverCLCmd = &cobra.Command{
@@ -33,7 +64,28 @@ var serverCLCmd = &cobra.Command{
 	Short: "Configures the server to run Camenisch-Lysyanskaya scheme for" +
 		" anonymous authentication.",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("running CL server")
+		sk := &cl.SecKey{}
+		pk := &cl.PubKey{}
+		err := cl.ReadGob("anauth/test/testdata/clSecKey.gob", sk)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		err = cl.ReadGob("anauth/test/testdata/clPubKey.gob", pk)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		clService, err := cl.NewServer(
+			cl.NewMockRecordManager(),
+			&cl.KeyPair{
+				Sec: sk,
+				Pub: pk,
+			})
+		clService.RegMgr = &mock.RegKeyDB{}
+		clService.SessMgr, _ = anauth.NewRandSessionKeyGen(32)
+
+		srv.RegisterService(clService)
 	},
 }
 

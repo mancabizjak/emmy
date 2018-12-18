@@ -1,16 +1,18 @@
 package cl
 
 import (
-	"github.com/emmyzkp/crypto/qr"
 	"math/big"
-	"github.com/emmyzkp/crypto/pedersen"
+
 	"github.com/emmyzkp/crypto/common"
 	"github.com/emmyzkp/crypto/df"
+	"github.com/emmyzkp/crypto/pedersen"
+	"github.com/emmyzkp/crypto/qr"
 	"github.com/pkg/errors"
 )
 
+// TODO probably doesn't make much sense if sec is unexported, remove
 type KeyPair struct {
-	sec *SecKey
+	Sec *SecKey
 	Pub *PubKey
 }
 
@@ -93,7 +95,7 @@ func (k *PubKey) GetContext() *big.Int {
 func GenerateKeyPair(p *Params) (*KeyPair, error) {
 	g, err := qr.NewRSASpecial(p.NLength / 2)
 	if err != nil {
-		return nil, errors.Wrap(err,"error creating RSASpecial group")
+		return nil, errors.Wrap(err, "error creating RSASpecial group")
 	}
 
 	// receiver for commitments of (committed) attributes:
@@ -110,7 +112,7 @@ func GenerateKeyPair(p *Params) (*KeyPair, error) {
 	}
 
 	return &KeyPair{
-		sec: sk,
+		Sec: sk,
 		Pub: pk,
 	}, nil
 }

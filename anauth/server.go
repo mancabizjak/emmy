@@ -61,7 +61,7 @@ func (s *GrpcServer) RegisterService(r Service) error {
 // It performs some default configuration (tracing of gRPC communication and interceptors)
 // and registers RPC server handlers with gRPC server. It requires TLS cert and keyfile
 // in order to establish a secure channel with clients.
-func NewGrpcServer(certFile, keyFile string, regMgr RegManager, logger log.Logger) (*GrpcServer, error) {
+func NewGrpcServer(certFile, keyFile string, logger log.Logger) (*GrpcServer, error) {
 	// TODO check for nil logger?
 	logger.Info("Instantiating new server")
 
@@ -87,7 +87,7 @@ func NewGrpcServer(certFile, keyFile string, regMgr RegManager, logger log.Logge
 	// The user will be able to turn it on via GrpcServer's EnableTracing function.
 	grpc.EnableTracing = false
 
-	logger.Notice("Registered gRPC Services")
+	//logger.Notice("Registered gRPC Services")
 
 	return s, nil
 }

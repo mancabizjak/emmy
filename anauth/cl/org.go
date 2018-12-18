@@ -62,8 +62,8 @@ func NewOrg(params *Params) (*Org, error) {
 func NewOrgFromParams(params *Params, keys *KeyPair) (*Org, error) {
 	var group *qr.RSASpecial
 	var err error
-	if keys.sec != nil {
-		group, err = qr.NewRSASpecialFromParams(keys.sec.RsaPrimes)
+	if keys.Sec != nil {
+		group, err = qr.NewRSASpecialFromParams(keys.Sec.RsaPrimes)
 		if err != nil {
 			return nil, fmt.Errorf("error when creating RSASpecial group: %s", err)
 		}
@@ -95,7 +95,7 @@ func LoadOrg(pubKeyPath, secKeyPath string) (*Org, error) {
 	}
 
 	keys := &KeyPair{
-		sec: secKey,
+		Sec: secKey,
 		Pub: pubKey,
 	}
 
@@ -386,7 +386,7 @@ func (o *Org) setUpAttrVerifiers(commitmentsOfAttrs []*big.Int) error {
 	attrsVerifiers := make([]*df.OpeningVerifier, len(commitmentsOfAttrs))
 	for i, attr := range commitmentsOfAttrs {
 		receiver, err := df.NewReceiverFromParams(
-			o.Keys.sec.AttributesSpecialRSAPrimes, o.Keys.Pub.G, o.Keys.Pub.H,
+			o.Keys.Sec.AttributesSpecialRSAPrimes, o.Keys.Pub.G, o.Keys.Pub.H,
 			o.Params.SecParam)
 		if err != nil {
 			return err
