@@ -30,8 +30,8 @@ clients (provers).`,
 
 var serverCLCmd = &cobra.Command{
 	Use: "cl",
-	Short: "Configures emmy server to run Camenisch-Lysyanskaya scheme for" +
-		" anonymous authentication",
+	Short: "Configures the server to run Camenisch-Lysyanskaya scheme for" +
+		" anonymous authentication.",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("running CL server")
 	},
@@ -39,8 +39,8 @@ var serverCLCmd = &cobra.Command{
 
 var serverPsysCmd = &cobra.Command{
 	Use: "psys",
-	Short: "Configures emmy server to run pseudonym system scheme for" +
-		" anonymous authentication. Uses modular arithmetic",
+	Short: "Configures the server to run pseudonym system scheme for" +
+		" anonymous authentication. Uses modular arithmetic.",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("running psys server")
 	},
@@ -48,7 +48,7 @@ var serverPsysCmd = &cobra.Command{
 
 var serverECPsysCmd = &cobra.Command{
 	Use: "ecpsys",
-	Short: "Configures emmy server to run pseudonym system scheme for" +
+	Short: "Configures the server to run pseudonym system scheme for" +
 		" anonymous authentication. Uses EC arithmetic.",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("running ecpsys server")
@@ -72,8 +72,8 @@ func init() {
 		"URI of redis database to hold registration keys, in the form redisHost:redisPort")
 	serverCmd.PersistentFlags().StringP("logfile", "",
 		"",
-		"Path to the file where server logs will be written (" +
-		"created if it doesn't exist)")
+		"Path to the file where server logs will be written ("+
+			"created if it doesn't exist)")
 
 	serverCmd.AddCommand(serverCLCmd, serverPsysCmd, serverECPsysCmd)
 }
