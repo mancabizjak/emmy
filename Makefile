@@ -56,7 +56,7 @@ fmt:
 # Auto-generated code for protobuffers is excluded from this check
 lint:
 	-gometalinter --exclude=.*.pb.go \
-	 	--enable=gofmt \
+		--enable=gofmt \
 		--enable=goimports \
 		--enable=gosimple \
 		--enable=misspell \
@@ -70,10 +70,12 @@ android:
 # Generates protobuffer code based on protobuffer definitions
 # Requires protoc compiler
 proto:
-	protoc -I proto/ \
- 	 	proto/messages.proto \
- 	 	proto/services.proto \
- 	 	--go_out=plugins=grpc:proto
+	protoc anauth/cl/clpb/cl.proto --go_out=plugins=grpc:$(GOPATH)/src
+	protoc anauth/psys/psyspb/psys.proto --go_out=plugins=grpc:$(GOPATH)/src
+	protoc \
+		-I . anauth/ecpsys/ecpsyspb/ecpsys.proto \
+		-I anauth/psys/psyspb/psys.proto \
+		--go_out=plugins=grpc:$(GOPATH)/src
 
 # Removes temporary files produced by the targets
 clean:
