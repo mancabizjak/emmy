@@ -23,6 +23,9 @@ import (
 	"github.com/spf13/viper"
 )
 
+const DEFAULT_EMMY_DIR = ".emmy"
+
+var emmyDir = DEFAULT_EMMY_DIR
 var cfgFile string
 
 // rootCmd represents the base command when called without any subcommands

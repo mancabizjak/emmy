@@ -17,8 +17,11 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path"
 
-	"github.com/emmyzkp/emmy/mock"
+	"github.com/go-redis/redis"
+
+	"github.com/mitchellh/go-homedir"
 
 	"github.com/emmyzkp/emmy/anauth/cl"
 
@@ -29,6 +32,68 @@ import (
 )
 
 var srv *anauth.GrpcServer
+var port int
+var keyPath string
+var certPath string
+var redisAddr string
+
+func init() {
+	rootCmd.AddCommand(serverCmd, genCmd)
+
+	serverCmd.PersistentFlags().IntVarP(&port, "port", "p",
+		7007,
+		"Port where emmy server will listen for client connections")
+	serverCmd.Flags().StringVarP(&certPath, "cert", "",
+		"./anauth/test/testdata/server.pem",
+		"Path to server's certificate file")
+	serverCmd.Flags().StringVarP(&keyPath, "key", "",
+		"./anauth/test/testdata/server.key",
+		"Path to server's key file")
+	serverCmd.PersistentFlags().StringVarP(&redisAddr, "db", "",
+		"localhost:6379",
+		"URI of redis database to hold registration keys, in the form redisHost:redisPort")
+	serverCmd.PersistentFlags().StringP("logfile", "",
+		"",
+		"Path to the file where server logs will be written ("+
+			"created if it doesn't exist)")
+
+	// add subcommands tied to various anonymous authentication schemes
+	genCmd.AddCommand(genCLCmd)
+	serverCmd.AddCommand(serverCLCmd, serverPsysCmd, serverECPsysCmd)
+}
+
+var genCmd = &cobra.Command{
+	Use: "generate",
+	Short: "Generates paremeters for the chosen anonymous authentication" +
+		" scheme.",
+}
+
+var genCLCmd = &cobra.Command{
+	Use:        "cl",
+	Short:      "Generates and stores keypair for the scheme.",
+	SuggestFor: []string{"cl"},
+	Run: func(cmd *cobra.Command, args []string) {
+		keys, err := cl.GenerateKeyPair(cl.GetDefaultParamSizes())
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		err = cl.WriteGob("./anauth/test/testdata/clSecKey.gob", keys.Sec)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		err = cl.WriteGob("./anauth/test/testdata/clPubKey.gob", keys.Pub)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		fmt.Println("successfully generated keypair")
+	},
+}
 
 // serverCmd represents the server command
 var serverCmd = &cobra.Command{
@@ -43,20 +108,30 @@ clients (provers).`,
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		// FIXME
-		srv, err = anauth.NewGrpcServer(
-			"anauth/test/testdata/server.pem",
-			"anauth/test/testdata/server.key",
-			lgr,
-		)
+
+		srv, err = anauth.NewGrpcServer(certPath, keyPath, lgr)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
 	},
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
-		srv.Start(7007) // FIXME
+		srv.Start(port)
 	},
+}
+
+// checkEmmyDir checks whether emmy configuration folder
+// exists on the filesystem.
+func emmyDirExists() bool {
+	home, err := homedir.Dir()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	emmyPath := path.Join(home, ".emmy")
+	_, err = os.Stat(emmyPath)
+	return !os.IsNotExist(err)
 }
 
 var serverCLCmd = &cobra.Command{
@@ -64,7 +139,7 @@ var serverCLCmd = &cobra.Command{
 	Short: "Configures the server to run Camenisch-Lysyanskaya scheme for" +
 		" anonymous authentication.",
 	Run: func(cmd *cobra.Command, args []string) {
-		/*sk := &cl.SecKey{}
+		sk := &cl.SecKey{}
 		pk := &cl.PubKey{}
 		err := cl.ReadGob("anauth/test/testdata/clSecKey.gob", sk)
 		if err != nil {
@@ -75,21 +150,23 @@ var serverCLCmd = &cobra.Command{
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
-		}*/
+		}
+		//keys, _ := cl.GenerateKeyPair(cl.GetDefaultParamSizes())
 		// FIXME this is to match with the client.
 		//  We then announce the pubkey via a RPC service
-		keys, _ := cl.GenerateKeyPair(cl.GetDefaultParamSizes())
 		// TODO STORE SECRET AND PUBLIC KEYS UPON GENERATION!
 		clService, _ := cl.NewServer(
-			cl.NewMockRecordManager(),
+			cl.NewMockRecordManager(), // TODO redis
 			&cl.KeyPair{
-				Sec: keys.Sec,
-				Pub: keys.Pub,
+				Sec: sk,
+				Pub: pk,
 			})
 
-		mockDb := &mock.RegKeyDB{} // TODO fixme
-		mockDb.Insert("abc")
-		clService.RegMgr = mockDb
+		redis := anauth.NewRedisClient(redis.NewClient(&redis.Options{
+			Addr: redisAddr,
+		})) // TODO ping
+
+		clService.RegMgr = redis
 		clService.SessMgr, _ = anauth.NewRandSessionKeyGen(32)
 
 		srv.RegisterService(clService)
@@ -112,27 +189,4 @@ var serverECPsysCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("running ecpsys server")
 	},
-}
-
-func init() {
-	rootCmd.AddCommand(serverCmd)
-
-	serverCmd.PersistentFlags().IntP("port", "p",
-		7007,
-		"Port where emmy server will listen for client connections")
-	serverCmd.PersistentFlags().StringP("cert", "",
-		".",
-		"Path to server's certificate file")
-	serverCmd.PersistentFlags().StringP("key", "",
-		".",
-		"Path to server's key file")
-	serverCmd.PersistentFlags().StringP("db", "",
-		"localhost:6666",
-		"URI of redis database to hold registration keys, in the form redisHost:redisPort")
-	serverCmd.PersistentFlags().StringP("logfile", "",
-		"",
-		"Path to the file where server logs will be written ("+
-			"created if it doesn't exist)")
-
-	serverCmd.AddCommand(serverCLCmd, serverPsysCmd, serverECPsysCmd)
 }
