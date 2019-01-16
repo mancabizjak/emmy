@@ -100,7 +100,6 @@ func (c *Client) IssueCredential(cm *CredManager, regKey string) (*Cred,
 		return nil, err
 	}
 
-	fmt.Println("nonce", resp.GetNonce())
 	credIssueNonceOrg := new(big.Int).SetBytes(resp.GetNonce())
 	credReq, err := cm.GetCredRequest(credIssueNonceOrg)
 	if err != nil {
