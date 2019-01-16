@@ -21,6 +21,7 @@ package clpb;
 option go_package = "github.com/emmyzkp/emmy/anauth/cl/clpb";
 
 service AnonCreds {
+	rpc GetPublicParams (Empty) returns (PublicParams) {}
 	rpc Issue (stream Request) returns (stream Response) {}
 	rpc Update (CredUpdateRequest) returns (IssuedCred) {}
 	rpc Prove (stream Request) returns (stream Response) {}
@@ -44,6 +45,57 @@ message Response {
 }
 
 message Empty {}
+
+message SchnorrGroup {
+	bytes p = 2;
+	bytes g = 3;
+	bytes q = 4;
+}
+
+message PedersenParams {
+	SchnorrGroup schnorrGroup = 1;
+	bytes h = 2;
+}
+
+message PubKey {
+	bytes n = 1;
+	bytes s = 2;
+	bytes z = 3;
+	repeated bytes rsKnown = 4;
+	repeated bytes rsCommitted = 5;
+	repeated bytes rsHidden = 6;
+	PedersenParams pedersenParams = 7;
+	bytes n1 = 8;
+	bytes g = 9;
+	bytes h = 10;
+}
+
+message Params {
+	// There are only a few possibilities for RhoBitLen. 256 implies that the modulus
+	// bit length is 2048
+	int32 RhoBitLen = 1;          // bit length of order of the commitment group
+	int32 NLength = 2;           // bit length of RSA modulus
+	int32 KnownAttrsNum = 3;     // number of attributes known to both credential issuer and receiver
+	int32 CommittedAttrsNum = 4;  // number of attributes for which the issuer
+	//knows only commitments
+	int32 HiddenAttrsNum = 5;    // number of attributes known only to the
+	//receiver
+	int32 AttrBitLen = 6;        // bit length of attribute
+	int32 HashBitLen = 7;         // bit length of hash output used for
+	//Fiat-Shamir
+	int32 SecParam = 8;           // security parameter
+	int32 EBitLen = 9;           // size of e values of certificates
+	int32 E1BitLen = 10;          // size of the interval the e values are taken
+	//from
+	int32 VBitLen = 11;            // size of the v values of the certificates
+	int32 ChallengeSpace = 12;     // bit length of challenges for DF commitment
+	//proofs
+}
+
+message PublicParams {
+	PubKey pubKey = 1;
+	Params params = 2;
+}
 
 message CredIssueRequest {
 	bytes Nym = 1;

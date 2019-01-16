@@ -31,10 +31,11 @@ import (
 	"github.com/emmyzkp/crypto/pedersen"
 	"github.com/emmyzkp/crypto/qr"
 	"github.com/emmyzkp/crypto/schnorr"
+	pb "github.com/emmyzkp/emmy/anauth/cl/clpb"
 )
 
 type Org struct {
-	Params             *Params
+	Params             *pb.Params
 	Group              *qr.RSASpecial     // in this group attributes will be used as exponents (basis is PubKey.Rs...)
 	pedersenReceiver   *pedersen.Receiver // used for nyms (nym is Pedersen commitment)
 	nym                *big.Int
@@ -49,7 +50,7 @@ type Org struct {
 	proveCredNonceOrg  *big.Int
 }
 
-func NewOrg(params *Params) (*Org, error) {
+func NewOrg(params *pb.Params) (*Org, error) {
 	keys, err := GenerateKeyPair(params)
 	if err != nil {
 		return nil, err
@@ -59,7 +60,7 @@ func NewOrg(params *Params) (*Org, error) {
 }
 
 // FIXME
-func NewOrgFromParams(params *Params, keys *KeyPair) (*Org, error) {
+func NewOrgFromParams(params *pb.Params, keys *KeyPair) (*Org, error) {
 	var group *qr.RSASpecial
 	var err error
 	if keys.Sec != nil {
@@ -120,14 +121,14 @@ func (o *Org) genCredRandoms() (*big.Int, *big.Int) {
 	b := new(big.Int).Exp(big.NewInt(2), exp, nil)
 	var e *big.Int
 	for {
-		er, _ := rand.Prime(rand.Reader, o.Params.E1BitLen-1)
+		er, _ := rand.Prime(rand.Reader, int(o.Params.E1BitLen)-1)
 		e = new(big.Int).Add(er, b)
 		if e.ProbablyPrime(20) { // e needs to be prime
 			break
 		}
 	}
 
-	vr, _ := rand.Prime(rand.Reader, o.Params.VBitLen-1)
+	vr, _ := rand.Prime(rand.Reader, int(o.Params.VBitLen)-1)
 	exp = big.NewInt(int64(o.Params.VBitLen - 1))
 	b = new(big.Int).Exp(big.NewInt(2), exp, nil)
 	v11 := new(big.Int).Add(vr, b)
@@ -136,7 +137,7 @@ func (o *Org) genCredRandoms() (*big.Int, *big.Int) {
 }
 
 func (o *Org) genAProof(nonceUser, context, eInv, Q, A *big.Int) *qr.RepresentationProof {
-	prover := qr.NewRepresentationProver(o.Group, o.Params.SecParam,
+	prover := qr.NewRepresentationProver(o.Group, int(o.Params.SecParam),
 		[]*big.Int{eInv}, []*big.Int{Q}, A)
 	proofRandomData := prover.GetProofRandomData(true)
 	// challenge = hash(context||Q||A||AProofRandomData||nonceUser)
@@ -154,7 +155,7 @@ type CredResult struct {
 
 func (o *Org) IssueCred(cr *CredRequest) (*CredResult, error) {
 	o.nymVerifier = schnorr.NewVerifier(o.pedersenReceiver.Params.Group)
-	o.UVerifier = qr.NewRepresentationVerifier(o.Group, o.Params.SecParam)
+	o.UVerifier = qr.NewRepresentationVerifier(o.Group, int(o.Params.SecParam))
 
 	o.nym = cr.Nym
 	o.knownAttrs = cr.KnownAttrs
@@ -209,7 +210,8 @@ func (o *Org) UpdateCred(nym *big.Int, rec *ReceiverRecord, nonceUser *big.Int, 
 		o.knownAttrs = newKnownAttrs
 		o.setUpAttrVerifiers(rec.CommitmentsOfAttrs)
 		o.nymVerifier = schnorr.NewVerifier(o.pedersenReceiver.Params.Group) // pubKey.Params.Group
-		o.UVerifier = qr.NewRepresentationVerifier(o.Group, o.Params.SecParam)
+		o.UVerifier = qr.NewRepresentationVerifier(o.Group,
+			int(o.Params.SecParam))
 	}
 
 	e, v11 := o.genCredRandoms()
@@ -258,7 +260,7 @@ func (o *Org) GetProveCredNonce() *big.Int {
 func (o *Org) ProveCred(A *big.Int, proof *qr.RepresentationProof,
 	revealedKnownAttrsIndices, revealedCommitmentsOfAttrsIndices []int,
 	knownAttrs, commitmentsOfAttrs []*big.Int) (bool, error) {
-	ver := qr.NewRepresentationVerifier(o.Group, o.Params.SecParam)
+	ver := qr.NewRepresentationVerifier(o.Group, int(o.Params.SecParam))
 	bases := []*big.Int{}
 	for i := 0; i < len(o.Keys.Pub.RsKnown); i++ {
 		if !common.Contains(revealedKnownAttrsIndices, i) {
@@ -387,13 +389,14 @@ func (o *Org) setUpAttrVerifiers(commitmentsOfAttrs []*big.Int) error {
 	for i, attr := range commitmentsOfAttrs {
 		receiver, err := df.NewReceiverFromParams(
 			o.Keys.Sec.AttributesSpecialRSAPrimes, o.Keys.Pub.G, o.Keys.Pub.H,
-			o.Params.SecParam)
+			int(o.Params.SecParam))
 		if err != nil {
 			return err
 		}
 		receiver.SetCommitment(attr)
 
-		verifier := df.NewOpeningVerifier(receiver, o.Params.ChallengeSpace)
+		verifier := df.NewOpeningVerifier(receiver,
+			int(o.Params.ChallengeSpace))
 		attrsVerifiers[i] = verifier
 	}
 

@@ -26,6 +26,7 @@ import (
 	"github.com/emmyzkp/crypto/pedersen"
 	"github.com/emmyzkp/crypto/qr"
 	"github.com/emmyzkp/crypto/schnorr"
+	"github.com/emmyzkp/emmy/anauth/cl/clpb"
 )
 
 // CredManager manages a single instance of anonymous credential.
@@ -37,7 +38,7 @@ import (
 // When a user needs a new credential under a new nym, she also needs
 // a new instance of CredManager.
 type CredManager struct {
-	Params             *Params
+	Params             *clpb.Params
 	PubKey             *PubKey
 	nymCommitter       *pedersen.Committer // nym is actually a commitment to masterSecret
 	Nym                *big.Int
@@ -87,9 +88,9 @@ func checkBitLen(s []*big.Int, len int) bool {
 	return true
 }
 
-func NewCredManager(params *Params, pubKey *PubKey, masterSecret *big.Int,
+func NewCredManager(params *clpb.Params, pubKey *PubKey, masterSecret *big.Int,
 	attrs *Attrs) (*CredManager, error) {
-	if !checkBitLen(attrs.join(), params.AttrBitLen) {
+	if !checkBitLen(attrs.join(), int(params.AttrBitLen)) {
 		return nil, fmt.Errorf("attributes length not ok")
 	}
 
@@ -97,7 +98,7 @@ func NewCredManager(params *Params, pubKey *PubKey, masterSecret *big.Int,
 	commitmentsOfAttrs := make([]*big.Int, len(attrs.Committed))
 	for i, attr := range attrs.Committed {
 		committer := df.NewCommitter(pubKey.N1, pubKey.G, pubKey.H,
-			pubKey.N1, params.SecParam)
+			pubKey.N1, int(params.SecParam))
 		com, err := committer.GetCommitMsg(attr)
 		if err != nil {
 			return nil, fmt.Errorf("error when creating Pedersen commitment: %s", err)
@@ -107,7 +108,8 @@ func NewCredManager(params *Params, pubKey *PubKey, masterSecret *big.Int,
 	}
 	commitmentsOfAttrsProvers := make([]*df.OpeningProver, len(commitmentsOfAttrs))
 	for i, _ := range commitmentsOfAttrs {
-		prover := df.NewOpeningProver(attrsCommitters[i], params.ChallengeSpace)
+		prover := df.NewOpeningProver(attrsCommitters[i],
+			int(params.ChallengeSpace))
 		commitmentsOfAttrsProvers[i] = prover
 	}
 
@@ -125,7 +127,8 @@ func NewCredManager(params *Params, pubKey *PubKey, masterSecret *big.Int,
 	return &credManager, nil
 }
 
-func NewCredManagerFromExisting(nym, v1, credReqNonce *big.Int, params *Params, pubKey *PubKey, masterSecret *big.Int,
+func NewCredManagerFromExisting(nym, v1, credReqNonce *big.Int,
+	params *clpb.Params, pubKey *PubKey, masterSecret *big.Int,
 	attrs *Attrs, commitmentsOfAttrs []*big.Int) (*CredManager, error) {
 
 	// nymCommitter is needed only for IssueCred (when proving that nym can be opened), so we do not need it here
@@ -234,7 +237,7 @@ func (m *CredManager) Verify(cred *Cred, AProof *qr.RepresentationProof) (bool, 
 	}
 
 	// verify signature proof:
-	ver := qr.NewRepresentationVerifier(group, m.Params.SecParam)
+	ver := qr.NewRepresentationVerifier(group, int(m.Params.SecParam))
 	ver.SetProofRandomData(AProof.ProofRandomData, []*big.Int{Q}, cred.A)
 	// check challenge
 	context := m.PubKey.GetContext()
@@ -304,6 +307,7 @@ func (m *CredManager) BuildProof(cred *Cred, revealedKnownAttrsIndices,
 			unrevealedCommitmentsOfAttrs = append(unrevealedCommitmentsOfAttrs, m.CommitmentsOfAttrs[i])
 		}
 	}
+
 	bases = append(bases, m.PubKey.RsHidden...)
 	bases = append(bases, rCred.A)
 	bases = append(bases, m.PubKey.S)
@@ -331,15 +335,15 @@ func (m *CredManager) BuildProof(cred *Cred, revealedKnownAttrsIndices,
 	denomInv := group.Inv(denom)
 	y := group.Mul(m.PubKey.Z, denomInv)
 
-	prover := qr.NewRepresentationProver(group, m.Params.SecParam,
+	prover := qr.NewRepresentationProver(group, int(m.Params.SecParam),
 		secrets, bases, y)
 
 	// boundary for m_tilde
-	b_m := m.Params.AttrBitLen + m.Params.SecParam + m.Params.HashBitLen
+	b_m := int(m.Params.AttrBitLen + m.Params.SecParam + m.Params.HashBitLen)
 	// boundary for e
-	b_e := m.Params.EBitLen + m.Params.SecParam + m.Params.HashBitLen
+	b_e := int(m.Params.EBitLen + m.Params.SecParam + m.Params.HashBitLen)
 	// boundary for v1
-	b_v1 := m.Params.VBitLen + m.Params.SecParam + m.Params.HashBitLen
+	b_v1 := int(m.Params.VBitLen + m.Params.SecParam + m.Params.HashBitLen)
 
 	boundaries := []int{}
 	for i := 0; i < len(unrevealedKnownAttrs); i++ {

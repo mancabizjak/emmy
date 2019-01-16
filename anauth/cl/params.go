@@ -17,8 +17,9 @@
 
 package cl
 
-import ()
+import pb "github.com/emmyzkp/emmy/anauth/cl/clpb"
 
+/*
 type Params struct {
 	// There are only a few possibilities for RhoBitLen. 256 implies that the modulus
 	// bit length is 2048
@@ -34,16 +35,16 @@ type Params struct {
 	E1BitLen          int // size of the interval the e values are taken from
 	VBitLen           int // size of the v values of the certificates
 	ChallengeSpace    int // bit length of challenges for DF commitment proofs
-}
+}*/
 
 // TODO: add method to load params from file or blockchain or wherever they will be stored.
-func GetDefaultParamSizes() *Params {
-	return &Params{
+func GetDefaultParamSizes() *pb.Params {
+	return &pb.Params{
 		RhoBitLen:         256,
 		NLength:           256, // should be at least 2048 when not testing
-		KnownAttrsNum:     4,
-		CommittedAttrsNum: 2,
-		HiddenAttrsNum:    3,
+		KnownAttrsNum:     2,   // FIXME
+		CommittedAttrsNum: 0,   // FIXME
+		HiddenAttrsNum:    0,   // FIXME
 		AttrBitLen:        256,
 		HashBitLen:        512,
 		SecParam:          80,

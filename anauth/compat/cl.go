@@ -20,7 +20,7 @@ package compat
 import (
 	"math/big"
 
-	"github.com/emmyzkp/crypto/pedersen"
+	"github.com/emmyzkp/emmy/anauth/cl/clpb"
 
 	"github.com/emmyzkp/emmy/anauth/cl"
 )
@@ -35,30 +35,60 @@ func NewCLClient(conn *Connection) *CLClient {
 	}
 }
 
-func (c *CLClient) IssueCred(cm CLCredManager, regKey string) (*CLCred, error) {
-	cred, err := c.Client.IssueCredential(cm.CredManager, regKey)
-	if err != nil {
-		return nil, err
-	}
-
-	return &CLCred{
-		A:   cred.A.Bytes(),
-		E:   cred.E.Bytes(),
-		V11: cred.V11.Bytes(),
-	}, nil
+type CLPublicParams struct {
+	PubKey *CLOrgPubKey
+	Config *CLParams
 }
 
-func (c *CLClient) ProveCred(cm CLCredManager, cred CLCred,
-	known [][]byte, revealedI, revealedCommI []int) (string,
-	error) {
-	knownAttrs := make([]*big.Int, len(known))
-	for i, r := range known {
-		knownAttrs[i].SetBytes(r)
+type Attr struct {
+	key string
+	val *big.Int
+}
+
+func NewAttr(key string, val []byte) *Attr {
+	return &Attr{
+		key: key,
+		val: new(big.Int).SetBytes(val),
 	}
+}
+
+type Attrs struct {
+	attrs []*Attr
+}
+
+func NewAttrs() *Attrs {
+	return &Attrs{
+		attrs: make([]*Attr, 0),
+	}
+}
+
+func (a *Attrs) toBigintSlice() []*big.Int {
+	out := make([]*big.Int, len(a.attrs))
+	for i, a := range a.attrs {
+		out[i] = new(big.Int).Set(a.val)
+	}
+
+	return out
+}
+
+func (a *Attrs) Add(attr *Attr) {
+	a.attrs = append(a.attrs, attr)
+}
+
+type Commitment struct {
+	data []byte
+}
+
+// FIXME ignores revealedI, revealedCommI []int
+func (c *CLClient) ProveCred(cm *CLCredManager, cred *CLCred,
+	known *Attrs) (string,
+	error) {
 
 	sessKey, err := c.Client.ProveCredential(cm.CredManager,
 		cred.getNativeType(),
-		knownAttrs, revealedI, revealedCommI)
+		known.toBigintSlice(),
+		nil,
+		nil) // FIXME
 
 	if err != nil {
 		return "<INVALID>", err
@@ -88,114 +118,94 @@ type PedersenParams struct {
 }
 
 type CLParams struct {
-	*cl.Params
-}
-
-func GetCLDefaultParams() *CLParams {
-	return &CLParams{
-		Params: cl.GetDefaultParamSizes(),
-	}
+	*clpb.Params
 }
 
 type CLOrgPubKey struct {
-	N              []byte
-	S              []byte
-	Z              []byte
-	RsKnown        [][]byte       // UNSUPPORTED
-	RsCommitted    [][]byte       // UNSUPPORTED
-	RsHidden       [][]byte       // UNSUPPORTED
-	PedersenParams PedersenParams // UNSUPPORTED?
-	N1             []byte
-	G              []byte
-	H              []byte
+	*cl.PubKey
 }
 
-func (k *CLOrgPubKey) GetUserMasterSecret() ([]byte, error) {
-	// FIXME avoid conversion, do wrapping instead
-	key, err := k.getNativeType()
-	if err != nil {
-		return nil, err
-	}
-	return key.GenerateUserMasterSecret().Bytes(), nil
+func (k *CLOrgPubKey) GenerateMasterSecret() []byte {
+	return k.PubKey.GenerateUserMasterSecret().Bytes()
 }
 
-func (k *CLOrgPubKey) getNativeType() (*cl.PubKey, error) {
-	rsKnown := make([]*big.Int, len(k.RsKnown))
-	for i, r := range k.RsKnown {
-		rsKnown[i].SetBytes(r)
+type CLAttrs struct {
+	Known     *Attrs
+	Hidden    *Attrs
+	Committed *Attrs
+}
+
+func NewCLAttrs(known, hidden, committed *Attrs) *CLAttrs {
+	return &CLAttrs{
+		Known:     known,
+		Hidden:    hidden,
+		Committed: committed,
 	}
-	rsCommitted := make([]*big.Int, len(k.RsCommitted))
-	for i, r := range k.RsCommitted {
-		rsCommitted[i].SetBytes(r)
-	}
-	rsHidden := make([]*big.Int, len(k.RsHidden))
-	for i, r := range k.RsHidden {
-		rsHidden[i].SetBytes(r)
+}
+
+func (a *CLAttrs) getNativeType() *cl.Attrs {
+	var known = make([]*big.Int, 0)
+	var hidden = make([]*big.Int, 0)
+	var committed = make([]*big.Int, 0)
+
+	if a.Known != nil {
+		known = a.Known.toBigintSlice()
 	}
 
-	group, err := k.PedersenParams.Group.toNativeType()
-	if err != nil {
-		return nil, err
+	if a.Hidden != nil {
+		hidden = a.Hidden.toBigintSlice()
 	}
 
-	pp := pedersen.NewParams(
-		group,
-		new(big.Int).SetBytes(k.PedersenParams.H),
-		new(big.Int).SetBytes(k.PedersenParams.a))
+	if a.Committed != nil {
+		committed = a.Committed.toBigintSlice()
+	}
 
-	return &cl.PubKey{
-		N:              new(big.Int).SetBytes(k.N),
-		S:              new(big.Int).SetBytes(k.S),
-		Z:              new(big.Int).SetBytes(k.Z),
-		RsKnown:        rsKnown,
-		RsCommitted:    rsCommitted,
-		RsHidden:       rsHidden,
-		PedersenParams: pp,
-		N1:             new(big.Int).SetBytes(k.N1),
-		G:              new(big.Int).SetBytes(k.G),
-		H:              new(big.Int).SetBytes(k.H),
-	}, nil
+	return cl.NewAttrs(known, hidden, committed)
 }
 
 type CLCredManager struct {
 	*cl.CredManager
 }
 
-type CLAttrs struct {
-	Known     [][]byte // UNSUPPORTED
-	Hidden    [][]byte // UNSUPPORTED
-	Committed [][]byte // UNSUPPORTED
+type CLCredManagerState struct {
+	Nym                []byte
+	V1                 []byte
+	CredReqNonce       []byte
+	PubKey             *CLOrgPubKey
+	Params             *CLParams
+	Attrs              *CLAttrs
+	CommitmentsOfAttrs []Commitment
 }
 
-func (a *CLAttrs) getNativeType() *cl.Attrs {
-	known := make([]*big.Int, len(a.Known))
-	for i, r := range a.Known {
-		known[i].SetBytes(r)
+// GetState returns a CLCredManagerState filled with
+// current state of the CLCredManager. It can be used to restore
+// a CLCredManager.
+func (cm *CLCredManager) GetState() *CLCredManagerState {
+	coa := make([]Commitment, len(cm.CommitmentsOfAttrs))
+	for i, c := range cm.CommitmentsOfAttrs {
+		coa[i] = Commitment{c.Bytes()}
 	}
 
-	hidden := make([]*big.Int, len(a.Hidden))
-	for i, r := range a.Hidden {
-		hidden[i].SetBytes(r)
+	return &CLCredManagerState{
+		Nym:                cm.Nym.Bytes(),
+		V1:                 cm.V1.Bytes(),
+		CredReqNonce:       cm.CredReqNonce.Bytes(),
+		PubKey:             &CLOrgPubKey{cm.PubKey},
+		Params:             &CLParams{cm.Params},
+		CommitmentsOfAttrs: coa,
 	}
-
-	committed := make([]*big.Int, len(a.Committed))
-	for i, r := range a.Committed {
-		committed[i].SetBytes(r)
-	}
-
-	return cl.NewAttrs(known, hidden, committed)
 }
 
+// NewCLCredManager generates credential manager for the CL scheme.
+// It accepts parameters for the CL scheme (these must match server-side
+// configuration), server's public key, user's secret and attributes to
+// manage.
 func NewCLCredManager(params *CLParams, pk *CLOrgPubKey,
 	secret []byte, attrs *CLAttrs) (*CLCredManager,
 	error) {
-	pubKey, err := pk.getNativeType()
-	if err != nil {
-		return nil, err
-	}
 
 	cm, err := cl.NewCredManager(params.Params,
-		pubKey,
+		pk.PubKey,
 		new(big.Int).SetBytes(secret),
 		attrs.getNativeType())
 	if err != nil {
@@ -207,24 +217,21 @@ func NewCLCredManager(params *CLParams, pk *CLOrgPubKey,
 	}, nil
 }
 
-func RestoreCLCredManager(params CLParams, pk *CLOrgPubKey, secret,
-	nym, v1, nonce []byte, commitmentsOfAttrs [][]byte, attrs *CLAttrs) (*CLCredManager, error) {
-	pubKey, err := pk.getNativeType()
-	if err != nil {
-		return nil, err
-	}
-
-	coa := make([]*big.Int, len(commitmentsOfAttrs))
-	for i, a := range commitmentsOfAttrs {
-		coa[i].SetBytes(a)
+// RestoreCLCredManager establishes credential manager for the CL scheme.
+// It is meant to be used to re-establish the credential manager after it
+// has been previously created with NewCLCredManager.
+func RestoreCLCredManager(state *CLCredManagerState, secret []byte, attrs *CLAttrs) (*CLCredManager, error) {
+	coa := make([]*big.Int, len(state.CommitmentsOfAttrs))
+	for i, a := range state.CommitmentsOfAttrs {
+		coa[i].SetBytes(a.data)
 	}
 
 	cm, err := cl.NewCredManagerFromExisting(
-		new(big.Int).SetBytes(nym),
-		new(big.Int).SetBytes(v1),
-		new(big.Int).SetBytes(nonce),
-		params.Params,
-		pubKey,
+		new(big.Int).SetBytes(state.Nym),
+		new(big.Int).SetBytes(state.V1),
+		new(big.Int).SetBytes(state.CredReqNonce),
+		state.Params.Params,
+		state.PubKey.PubKey,
 		new(big.Int).SetBytes(secret),
 		attrs.getNativeType(),
 		coa,
@@ -237,3 +244,63 @@ func RestoreCLCredManager(params CLParams, pk *CLOrgPubKey, secret,
 		CredManager: cm,
 	}, nil
 }
+
+func (c *CLClient) GetPublicParams() (*CLPublicParams, error) {
+	cfg, pubKey, err := c.Client.GetPublicParams()
+	if err != nil {
+		return nil, err
+	}
+
+	return &CLPublicParams{
+		PubKey: &CLOrgPubKey{PubKey: pubKey},
+		Config: &CLParams{Params: cfg},
+	}, nil
+}
+
+func (c *CLClient) IssueCred(cm *CLCredManager, regKey string) (*CLCred,
+	error) {
+	cred, err := c.Client.IssueCredential(cm.CredManager, regKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return &CLCred{
+		A:   cred.A.Bytes(),
+		E:   cred.E.Bytes(),
+		V11: cred.V11.Bytes(),
+	}, nil
+}
+
+/*
+type Attrs struct {
+	//data [][]byte
+	data map[string][]byte
+}
+
+func NewAttrs() *Attrs {
+	return &Attrs{
+		//data: make([][]byte, 0),
+		data: map[string][]byte{},
+	}
+}
+
+func (a *Attrs) Add(key string, val []byte) {
+	fmt.Println("adding", key, "with value", val)
+	fmt.Println("DATA BEFORE:", a.data)
+	//tmp := append(a.data, val)
+	a.data[key] = val
+	fmt.Println("DATA AFTER:", a.data)
+}
+
+func (a *Attrs) toBigintSlice() []*big.Int {
+	bigintAttrs := make([]*big.Int, 0)
+	if a.data != nil {
+		for k, v := range a.data {
+			i := new(big.Int).SetBytes(v)
+			bigintAttrs = append(bigintAttrs, i)
+			fmt.Println(k, i)
+		}
+	}
+
+	return bigintAttrs
+}*/

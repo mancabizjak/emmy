@@ -20,6 +20,8 @@ package cl
 import (
 	"fmt"
 
+	pb "github.com/emmyzkp/emmy/anauth/cl/clpb"
+
 	"github.com/emmyzkp/emmy/anauth"
 
 	"google.golang.org/grpc/codes"
@@ -30,7 +32,6 @@ import (
 	"github.com/emmyzkp/crypto/df"
 	"github.com/emmyzkp/crypto/qr"
 	"github.com/emmyzkp/crypto/schnorr"
-	"github.com/emmyzkp/emmy/anauth/cl/clpb"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -58,25 +59,58 @@ func NewServer(recMgr ReceiverRecordManager, keys *KeyPair) (*Server, error) {
 }
 
 func (s *Server) RegisterTo(grpcSrv *grpc.Server) {
-	clpb.RegisterAnonCredsServer(grpcSrv, s)
+	pb.RegisterAnonCredsServer(grpcSrv, s)
 }
 
-func (s *Server) Issue(stream clpb.AnonCreds_IssueServer) error {
+func (s *Server) GetPublicParams(ctx context.Context,
+	msg *pb.Empty) (*pb.PublicParams, error) {
+	pk := s.Org.Keys.Pub
+	group := pk.PedersenParams.Group
+
+	return &pb.PublicParams{
+		PubKey: &pb.PubKey{
+			N:           pk.N.Bytes(),
+			S:           pk.S.Bytes(),
+			Z:           pk.Z.Bytes(),
+			RsKnown:     toByteSlices(pk.RsKnown),
+			RsCommitted: toByteSlices(pk.RsCommitted),
+			RsHidden:    toByteSlices(pk.RsHidden),
+			PedersenParams: &pb.PedersenParams{
+				SchnorrGroup: &pb.SchnorrGroup{
+					P: group.P.Bytes(),
+					G: group.G.Bytes(),
+					Q: group.Q.Bytes(),
+				},
+				H: pk.PedersenParams.H.Bytes(),
+			},
+			N1: pk.N1.Bytes(),
+			G:  pk.G.Bytes(),
+			H:  pk.H.Bytes(),
+		},
+		Params: s.Params,
+	}, nil
+}
+
+func (s *Server) Issue(stream pb.AnonCreds_IssueServer) error {
 	req, err := stream.Recv()
 	if err != nil {
 		return err
 	}
 
 	regKeyOk, err := s.RegMgr.CheckRegistrationKey(req.GetRegKey())
-	if !regKeyOk || err != nil {
+	fmt.Println("checking reg key", req.GetRegKey())
+	if err != nil {
 		//s.Logger.Debugf("registration key %s ok=%t, error=%v",
 		//	proofRandData.RegKey, regKeyOk, err)
+		return status.Error(codes.Internal, "something went wrong")
+	}
+	if !regKeyOk {
 		return status.Error(codes.NotFound, "registration key verification failed")
 	}
 
 	nonce := s.GetCredIssueNonce()
-	resp := &clpb.Response{
-		Type: &clpb.Response_Nonce{
+	resp := &pb.Response{
+		Type: &pb.Response_Nonce{
 			Nonce: nonce.Bytes(),
 		},
 	}
@@ -140,15 +174,15 @@ func (s *Server) Issue(stream clpb.AnonCreds_IssueServer) error {
 		return err
 	}
 
-	resp = &clpb.Response{
-		Type: &clpb.Response_IssuedCred{
-			IssuedCred: &clpb.IssuedCred{
-				Cred: &clpb.Cred{
+	resp = &pb.Response{
+		Type: &pb.Response_IssuedCred{
+			IssuedCred: &pb.IssuedCred{
+				Cred: &pb.Cred{
 					A:   res.Cred.A.Bytes(),
 					E:   res.Cred.E.Bytes(),
 					V11: res.Cred.V11.Bytes(),
 				},
-				AProof: &clpb.FiatShamirAlsoNeg{
+				AProof: &pb.FiatShamirAlsoNeg{
 					ProofRandomData: res.AProof.ProofRandomData.Bytes(),
 					Challenge:       res.AProof.Challenge.Bytes(),
 					ProofData:       []string{res.AProof.ProofData[0].String()},
@@ -160,7 +194,7 @@ func (s *Server) Issue(stream clpb.AnonCreds_IssueServer) error {
 	return stream.Send(resp)
 }
 
-func (s *Server) Update(ctx context.Context, req *clpb.CredUpdateRequest) (*clpb.IssuedCred, error) {
+func (s *Server) Update(ctx context.Context, req *pb.CredUpdateRequest) (*pb.IssuedCred, error) {
 	nym := new(big.Int).SetBytes(req.Nym)
 
 	// Retrieve the receiver record from the database
@@ -185,13 +219,13 @@ func (s *Server) Update(ctx context.Context, req *clpb.CredUpdateRequest) (*clpb
 		return nil, err
 	}
 
-	return &clpb.IssuedCred{
-		Cred: &clpb.Cred{
+	return &pb.IssuedCred{
+		Cred: &pb.Cred{
 			A:   res.Cred.A.Bytes(),
 			E:   res.Cred.E.Bytes(),
 			V11: res.Cred.V11.Bytes(),
 		},
-		AProof: &clpb.FiatShamirAlsoNeg{
+		AProof: &pb.FiatShamirAlsoNeg{
 			ProofRandomData: res.AProof.ProofRandomData.Bytes(),
 			Challenge:       res.AProof.Challenge.Bytes(),
 			ProofData:       []string{res.AProof.ProofData[0].String()},
@@ -199,15 +233,15 @@ func (s *Server) Update(ctx context.Context, req *clpb.CredUpdateRequest) (*clpb
 	}, nil
 }
 
-func (s *Server) Prove(stream clpb.AnonCreds_ProveServer) error {
+func (s *Server) Prove(stream pb.AnonCreds_ProveServer) error {
 	req, err := stream.Recv()
 	if err != nil {
 		return err
 	}
 
 	nonce := s.GetProveCredNonce()
-	resp := &clpb.Response{
-		Type: &clpb.Response_Nonce{
+	resp := &pb.Response{
+		Type: &pb.Response_Nonce{
 			Nonce: nonce.Bytes(),
 		},
 	}
@@ -275,8 +309,8 @@ func (s *Server) Prove(stream clpb.AnonCreds_ProveServer) error {
 	}
 
 	return stream.Send(
-		&clpb.Response{
-			Type: &clpb.Response_SessionKey{
+		&pb.Response{
+			Type: &pb.Response_SessionKey{
 				SessionKey: *sessKey,
 			},
 		})

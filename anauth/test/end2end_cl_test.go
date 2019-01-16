@@ -26,17 +26,31 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/emmyzkp/emmy/anauth/cl"
+	pb "github.com/emmyzkp/emmy/anauth/cl/clpb"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestEndToEnd_CL(t *testing.T) {
 	tests := []struct {
 		desc   string
-		params *cl.Params
+		params *pb.Params
 		attrs  *cl.Attrs
 	}{
 		{"Defaults",
-			cl.GetDefaultParamSizes(),
+			&pb.Params{
+				RhoBitLen:         256,
+				NLength:           256, // should be at least 2048 when not testing
+				KnownAttrsNum:     4,
+				CommittedAttrsNum: 2,
+				HiddenAttrsNum:    3,
+				AttrBitLen:        256,
+				HashBitLen:        512,
+				SecParam:          80,
+				EBitLen:           597,
+				E1BitLen:          120,
+				VBitLen:           2724,
+				ChallengeSpace:    80,
+			},
 			cl.NewAttrs(
 				intsToBig(7, 6, 5, 22),
 				intsToBig(11, 13, 19),
@@ -69,7 +83,7 @@ func TestEndToEnd_CL(t *testing.T) {
 		}
 
 		t.Run(tt.desc, func(t *testing.T) {
-			testEndToEndCL(t, conn, tt.params, tt.attrs, keys.Pub)
+			testEndToEndCL(t, conn, tt.attrs)
 		})
 
 		conn.Close()
@@ -78,17 +92,19 @@ func TestEndToEnd_CL(t *testing.T) {
 }
 
 // TestCL requires a running server.
-func testEndToEndCL(t *testing.T, conn *grpc.ClientConn, params *cl.Params,
-	attrs *cl.Attrs,
-	pk *cl.PubKey) {
-	masterSecret := pk.GenerateUserMasterSecret()
+func testEndToEndCL(t *testing.T, conn *grpc.ClientConn, attrs *cl.Attrs) {
+	client := cl.NewClient(conn)
 
-	cm, err := cl.NewCredManager(params, pk, masterSecret, attrs)
+	params, pubKey, err := client.GetPublicParams()
+	if err != nil {
+		t.Errorf("error retrieving org's pubkey: %v", err)
+	}
+	masterSecret := pubKey.GenerateUserMasterSecret()
+
+	cm, err := cl.NewCredManager(params, pubKey, masterSecret, attrs)
 	if err != nil {
 		t.Errorf("error when creating a user: %v", err)
 	}
-
-	client := cl.NewClient(conn)
 
 	regKey := "key1"
 	regKeyDB.Insert(regKey)
@@ -100,7 +116,7 @@ func testEndToEndCL(t *testing.T, conn *grpc.ClientConn, params *cl.Params,
 	// create new CredManager (updating or proving usually does not happen at the same time
 	// as issuing)
 	cm, err = cl.NewCredManagerFromExisting(cm.Nym, cm.V1,
-		cm.CredReqNonce, params, pk, masterSecret, attrs,
+		cm.CredReqNonce, params, pubKey, masterSecret, attrs,
 		cm.CommitmentsOfAttrs)
 	if err != nil {
 		t.Errorf("error when calling NewCredManagerFromExisting: %v", err)

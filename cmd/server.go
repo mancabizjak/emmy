@@ -64,7 +64,7 @@ var serverCLCmd = &cobra.Command{
 	Short: "Configures the server to run Camenisch-Lysyanskaya scheme for" +
 		" anonymous authentication.",
 	Run: func(cmd *cobra.Command, args []string) {
-		sk := &cl.SecKey{}
+		/*sk := &cl.SecKey{}
 		pk := &cl.PubKey{}
 		err := cl.ReadGob("anauth/test/testdata/clSecKey.gob", sk)
 		if err != nil {
@@ -75,14 +75,21 @@ var serverCLCmd = &cobra.Command{
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
-		}
-		clService, err := cl.NewServer(
+		}*/
+		// FIXME this is to match with the client.
+		//  We then announce the pubkey via a RPC service
+		keys, _ := cl.GenerateKeyPair(cl.GetDefaultParamSizes())
+		// TODO STORE SECRET AND PUBLIC KEYS UPON GENERATION!
+		clService, _ := cl.NewServer(
 			cl.NewMockRecordManager(),
 			&cl.KeyPair{
-				Sec: sk,
-				Pub: pk,
+				Sec: keys.Sec,
+				Pub: keys.Pub,
 			})
-		clService.RegMgr = &mock.RegKeyDB{}
+
+		mockDb := &mock.RegKeyDB{} // TODO fixme
+		mockDb.Insert("abc")
+		clService.RegMgr = mockDb
 		clService.SessMgr, _ = anauth.NewRandSessionKeyGen(32)
 
 		srv.RegisterService(clService)

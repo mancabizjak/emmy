@@ -7,6 +7,7 @@ import (
 	"github.com/emmyzkp/crypto/df"
 	"github.com/emmyzkp/crypto/pedersen"
 	"github.com/emmyzkp/crypto/qr"
+	pb "github.com/emmyzkp/emmy/anauth/cl/clpb"
 	"github.com/pkg/errors"
 )
 
@@ -48,14 +49,16 @@ type PubKey struct {
 
 // NewPubKey accepts group g, parameters p and commitment receiver recv,
 // and returns a public key for the CL scheme.
-func NewPubKey(g *qr.RSASpecial, p *Params, recv *df.Receiver) (*PubKey, error) {
+func NewPubKey(g *qr.RSASpecial, p *pb.Params, recv *df.Receiver) (*PubKey,
+	error) {
 	S, Z, RsKnown, RsCommitted, RsHidden, err := generateQuadraticResidues(
-		g, p.KnownAttrsNum, p.CommittedAttrsNum, p.HiddenAttrsNum)
+		g, int(p.KnownAttrsNum), int(p.CommittedAttrsNum),
+		int(p.HiddenAttrsNum))
 	if err != nil {
 		return nil, errors.Wrap(err, "error creating quadratic residues")
 	}
 
-	pp, err := pedersen.GenerateParams(p.RhoBitLen)
+	pp, err := pedersen.GenerateParams(int(p.RhoBitLen))
 	if err != nil {
 		return nil, errors.Wrap(err, "error creating Pedersen receiver")
 	}
@@ -92,14 +95,14 @@ func (k *PubKey) GetContext() *big.Int {
 
 // GenerateKeyPair takes and constructs a keypair containing public and
 // secret key for the CL scheme.
-func GenerateKeyPair(p *Params) (*KeyPair, error) {
-	g, err := qr.NewRSASpecial(p.NLength / 2)
+func GenerateKeyPair(p *pb.Params) (*KeyPair, error) {
+	g, err := qr.NewRSASpecial(int(p.NLength) / 2)
 	if err != nil {
 		return nil, errors.Wrap(err, "error creating RSASpecial group")
 	}
 
 	// receiver for commitments of (committed) attributes:
-	commRecv, err := df.NewReceiver(p.NLength/2, p.SecParam)
+	commRecv, err := df.NewReceiver(int(p.NLength/2), int(p.SecParam))
 	if err != nil {
 		return nil, errors.Wrap(err, "error creating DF commitment receiver")
 	}

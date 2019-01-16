@@ -21,10 +21,14 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/emmyzkp/crypto/schnorr"
+	"golang.org/x/net/context"
+
+	"github.com/emmyzkp/crypto/pedersen"
+
 	"github.com/emmyzkp/crypto/common"
 	"github.com/emmyzkp/crypto/qr"
 	pb "github.com/emmyzkp/emmy/anauth/cl/clpb"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 
@@ -36,6 +40,39 @@ func NewClient(conn *grpc.ClientConn) *Client {
 	return &Client{
 		AnonCredsClient: pb.NewAnonCredsClient(conn),
 	}
+}
+
+func (c *Client) GetPublicParams() (*pb.Params, *PubKey, error) {
+	if c.AnonCredsClient == nil {
+		return nil, nil, fmt.Errorf("client is not connected")
+	}
+
+	p, err := c.AnonCredsClient.GetPublicParams(context.Background(),
+		&pb.Empty{})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	pubKey := &PubKey{
+		N:           new(big.Int).SetBytes(p.PubKey.N),
+		S:           new(big.Int).SetBytes(p.PubKey.S),
+		Z:           new(big.Int).SetBytes(p.PubKey.Z),
+		RsKnown:     fromByteSlices(p.PubKey.RsKnown),
+		RsCommitted: fromByteSlices(p.PubKey.RsCommitted),
+		RsHidden:    fromByteSlices(p.PubKey.RsHidden),
+		PedersenParams: pedersen.NewParams(
+			schnorr.NewGroupFromParams(
+				new(big.Int).SetBytes(p.PubKey.PedersenParams.SchnorrGroup.P),
+				new(big.Int).SetBytes(p.PubKey.PedersenParams.SchnorrGroup.G),
+				new(big.Int).SetBytes(p.PubKey.PedersenParams.SchnorrGroup.Q),
+			),
+			new(big.Int).SetBytes(p.PubKey.PedersenParams.H), nil), // FIXME a is nil
+		N1: new(big.Int).SetBytes(p.PubKey.N1),
+		G:  new(big.Int).SetBytes(p.PubKey.G),
+		H:  new(big.Int).SetBytes(p.PubKey.H),
+	}
+
+	return p.Params, pubKey, nil
 }
 
 func (c *Client) IssueCredential(cm *CredManager, regKey string) (*Cred,
@@ -63,6 +100,7 @@ func (c *Client) IssueCredential(cm *CredManager, regKey string) (*Cred,
 		return nil, err
 	}
 
+	fmt.Println("nonce", resp.GetNonce())
 	credIssueNonceOrg := new(big.Int).SetBytes(resp.GetNonce())
 	credReq, err := cm.GetCredRequest(credIssueNonceOrg)
 	if err != nil {

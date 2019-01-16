@@ -97,7 +97,7 @@ func (m *CredManager) getUProver(U *big.Int) *qr.RepresentationProver {
 
 	// bases are [R_1, ..., R_L, S]
 	bases := append(m.PubKey.RsHidden, m.PubKey.S)
-	prover := qr.NewRepresentationProver(group, m.Params.SecParam,
+	prover := qr.NewRepresentationProver(group, int(m.Params.SecParam),
 		secrets[:], bases[:], U)
 	return prover
 }
@@ -110,9 +110,9 @@ func (m *CredManager) getUProofRandomData(prover *qr.RepresentationProver) (*big
 
 	boundaries := make([]int, len(m.PubKey.RsHidden))
 	for i := 0; i < len(m.PubKey.RsHidden); i++ {
-		boundaries[i] = b_m
+		boundaries[i] = int(b_m)
 	}
-	boundaries = append(boundaries, b_v1)
+	boundaries = append(boundaries, int(b_v1))
 
 	UTilde, err := prover.GetProofRandomDataGivenBoundaries(boundaries, true)
 	if err != nil {
