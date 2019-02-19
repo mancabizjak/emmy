@@ -20,10 +20,10 @@ LABEL maintainer="XLAB d.o.o" \
       description="This image starts the core Emmy server"
 
 # Create appropriate directory structure
-RUN mkdir -p $GOPATH/src/github.com/emmyzkp/crypto
+RUN mkdir -p $GOPATH/src/github.com/emmyzkp/emmy
 
 # Run subsequent commands from the project root
-WORKDIR $GOPATH/src/github.com/emmyzkp/crypto
+WORKDIR $GOPATH/src/github.com/emmyzkp/emmy
 
 # Copy project from host to project directory in container
 COPY ./ ./
@@ -34,7 +34,7 @@ RUN make setup_dep && \
     go install
 
 # Start emmy server
-ENTRYPOINT ["emmy", "server", "start"]
+ENTRYPOINT ["emmy", "server", "cl"]
 
 # Set default arguments for entrypoint command
 CMD ["--loglevel", "debug", "--db", "redis:6379"]

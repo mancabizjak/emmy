@@ -94,7 +94,7 @@ func (t *TranscriptEC) getNativeType() (*ecschnorr.BlindedTrans, error) {
 	return transcript, nil
 }
 
-// CredentialEC represents an equivalent of ecpseudsys.Cred,
+// CredentialEC represents an equivalent of ecpseudsys.CLCred,
 // but has field types compatible with Go language binding tools.
 type CredentialEC struct {
 	SmallAToGamma *ECGroupElement
@@ -117,7 +117,7 @@ func NewCredentialEC(aToGamma, bToGamma, AToGamma, BToGamma *ECGroupElement,
 	}
 }
 
-// getNativeType translates compatibility CredentialEC to emmy's native ecpseudsys.Cred.
+// getNativeType translates compatibility CredentialEC to emmy's native ecpseudsys.CLCred.
 func (c *CredentialEC) getNativeType() (*ecpsys.Cred, error) {
 	aTg, err := c.SmallAToGamma.getNativeType()
 	if err != nil {
@@ -151,9 +151,9 @@ func (c *CredentialEC) getNativeType() (*ecpsys.Cred, error) {
 	return cred, nil
 }
 
-// Client wraps around client.Client to conform to
+// CLClient wraps around client.CLClient to conform to
 // type restrictions of Go language binding tools. It exposes the same set of methods as
-// client.Client.
+// client.CLClient.
 type PseudonymsysClientEC struct {
 	*ecpsys.Client
 }
@@ -189,7 +189,7 @@ func (c *PseudonymsysClientEC) GenerateNym(userSecret string,
 		return nil, err
 	}
 
-	// Call Client client with translated parameters
+	// Call CLClient client with translated parameters
 	nym, err := c.Client.GenerateNym(secret, certificate, regKey)
 	if err != nil {
 		return nil, err
@@ -221,7 +221,7 @@ func (c *PseudonymsysClientEC) ObtainCredential(userSecret string,
 		return nil, err
 	}
 
-	// Call Client client with translated parameters
+	// Call CLClient client with translated parameters
 	credential, err := c.Client.ObtainCredential(secret, pseudonym, pubKey)
 	if err != nil {
 		return nil, err
@@ -282,7 +282,7 @@ func (c *PseudonymsysClientEC) TransferCredential(orgName, userSecret string,
 		return "", err
 	}
 
-	// Call Client client with translated parameters
+	// Call CLClient client with translated parameters
 	sessionKey, err := c.Client.TransferCredential(orgName, secret, pseudonym,
 		credential)
 	if err != nil {

@@ -27,8 +27,8 @@ import (
 
 	"github.com/emmyzkp/emmy/anauth"
 	"github.com/emmyzkp/emmy/anauth/cl"
+	"github.com/emmyzkp/emmy/internal/mock"
 	"github.com/emmyzkp/emmy/log"
-	"github.com/emmyzkp/emmy/mock"
 	"github.com/go-redis/redis"
 	"google.golang.org/grpc"
 )

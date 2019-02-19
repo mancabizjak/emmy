@@ -36,7 +36,7 @@ func NewCLClient(conn *Connection) *CLClient {
 }
 
 type CLPublicParams struct {
-	PubKey *CLOrgPubKey
+	PubKey *CLPubKey
 	Config *CLParams
 }
 
@@ -121,11 +121,11 @@ type CLParams struct {
 	*clpb.Params
 }
 
-type CLOrgPubKey struct {
+type CLPubKey struct {
 	*cl.PubKey
 }
 
-func (k *CLOrgPubKey) GenerateMasterSecret() []byte {
+func (k *CLPubKey) GenerateMasterSecret() []byte {
 	return k.PubKey.GenerateUserMasterSecret().Bytes()
 }
 
@@ -171,7 +171,7 @@ type CLCredManagerState struct {
 	Nym                []byte
 	V1                 []byte
 	CredReqNonce       []byte
-	PubKey             *CLOrgPubKey
+	PubKey             *CLPubKey
 	Params             *CLParams
 	Attrs              *CLAttrs
 	CommitmentsOfAttrs []Commitment
@@ -190,7 +190,7 @@ func (cm *CLCredManager) GetState() *CLCredManagerState {
 		Nym:                cm.Nym.Bytes(),
 		V1:                 cm.V1.Bytes(),
 		CredReqNonce:       cm.CredReqNonce.Bytes(),
-		PubKey:             &CLOrgPubKey{cm.PubKey},
+		PubKey:             &CLPubKey{cm.PubKey},
 		Params:             &CLParams{cm.Params},
 		CommitmentsOfAttrs: coa,
 	}
@@ -200,7 +200,7 @@ func (cm *CLCredManager) GetState() *CLCredManagerState {
 // It accepts parameters for the CL scheme (these must match server-side
 // configuration), server's public key, user's secret and attributes to
 // manage.
-func NewCLCredManager(params *CLParams, pk *CLOrgPubKey,
+func NewCLCredManager(params *CLParams, pk *CLPubKey,
 	secret []byte, attrs *CLAttrs) (*CLCredManager,
 	error) {
 
@@ -252,7 +252,7 @@ func (c *CLClient) GetPublicParams() (*CLPublicParams, error) {
 	}
 
 	return &CLPublicParams{
-		PubKey: &CLOrgPubKey{PubKey: pubKey},
+		PubKey: &CLPubKey{PubKey: pubKey},
 		Config: &CLParams{Params: cfg},
 	}, nil
 }

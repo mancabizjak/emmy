@@ -66,7 +66,7 @@ func (c *Client) GetPublicParams() (*pb.Params, *PubKey, error) {
 				new(big.Int).SetBytes(p.PubKey.PedersenParams.SchnorrGroup.G),
 				new(big.Int).SetBytes(p.PubKey.PedersenParams.SchnorrGroup.Q),
 			),
-			new(big.Int).SetBytes(p.PubKey.PedersenParams.H), nil), // FIXME a is nil
+			new(big.Int).SetBytes(p.PubKey.PedersenParams.H), nil),
 		N1: new(big.Int).SetBytes(p.PubKey.N1),
 		G:  new(big.Int).SetBytes(p.PubKey.G),
 		H:  new(big.Int).SetBytes(p.PubKey.H),

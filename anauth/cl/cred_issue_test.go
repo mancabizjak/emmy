@@ -27,6 +27,9 @@ import (
 
 func TestCL(t *testing.T) {
 	params := GetDefaultParamSizes()
+	params.KnownAttrsNum = 4
+	params.CommittedAttrsNum = 2
+	params.HiddenAttrsNum = 3
 
 	org, err := NewOrg(params)
 	if err != nil {

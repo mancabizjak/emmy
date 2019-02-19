@@ -25,7 +25,7 @@ import (
 	"github.com/emmyzkp/emmy/anauth/psys"
 )
 
-// Credential represents an equivalent of pseudsys.Cred,
+// Credential represents an equivalent of pseudsys.CLCred,
 // but has field types compatible with Go language binding tools.
 type Credential struct {
 	SmallAToGamma string
@@ -49,7 +49,7 @@ func NewCredential(aToGamma, bToGamma, AToGamma, BToGamma string,
 	return credential
 }
 
-// getNativeType translates compatibility Credential to emmy's native pseudsys.Cred.
+// getNativeType translates compatibility Credential to emmy's native pseudsys.CLCred.
 func (c *Credential) getNativeType() (*psys.Cred, error) {
 	atG, atGOk := new(big.Int).SetString(c.SmallAToGamma, 10)
 	btG, btGOk := new(big.Int).SetString(c.SmallBToGamma, 10)
@@ -71,7 +71,7 @@ func (c *Credential) getNativeType() (*psys.Cred, error) {
 	return cred, nil
 }
 
-// PubKey represents an equivalent of pseudsys.PubKey, but has string
+// CLPubKey represents an equivalent of pseudsys.CLPubKey, but has string
 // field types to overcome type restrictions of Go language binding tools.
 type PubKey struct {
 	H1 string
@@ -85,7 +85,7 @@ func NewPubKey(h1, h2 string) *PubKey {
 	}
 }
 
-// getNativeType translates compatibility PubKey to emmy's native pseudsys.PubKey.
+// getNativeType translates compatibility CLPubKey to emmy's native pseudsys.CLPubKey.
 func (k *PubKey) getNativeType() (*psys.PubKey, error) {
 	h1, h1Ok := new(big.Int).SetString(k.H1, 10)
 	h2, h2Ok := new(big.Int).SetString(k.H2, 10)
@@ -128,9 +128,9 @@ func (t *Transcript) getNativeType() (*schnorr.BlindedTrans, error) {
 	return transcript, nil
 }
 
-// Client wraps around client.Client to conform to
+// CLClient wraps around client.CLClient to conform to
 // type restrictions of Go language binding tools. It exposes the same set of methods as
-// client.Client.
+// client.CLClient.
 type PseudonymsysClient struct {
 	*psys.Client
 }
@@ -172,7 +172,7 @@ func (c *PseudonymsysClient) GenerateNym(userSecret string,
 		return nil, err
 	}
 
-	// Call Client client with translated parameters
+	// Call CLClient client with translated parameters
 	nym, err := c.Client.GenerateNym(secret, certificate, regKey)
 	if err != nil {
 		return nil, err
@@ -198,13 +198,13 @@ func (c *PseudonymsysClient) ObtainCredential(userSecret string,
 		return nil, err
 	}
 
-	// Translate PubKey
+	// Translate CLPubKey
 	pubKey, err := publicKey.getNativeType()
 	if err != nil {
 		return nil, err
 	}
 
-	// Call Client client with translated parameters
+	// Call CLClient client with translated parameters
 	credential, err := c.Client.ObtainCredential(secret, pseudonym, pubKey)
 	if err != nil {
 		return nil, err
@@ -251,7 +251,7 @@ func (c *PseudonymsysClient) TransferCredential(orgName, userSecret string,
 		return "", err
 	}
 
-	// Call Client client with translated parameters
+	// Call CLClient client with translated parameters
 	sessionKey, err := c.Client.TransferCredential(orgName, secret, pseudonym,
 		credential)
 	if err != nil {
