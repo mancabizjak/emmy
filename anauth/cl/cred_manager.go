@@ -40,6 +40,7 @@ import (
 type CredManager struct {
 	Params             *clpb.Params
 	PubKey             *PubKey
+	RawCred            *RawCred
 	nymCommitter       *pedersen.Committer // nym is actually a commitment to masterSecret
 	Nym                *big.Int
 	masterSecret       *big.Int
@@ -88,8 +89,14 @@ func checkBitLen(s []*big.Int, len int) bool {
 	return true
 }
 
-func NewCredManager(params *clpb.Params, pubKey *PubKey, masterSecret *big.Int,
-	attrs *Attrs) (*CredManager, error) {
+func NewCredManager(params *clpb.Params, pubKey *PubKey,
+	masterSecret *big.Int, rawCred *RawCred) (*CredManager, error) {
+
+	known := rawCred.GetKnownValues()
+	committed := rawCred.GetCommittedValues()
+	hidden := []*big.Int{} // currently not used
+
+	attrs := NewAttrs(known, committed, hidden)
 	if !checkBitLen(attrs.join(), int(params.AttrBitLen)) {
 		return nil, fmt.Errorf("attributes length not ok")
 	}
@@ -116,6 +123,7 @@ func NewCredManager(params *clpb.Params, pubKey *PubKey, masterSecret *big.Int,
 	credManager := CredManager{
 		Params:                    params,
 		PubKey:                    pubKey,
+		RawCred:                   rawCred,
 		Attrs:                     attrs,
 		CommitmentsOfAttrs:        commitmentsOfAttrs,
 		attrsCommitters:           attrsCommitters,
@@ -252,8 +260,28 @@ func (m *CredManager) Verify(cred *Cred, AProof *qr.RepresentationProof) (bool, 
 }
 
 // Update updates credential.
-func (m *CredManager) Update(knownAttrs []*big.Int) {
-	m.Attrs.Known = knownAttrs
+func (m *CredManager) Update(c *RawCred) {
+	m.RawCred = c
+	m.Attrs.Known = m.RawCred.GetKnownValues()
+}
+
+// FilterAttributes returns only attributes to be revealed to the verifier.
+func (m *CredManager) FilterAttributes(revealedKnownAttrsIndices,
+	revealedCommitmentsOfAttrsIndices []int) ([]*big.Int, []*big.Int) {
+	revealedKnownAttrs := []*big.Int{}
+	revealedCommitmentsOfAttrs := []*big.Int{}
+	for i := 0; i < len(m.Attrs.Known); i++ {
+		if common.Contains(revealedKnownAttrsIndices, i) {
+			revealedKnownAttrs = append(revealedKnownAttrs, m.Attrs.Known[i])
+		}
+	}
+	for i := 0; i < len(m.CommitmentsOfAttrs); i++ {
+		if common.Contains(revealedCommitmentsOfAttrsIndices, i) {
+			revealedCommitmentsOfAttrs = append(revealedCommitmentsOfAttrs, m.CommitmentsOfAttrs[i])
+		}
+	}
+
+	return revealedKnownAttrs, revealedCommitmentsOfAttrs
 }
 
 // randomize randomizes credential cred, and returns the

@@ -91,6 +91,16 @@ func (s *Server) GetPublicParams(ctx context.Context,
 	}, nil
 }
 
+func (s *Server) GetAcceptableCreds(ctx context.Context,
+	msg *pb.Empty) (*pb.AcceptableCreds, error) {
+	return nil, nil
+}
+
+func (s *Server) GetCredStructure(ctx context.Context,
+	msg *pb.Empty) (*pb.CredStructure, error) {
+	return nil, nil
+}
+
 func (s *Server) Issue(stream pb.AnonCreds_IssueServer) error {
 	req, err := stream.Recv()
 	if err != nil {

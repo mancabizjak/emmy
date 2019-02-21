@@ -193,13 +193,16 @@ func (c *Client) IssueCredential(cm *CredManager, regKey string) (*Cred,
 	return nil, fmt.Errorf("credential not valid")
 }
 
-func (c *Client) UpdateCredential(cm *CredManager, newKnownAttrs []*big.Int) (*Cred,
+func (c *Client) UpdateCredential(cm *CredManager, rawCred *RawCred) (*Cred,
 	error) {
 	if c.AnonCredsClient == nil {
 		return nil, fmt.Errorf("client is not connected")
 	}
 
-	cm.Update(newKnownAttrs)
+	// refresh credManager with new credential values,
+	// works only for known attributes
+	cm.Update(rawCred)
+	newKnownAttrs := rawCred.GetKnownValues()
 
 	req := &pb.CredUpdateRequest{
 		Nym:           cm.Nym.Bytes(),
@@ -245,10 +248,30 @@ func (c *Client) UpdateCredential(cm *CredManager, newKnownAttrs []*big.Int) (*C
 // revealedCommitmentsOfAttrsIndices parameters. All knownAttrs and commitmentsOfAttrs should be passed into
 // ProveCred - only those which are revealed are then passed to the server.
 func (c *Client) ProveCredential(cm *CredManager, cred *Cred,
-	knownAttrs []*big.Int, revealedKnownAttrsIndices,
-	revealedCommitmentsOfAttrsIndices []int) (*string, error) {
+	revealedAttrIndices []int) (*string, error) {
 	if c.AnonCredsClient == nil {
 		return nil, fmt.Errorf("client is not connected")
+	}
+
+	var revealedKnownAttrsIndices []int
+	var revealedCommitmentsOfAttrsIndices []int
+	knownCount := 0
+	commCount := 0
+	attributes := cm.RawCred.GetAttributes()
+	for i := 0; i < len(attributes); i++ { // not using range to force attributes appear in proper order
+		attr := attributes[i]
+		if common.Contains(revealedAttrIndices, attr.Index) {
+			if attr.isKnown() {
+				revealedKnownAttrsIndices = append(revealedKnownAttrsIndices, knownCount)
+			} else {
+				revealedCommitmentsOfAttrsIndices = append(revealedCommitmentsOfAttrsIndices, commCount)
+			}
+		}
+		if attr.isKnown() {
+			knownCount++
+		} else {
+			commCount++
+		}
 	}
 
 	stream, err := c.AnonCredsClient.Prove(context.Background())
@@ -272,9 +295,11 @@ func (c *Client) ProveCredential(cm *CredManager, cred *Cred,
 		return nil, fmt.Errorf("error when building credential proof: %v", err)
 	}
 
-	filteredKnownAttrs := filterSlice(knownAttrs, revealedKnownAttrsIndices)
-	filteredCommitmentsOfAttrs := filterSlice(cm.CommitmentsOfAttrs, revealedCommitmentsOfAttrsIndices)
+	filteredKnownAttrs, filteredCommitmentsOfAttrs := cm.FilterAttributes(
+		revealedKnownAttrsIndices,
+		revealedCommitmentsOfAttrsIndices)
 
+	// TODO disappeared?
 	revealedKnownAttrs := make([]int32, len(revealedKnownAttrsIndices))
 	for i, a := range revealedKnownAttrsIndices {
 		revealedKnownAttrs[i] = int32(a)

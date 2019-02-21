@@ -22,6 +22,11 @@ option go_package = "github.com/emmyzkp/emmy/anauth/cl/clpb";
 
 service AnonCreds {
 	rpc GetPublicParams (Empty) returns (PublicParams) {}
+	// TODO merge with GetPublicParams
+	rpc GetCredStructure(Empty) returns (CredStructure) {}
+	// TODO merge with GetPublicParams
+	rpc GetAcceptableCreds(Empty) returns (AcceptableCreds) {}
+
 	rpc Issue (stream Request) returns (stream Response) {}
 	rpc Update (CredUpdateRequest) returns (IssuedCred) {}
 	rpc Prove (stream Request) returns (stream Response) {}
@@ -151,4 +156,38 @@ message FiatShamirAlsoNeg {
 	bytes ProofRandomData = 1;
 	bytes Challenge = 2;
 	repeated string ProofData = 3;
+}
+
+message AcceptableCred {
+	string orgName = 1;
+	repeated int32 revealedAttrs = 2;
+}
+
+message AcceptableCreds {
+	repeated AcceptableCred creds = 1;
+}
+
+message Attribute {
+	int32 index = 1;
+	string name = 2;
+	bool known = 4;
+}
+
+message IntAttribute {
+	Attribute attr = 1;
+}
+
+message StringAttribute {
+	Attribute attr = 2;
+}
+
+message CredAttribute {
+	oneof type {
+		StringAttribute stringAttr = 1;
+		IntAttribute intAttr = 2;
+	}
+}
+
+message CredStructure {
+	repeated CredAttribute attributes = 1;
 }
