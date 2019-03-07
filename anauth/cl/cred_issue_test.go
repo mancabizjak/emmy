@@ -43,14 +43,14 @@ func TestCredentialIssue(t *testing.T) {
 	_ = cred.AddStringAttribute("Graduated", "true", true)
 	_ = cred.AddIntAttribute("Age", 25, false)
 
-	credManager, err := NewCredManager(params, org.Keys.Pub, masterSecret, cred)
+	credMgr, err := NewCredManager(params, org.Keys.Pub, masterSecret, cred)
 	if err != nil {
 		t.Errorf("error when creating a user: %v", err)
 	}
 
 	credIssueNonceOrg := org.GetCredIssueNonce()
 
-	credReq, err := credManager.GetCredRequest(credIssueNonceOrg)
+	credReq, err := credMgr.GetCredRequest(credIssueNonceOrg)
 	if err != nil {
 		t.Errorf("error when generating credential request: %v", err)
 	}
@@ -66,7 +66,7 @@ func TestCredentialIssue(t *testing.T) {
 		t.Errorf("error saving record to db: %v", err)
 	}
 
-	userVerified, err := credManager.Verify(res.Cred, res.AProof)
+	userVerified, err := credMgr.Verify(res.Cred, res.AProof)
 	if err != nil {
 		t.Errorf("error when verifying credential: %v", err)
 	}
@@ -81,9 +81,9 @@ func TestCredentialIssue(t *testing.T) {
 
 	// create new CredManager (updating or proving usually does not happen at the same time
 	// as issuing)
-	credManager, err = NewCredManagerFromExisting(credManager.Nym, credManager.V1, credManager.CredReqNonce,
+	credMgr, err = NewCredManagerFromExisting(credMgr.Nym, credMgr.V1, credMgr.CredReqNonce,
 		params, org.Keys.Pub, masterSecret, cred,
-		credManager.CommitmentsOfAttrs)
+		credMgr.CommitmentsOfAttrs)
 	if err != nil {
 		t.Errorf("error when calling NewCredManagerFromExisting: %v", err)
 	}
@@ -91,23 +91,23 @@ func TestCredentialIssue(t *testing.T) {
 	// TODO: update to rawcred
 	a, _ := cred.GetAttribute("Name")
 	_ = a.updateValue("John")
-	credManager.Update(cred)
+	credMgr.Update(cred)
 
-	rec, err := mockDb.Load(credManager.Nym)
+	rec, err := mockDb.Load(credMgr.Nym)
 	if err != nil {
 		t.Errorf("error saving record to db: %v", err)
 	}
 
 	newKnownAttrs := cred.GetKnownValues()
-	res1, err := org.UpdateCred(credManager.Nym, rec, credReq.Nonce, newKnownAttrs)
+	res1, err := org.UpdateCred(credMgr.Nym, rec, credReq.Nonce, newKnownAttrs)
 	if err != nil {
 		t.Errorf("error when updating credential: %v", err)
 	}
-	if err := mockDb.Store(credManager.Nym, res1.Record); err != nil {
+	if err := mockDb.Store(credMgr.Nym, res1.Record); err != nil {
 		t.Errorf("error saving record to db: %v", err)
 	}
 
-	userVerified, err = credManager.Verify(res1.Cred, res1.AProof)
+	userVerified, err = credMgr.Verify(res1.Cred, res1.AProof)
 	if err != nil {
 		t.Errorf("error when verifying updated credential: %v", err)
 	}
@@ -124,13 +124,13 @@ func TestCredentialIssue(t *testing.T) {
 	revealedCommitmentsOfAttrsIndices := []int{0} // reveal only the commitment of the first attribute (of those of which only commitments are known)
 
 	nonce := org.GetProveCredNonce()
-	randCred, proof, err := credManager.BuildProof(res1.Cred, revealedKnownAttrsIndices,
+	randCred, proof, err := credMgr.BuildProof(res1.Cred, revealedKnownAttrsIndices,
 		revealedCommitmentsOfAttrsIndices, nonce)
 	if err != nil {
 		t.Errorf("error when building credential proof: %v", err)
 	}
 
-	revealedKnownAttrs, revealedCommitmentsOfAttrs := credManager.FilterAttributes(revealedKnownAttrsIndices,
+	revealedKnownAttrs, revealedCommitmentsOfAttrs := credMgr.FilterAttributes(revealedKnownAttrsIndices,
 		revealedCommitmentsOfAttrsIndices)
 
 	cVerified, err := org.ProveCred(randCred.A, proof, revealedKnownAttrsIndices,
