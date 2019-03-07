@@ -27,22 +27,35 @@ func (c *RawCred) GetAttribute(name string) (CredAttribute, error) {
 	return c.attrs[i], nil
 }
 
-func (c *RawCred) InsertAttribute(index int, name, attrType string, known bool) {
-	c.attrNameToIndex[name] = index
-	c.attrs[index] = NewAttribute(index, name, attrType, known, nil)
+func (c *RawCred) InsertAttribute(i int, a CredAttribute) {
+	c.attrNameToIndex[a.name()] = i
+	c.attrs[i] = a
 }
 
-func (c *RawCred) AddStringAttribute(name, val string) error {
+func (c *RawCred) AddStringAttribute(name, val string, known bool) error {
+	if c.attrAlreadyPresent(name) {
+		return fmt.Errorf("duplicate attribute, ignoring")
+	}
 	i := len(c.attrs)
-	c.attrNameToIndex[name] = i
-	a := NewAttribute(i, name, attrType, known, nil)
-	a.
-		c.attrs[i] = a
-	return c.SetAttributeValue(name, value)
+	a, err := NewStringAttribute(name, val, known)
+	if err != nil {
+		return err
+	}
+	c.InsertAttribute(i, a)
+	return nil
 }
 
-func (c *RawCred) AddIntAttribute(name string, val int) error {
-
+func (c *RawCred) AddIntAttribute(name string, val int, known bool) error {
+	if c.attrAlreadyPresent(name) {
+		return fmt.Errorf("duplicate attribute, ignoring")
+	}
+	i := len(c.attrs)
+	a, err := NewIntAttribute(name, val, known)
+	if err != nil {
+		return err
+	}
+	c.InsertAttribute(i, a)
+	return nil
 }
 
 // GetKnownValues returns *big.Int values of known attributes.
@@ -78,6 +91,12 @@ func (c *RawCred) GetAttributes() map[int]CredAttribute {
 	return c.attrs
 }
 
-func (c *RawCred) UpdateKnownAttrs() error {
+func (c *RawCred) attrAlreadyPresent(name string) bool {
+	for _, a := range c.attrs {
+		if name == a.name() {
+			return true
+		}
+	}
 
+	return false
 }

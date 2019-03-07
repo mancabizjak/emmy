@@ -42,9 +42,9 @@ func GetDefaultParamSizes() *pb.Params {
 	return &pb.Params{
 		RhoBitLen:         256,
 		NLength:           256, // should be at least 2048 when not testing
-		KnownAttrsNum:     2,   // FIXME
-		CommittedAttrsNum: 0,   // FIXME
-		HiddenAttrsNum:    0,   // FIXME
+		KnownAttrsNum:     3,   // FIXME should be moved outside
+		CommittedAttrsNum: 1,   // FIXME should be moved outside
+		HiddenAttrsNum:    0,   // FIXME should be moved outside
 		AttrBitLen:        256,
 		HashBitLen:        512,
 		SecParam:          80,

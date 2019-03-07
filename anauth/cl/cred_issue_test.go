@@ -18,18 +18,17 @@
 package cl
 
 import (
-	"math/big"
 	"testing"
 
-	"github.com/emmyzkp/crypto/common"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCL(t *testing.T) {
+func TestCredentialIssue(t *testing.T) {
 	params := GetDefaultParamSizes()
-	params.KnownAttrsNum = 4
-	params.CommittedAttrsNum = 2
-	params.HiddenAttrsNum = 3
+
+	params.KnownAttrsNum = 3
+	params.CommittedAttrsNum = 1
+	params.HiddenAttrsNum = 0
 
 	org, err := NewOrg(params)
 	if err != nil {
@@ -38,13 +37,13 @@ func TestCL(t *testing.T) {
 
 	masterSecret := org.Keys.Pub.GenerateUserMasterSecret()
 
-	known := []*big.Int{big.NewInt(7), big.NewInt(6), big.NewInt(5), big.NewInt(22)}
-	committed := []*big.Int{big.NewInt(9), big.NewInt(17)}
-	hidden := []*big.Int{big.NewInt(11), big.NewInt(13), big.NewInt(19)}
-	attrs := NewAttrs(known, hidden, committed)
+	cred := NewRawCred()
+	_ = cred.AddStringAttribute("Name", "Jack", true)
+	_ = cred.AddStringAttribute("Gender", "M", true)
+	_ = cred.AddStringAttribute("Graduated", "true", true)
+	_ = cred.AddIntAttribute("Age", 25, false)
 
-	credManager, err := NewCredManager(params, org.Keys.Pub, masterSecret,
-		attrs)
+	credManager, err := NewCredManager(params, org.Keys.Pub, masterSecret, cred)
 	if err != nil {
 		t.Errorf("error when creating a user: %v", err)
 	}
@@ -83,18 +82,23 @@ func TestCL(t *testing.T) {
 	// create new CredManager (updating or proving usually does not happen at the same time
 	// as issuing)
 	credManager, err = NewCredManagerFromExisting(credManager.Nym, credManager.V1, credManager.CredReqNonce,
-		params, org.Keys.Pub, masterSecret, attrs, credManager.CommitmentsOfAttrs)
+		params, org.Keys.Pub, masterSecret, cred,
+		credManager.CommitmentsOfAttrs)
 	if err != nil {
 		t.Errorf("error when calling NewCredManagerFromExisting: %v", err)
 	}
 
-	newKnownAttrs := []*big.Int{big.NewInt(17), big.NewInt(18), big.NewInt(19), big.NewInt(27)}
-	credManager.Update(newKnownAttrs)
+	// TODO: update to rawcred
+	a, _ := cred.GetAttribute("Name")
+	_ = a.updateValue("John")
+	credManager.Update(cred)
 
 	rec, err := mockDb.Load(credManager.Nym)
 	if err != nil {
 		t.Errorf("error saving record to db: %v", err)
 	}
+
+	newKnownAttrs := cred.GetKnownValues()
 	res1, err := org.UpdateCred(credManager.Nym, rec, credReq.Nonce, newKnownAttrs)
 	if err != nil {
 		t.Errorf("error when updating credential: %v", err)
@@ -116,21 +120,8 @@ func TestCL(t *testing.T) {
 		t.Errorf("error when generating CL org: %v", err)
 	}
 
-	revealedKnownAttrsIndices := []int{1, 2}      // reveal only the second and third known attribute
+	revealedKnownAttrsIndices := []int{0}         // reveal only the first known attribute
 	revealedCommitmentsOfAttrsIndices := []int{0} // reveal only the commitment of the first attribute (of those of which only commitments are known)
-
-	revealedKnownAttrs := []*big.Int{}
-	revealedCommitmentsOfAttrs := []*big.Int{}
-	for i := 0; i < len(known); i++ {
-		if common.Contains(revealedKnownAttrsIndices, i) {
-			revealedKnownAttrs = append(revealedKnownAttrs, newKnownAttrs[i])
-		}
-	}
-	for i := 0; i < len(credManager.CommitmentsOfAttrs); i++ {
-		if common.Contains(revealedCommitmentsOfAttrsIndices, i) {
-			revealedCommitmentsOfAttrs = append(revealedCommitmentsOfAttrs, credManager.CommitmentsOfAttrs[i])
-		}
-	}
 
 	nonce := org.GetProveCredNonce()
 	randCred, proof, err := credManager.BuildProof(res1.Cred, revealedKnownAttrsIndices,
@@ -138,6 +129,9 @@ func TestCL(t *testing.T) {
 	if err != nil {
 		t.Errorf("error when building credential proof: %v", err)
 	}
+
+	revealedKnownAttrs, revealedCommitmentsOfAttrs := credManager.FilterAttributes(revealedKnownAttrsIndices,
+		revealedCommitmentsOfAttrsIndices)
 
 	cVerified, err := org.ProveCred(randCred.A, proof, revealedKnownAttrsIndices,
 		revealedCommitmentsOfAttrsIndices, revealedKnownAttrs, revealedCommitmentsOfAttrs)

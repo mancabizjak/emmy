@@ -259,7 +259,7 @@ func (o *Org) GetProveCredNonce() *big.Int {
 // to be revealed to the organization.
 func (o *Org) ProveCred(A *big.Int, proof *qr.RepresentationProof,
 	revealedKnownAttrsIndices, revealedCommitmentsOfAttrsIndices []int,
-	knownAttrs, commitmentsOfAttrs []*big.Int) (bool, error) {
+	revealedKnownAttrs, revealedCommitmentsOfAttrs []*big.Int) (bool, error) {
 	ver := qr.NewRepresentationVerifier(o.Group, int(o.Params.SecParam))
 	bases := []*big.Int{}
 	for i := 0; i < len(o.Keys.Pub.RsKnown); i++ {
@@ -277,15 +277,15 @@ func (o *Org) ProveCred(A *big.Int, proof *qr.RepresentationProof,
 	bases = append(bases, o.Keys.Pub.S)
 
 	denom := big.NewInt(1)
-	for i := 0; i < len(knownAttrs); i++ {
+	for i := 0; i < len(revealedKnownAttrs); i++ {
 		rInd := revealedKnownAttrsIndices[i]
-		t1 := o.Group.Exp(o.Keys.Pub.RsKnown[rInd], knownAttrs[i])
+		t1 := o.Group.Exp(o.Keys.Pub.RsKnown[rInd], revealedKnownAttrs[i])
 		denom = o.Group.Mul(denom, t1)
 	}
 
-	for i := 0; i < len(commitmentsOfAttrs); i++ {
+	for i := 0; i < len(revealedCommitmentsOfAttrs); i++ {
 		rInd := revealedCommitmentsOfAttrsIndices[i]
-		t1 := o.Group.Exp(o.Keys.Pub.RsCommitted[rInd], commitmentsOfAttrs[i])
+		t1 := o.Group.Exp(o.Keys.Pub.RsCommitted[rInd], revealedCommitmentsOfAttrs[i])
 		denom = o.Group.Mul(denom, t1)
 	}
 	denomInv := o.Group.Inv(denom)

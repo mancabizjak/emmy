@@ -1,6 +1,7 @@
 package cl
 
 import (
+	"fmt"
 	"math/big"
 
 	"github.com/emmyzkp/crypto/common"
@@ -113,6 +114,8 @@ func GenerateKeyPair(p *pb.Params) (*KeyPair, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println("PubKey RsHidden", len(pk.RsHidden))
 
 	return &KeyPair{
 		Sec: sk,

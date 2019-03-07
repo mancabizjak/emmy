@@ -63,6 +63,8 @@ func (m *CredManager) computeU() (*big.Int, *big.Int) {
 	group := qr.NewRSApecialPublic(m.PubKey.N)
 	U := group.Exp(m.PubKey.S, v1)
 
+	fmt.Println("attrs.hidden", len(m.Attrs.Hidden))
+	fmt.Println("pubkey.RsHidden", len(m.PubKey.RsHidden))
 	for i, attr := range m.Attrs.Hidden {
 		t := group.Exp(m.PubKey.RsHidden[i], attr) // R_i^m_i
 		U = group.Mul(U, t)

@@ -93,8 +93,11 @@ func NewCredManager(params *clpb.Params, pubKey *PubKey,
 	masterSecret *big.Int, rawCred *RawCred) (*CredManager, error) {
 
 	known := rawCred.GetKnownValues()
+	fmt.Println("len(known)", len(known))
 	committed := rawCred.GetCommittedValues()
+	fmt.Println("len(committed)", len(committed))
 	hidden := []*big.Int{} // currently not used
+	fmt.Println("len(hidden)", len(hidden))
 
 	attrs := NewAttrs(known, committed, hidden)
 	if !checkBitLen(attrs.join(), int(params.AttrBitLen)) {
@@ -137,14 +140,19 @@ func NewCredManager(params *clpb.Params, pubKey *PubKey,
 
 func NewCredManagerFromExisting(nym, v1, credReqNonce *big.Int,
 	params *clpb.Params, pubKey *PubKey, masterSecret *big.Int,
-	attrs *Attrs, commitmentsOfAttrs []*big.Int) (*CredManager, error) {
-
+	rawCred *RawCred, commitmentsOfAttrs []*big.Int) (*CredManager, error) {
 	// nymCommitter is needed only for IssueCred (when proving that nym can be opened), so we do not need it here
 	// the same for attrsCommitters
+
+	known := rawCred.GetKnownValues()
+	committed := rawCred.GetCommittedValues()
+	hidden := []*big.Int{} // currently not used
+	attrs := NewAttrs(known, committed, hidden)
 
 	return &CredManager{
 		Params:             params,
 		PubKey:             pubKey,
+		RawCred:            rawCred,
 		Attrs:              attrs,
 		CommitmentsOfAttrs: commitmentsOfAttrs,
 		masterSecret:       masterSecret,

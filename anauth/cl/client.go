@@ -260,7 +260,7 @@ func (c *Client) ProveCredential(cm *CredManager, cred *Cred,
 	attributes := cm.RawCred.GetAttributes()
 	for i := 0; i < len(attributes); i++ { // not using range to force attributes appear in proper order
 		attr := attributes[i]
-		if common.Contains(revealedAttrIndices, attr.Index) {
+		if common.Contains(revealedAttrIndices, i) { // attr.index
 			if attr.isKnown() {
 				revealedKnownAttrsIndices = append(revealedKnownAttrsIndices, knownCount)
 			} else {
