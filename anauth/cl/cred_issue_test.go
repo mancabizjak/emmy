@@ -90,7 +90,7 @@ func TestCredentialIssue(t *testing.T) {
 
 	// TODO: update to rawcred
 	a, _ := cred.GetAttribute("Name")
-	_ = a.updateValue("John")
+	_ = a.UpdateValue("John")
 	credMgr.Update(cred)
 
 	rec, err := mockDb.Load(credMgr.Nym)

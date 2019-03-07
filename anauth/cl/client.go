@@ -75,6 +75,64 @@ func (c *Client) GetPublicParams() (*pb.Params, *PubKey, error) {
 	return p.Params, pubKey, nil
 }
 
+// TODO fix my name
+func (c *Client) GetCredStructure() (*RawCred, error) {
+	if c.AnonCredsClient == nil {
+		return nil, fmt.Errorf("client is not connected")
+	}
+
+	cs, err := c.AnonCredsClient.GetCredStructure(context.Background(), &pb.Empty{})
+	if err != nil {
+		return nil, err
+	}
+
+	rc := NewRawCred()
+	attrs := cs.GetAttributes()
+
+	for _, a := range attrs {
+		switch u := a.Type.(type) { // TODO make more intuitive
+		case *pb.CredAttribute_StringAttr:
+			fmt.Println("Client received string attribute", u.StringAttr)
+			strA := a.GetStringAttr().Attr
+			err := rc.AddStringAttribute(strA.Name, "", strA.Known)
+			if err != nil {
+				return nil, err
+			}
+		case *pb.CredAttribute_IntAttr:
+			fmt.Println("Client received int attribute", u.IntAttr)
+			intA := a.GetIntAttr().Attr
+			err := rc.AddIntAttribute(intA.Name, 0, intA.Known)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return rc, nil
+}
+
+func (c *Client) GetAcceptableCreds() (map[string][]string, error) {
+	if c.AnonCredsClient == nil {
+		return nil, fmt.Errorf("client is not connected")
+	}
+
+	ac, err := c.AnonCredsClient.GetAcceptableCreds(context.Background(), &pb.Empty{})
+	if err != nil {
+		return nil, err
+	}
+
+	accCreds := make(map[string][]string)
+	for _, cred := range ac.Creds {
+		var attrs []string
+		for _, attr := range cred.GetRevealedAttrs() {
+			attrs = append(attrs, attr)
+		}
+		accCreds[cred.GetOrgName()] = attrs
+	}
+	return accCreds, nil
+
+}
+
 func (c *Client) IssueCredential(cm *CredManager, regKey string) (*Cred,
 	error) {
 	if c.AnonCredsClient == nil {
@@ -248,7 +306,7 @@ func (c *Client) UpdateCredential(cm *CredManager, rawCred *RawCred) (*Cred,
 // revealedCommitmentsOfAttrsIndices parameters. All knownAttrs and commitmentsOfAttrs should be passed into
 // ProveCred - only those which are revealed are then passed to the server.
 func (c *Client) ProveCredential(cm *CredManager, cred *Cred,
-	revealedAttrIndices []int) (*string, error) {
+	revealedAttrIndices []string) (*string, error) {
 	if c.AnonCredsClient == nil {
 		return nil, fmt.Errorf("client is not connected")
 	}
@@ -258,14 +316,17 @@ func (c *Client) ProveCredential(cm *CredManager, cred *Cred,
 	knownCount := 0
 	commCount := 0
 	attributes := cm.RawCred.GetAttributes()
-	for i := 0; i < len(attributes); i++ { // not using range to force attributes appear in proper order
-		attr := attributes[i]
-		if common.Contains(revealedAttrIndices, i) { // attr.index
-			if attr.isKnown() {
-				revealedKnownAttrsIndices = append(revealedKnownAttrsIndices, knownCount)
-			} else {
-				revealedCommitmentsOfAttrsIndices = append(revealedCommitmentsOfAttrsIndices, commCount)
+	for _, attr := range attributes { // not using range to force attributes
+		// appear in proper order
+		for _, revealed := range revealedAttrIndices {
+			if attr.name() == revealed {
+				if attr.isKnown() {
+					revealedKnownAttrsIndices = append(revealedKnownAttrsIndices, knownCount)
+				} else {
+					revealedCommitmentsOfAttrsIndices = append(revealedCommitmentsOfAttrsIndices, commCount)
+				}
 			}
+
 		}
 		if attr.isKnown() {
 			knownCount++

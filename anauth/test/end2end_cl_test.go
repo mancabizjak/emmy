@@ -18,8 +18,15 @@
 package test
 
 import (
+	"fmt"
 	"math/big"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/spf13/viper"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/emmyzkp/emmy/anauth"
 
@@ -27,22 +34,25 @@ import (
 
 	"github.com/emmyzkp/emmy/anauth/cl"
 	pb "github.com/emmyzkp/emmy/anauth/cl/clpb"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestEndToEnd_CL(t *testing.T) {
 	tests := []struct {
-		desc   string
-		params *pb.Params
-		attrs  *cl.Attrs
+		desc            string
+		params          *pb.Params
+		acceptableCreds map[string][]string
+		attributes      map[string]interface{}
+		//attrs  *cl.Attrs
+		//attrs []cl.CredAttribute
+		//rawCred *cl.RawCred
 	}{
 		{"Defaults",
 			&pb.Params{
 				RhoBitLen:         256,
 				NLength:           256, // should be at least 2048 when not testing
-				KnownAttrsNum:     4,
-				CommittedAttrsNum: 2,
-				HiddenAttrsNum:    3,
+				KnownAttrsNum:     3,   // FIXME
+				CommittedAttrsNum: 1,   // FIXME
+				HiddenAttrsNum:    0,   // FIXME
 				AttrBitLen:        256,
 				HashBitLen:        512,
 				SecParam:          80,
@@ -51,10 +61,19 @@ func TestEndToEnd_CL(t *testing.T) {
 				VBitLen:           2724,
 				ChallengeSpace:    80,
 			},
-			cl.NewAttrs(
-				intsToBig(7, 6, 5, 22),
-				intsToBig(11, 13, 19),
-				intsToBig(9, 17)),
+			map[string][]string{
+				"org1": {"name", "age"},
+				"org2": {"gender"},
+			},
+			map[string]interface{}{
+				"name":      map[string]string{"type": "string"},
+				"gender":    map[string]string{"type": "string"},
+				"graduated": map[string]string{"type": "string"},
+				"age": map[string]string{
+					"type":  "int",
+					"known": "false",
+				},
+			},
 		},
 	}
 
@@ -64,7 +83,11 @@ func TestEndToEnd_CL(t *testing.T) {
 			t.Errorf("error creating keypair: %v", err)
 		}
 
-		clSrv, err := cl.NewServer(recDB, keys)
+		v := viper.New()
+		v.Set("acceptable_creds", tt.acceptableCreds)
+		v.Set("attributes", tt.attributes)
+
+		clSrv, err := cl.NewServer(recDB, keys, v)
 		if err != nil {
 			t.Errorf("error creating cl server: %v", err)
 		}
@@ -83,7 +106,7 @@ func TestEndToEnd_CL(t *testing.T) {
 		}
 
 		t.Run(tt.desc, func(t *testing.T) {
-			testEndToEndCL(t, conn, tt.attrs)
+			testEndToEndCL(t, conn)
 		})
 
 		conn.Close()
@@ -92,16 +115,37 @@ func TestEndToEnd_CL(t *testing.T) {
 }
 
 // TestCL requires a running server.
-func testEndToEndCL(t *testing.T, conn *grpc.ClientConn, attrs *cl.Attrs) {
+func testEndToEndCL(t *testing.T, conn *grpc.ClientConn) {
 	client := cl.NewClient(conn)
 
 	params, pubKey, err := client.GetPublicParams()
-	if err != nil {
-		t.Errorf("error retrieving org's pubkey: %v", err)
-	}
-	masterSecret := pubKey.GenerateUserMasterSecret()
+	require.NoError(t, err)
 
-	cm, err := cl.NewCredManager(params, pubKey, masterSecret, attrs)
+	cs, err := client.GetCredStructure()
+	require.NoError(t, err)
+
+	name, _ := cs.GetAttribute("name")
+	err = name.UpdateValue("Jack")
+	assert.NoError(t, err)
+	gender, _ := cs.GetAttribute("gender")
+	err = gender.UpdateValue("M")
+	assert.NoError(t, err)
+	graduated, _ := cs.GetAttribute("graduated")
+	err = graduated.UpdateValue("true")
+	assert.NoError(t, err)
+	age, _ := cs.GetAttribute("age")
+	err = age.UpdateValue(50)
+	assert.NoError(t, err)
+
+	acceptableCreds, err := client.GetAcceptableCreds()
+	if err != nil {
+		t.Errorf("error when retrieving acceptable creds: %v", err)
+	}
+	revealedAttrs := acceptableCreds["org1"]
+	fmt.Println("RevealdAttrs", revealedAttrs)
+
+	masterSecret := pubKey.GenerateUserMasterSecret()
+	cm, err := cl.NewCredManager(params, pubKey, masterSecret, cs)
 	if err != nil {
 		t.Errorf("error when creating a user: %v", err)
 	}
@@ -116,37 +160,34 @@ func testEndToEndCL(t *testing.T, conn *grpc.ClientConn, attrs *cl.Attrs) {
 	// create new CredManager (updating or proving usually does not happen at the same time
 	// as issuing)
 	cm, err = cl.NewCredManagerFromExisting(cm.Nym, cm.V1,
-		cm.CredReqNonce, params, pubKey, masterSecret, attrs,
-		cm.CommitmentsOfAttrs)
+		cm.CredReqNonce, params, pubKey, masterSecret, cs, cm.CommitmentsOfAttrs)
 	if err != nil {
 		t.Errorf("error when calling NewCredManagerFromExisting: %v", err)
 	}
 
-	revealedKnownAttrsIndices := []int{1, 2}      // reveal only the second and third known attribute
-	revealedCommitmentsOfAttrsIndices := []int{0} // reveal only the commitment of the first attribute (of those of which only commitments are known)
-
-	sessKey, err := client.ProveCredential(cm, cred, attrs.Known,
-		revealedKnownAttrsIndices,
-		revealedCommitmentsOfAttrsIndices)
+	sessKey, err := client.ProveCredential(cm, cred, revealedAttrs)
 	if err != nil {
 		t.Errorf("error when proving possession of a credential: %v", err)
 	}
 	assert.NotNil(t, sessKey, "possesion of a credential proof failed")
 
-	newKnownAttrs := intsToBig(17, 18, 19, 27)
-	cred1, err := client.UpdateCredential(cm, newKnownAttrs)
+	// modify some attributes and get updated credential
+	name, err = cs.GetAttribute("name")
+	err = name.UpdateValue("Jim")
+	assert.NoError(t, err)
+
+	cred1, err := client.UpdateCredential(cm, cs)
 	if err != nil {
 		t.Errorf("error when updating credential: %v", err)
 	}
 
-	sessKey, err = client.ProveCredential(cm, cred1, newKnownAttrs,
-		revealedKnownAttrsIndices,
-		revealedCommitmentsOfAttrsIndices)
+	sessKey, err = client.ProveCredential(cm, cred1, revealedAttrs)
 	if err != nil {
 		t.Errorf("error when proving possession of an updated credential: %v", err)
 	}
 
-	assert.NotNil(t, sessKey, "possesion of an updated credential proof failed")
+	assert.NotNil(t, sessKey,
+		"possesion of an updated credential proof failed")
 }
 
 func intsToBig(s ...int) []*big.Int {

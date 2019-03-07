@@ -63,7 +63,7 @@ type Attrs struct {
 	Committed []*big.Int
 }
 
-func NewAttrs(known, hidden, committed []*big.Int) *Attrs {
+func NewAttrs(known, committed, hidden []*big.Int) *Attrs {
 	return &Attrs{
 		Known:     known,
 		Hidden:    hidden,
@@ -93,11 +93,8 @@ func NewCredManager(params *clpb.Params, pubKey *PubKey,
 	masterSecret *big.Int, rawCred *RawCred) (*CredManager, error) {
 
 	known := rawCred.GetKnownValues()
-	fmt.Println("len(known)", len(known))
 	committed := rawCred.GetCommittedValues()
-	fmt.Println("len(committed)", len(committed))
 	hidden := []*big.Int{} // currently not used
-	fmt.Println("len(hidden)", len(hidden))
 
 	attrs := NewAttrs(known, committed, hidden)
 	if !checkBitLen(attrs.join(), int(params.AttrBitLen)) {

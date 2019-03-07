@@ -20,6 +20,8 @@ package cl
 import (
 	"fmt"
 
+	"github.com/spf13/viper"
+
 	pb "github.com/emmyzkp/emmy/anauth/cl/clpb"
 
 	"github.com/emmyzkp/emmy/anauth"
@@ -41,11 +43,14 @@ type Server struct {
 	ReceiverRecordManager
 	*Org
 
+	config *viper.Viper
+
 	SessMgr anauth.SessManager
 	RegMgr  anauth.RegManager
 }
 
-func NewServer(recMgr ReceiverRecordManager, keys *KeyPair) (*Server, error) {
+func NewServer(recMgr ReceiverRecordManager, keys *KeyPair,
+	v *viper.Viper) (*Server, error) {
 	params := GetDefaultParamSizes()
 	org, err := NewOrgFromParams(params, keys)
 	if err != nil {
@@ -54,7 +59,8 @@ func NewServer(recMgr ReceiverRecordManager, keys *KeyPair) (*Server, error) {
 
 	return &Server{
 		ReceiverRecordManager: recMgr,
-		Org: org,
+		Org:    org,
+		config: v,
 	}, nil
 }
 
@@ -93,12 +99,65 @@ func (s *Server) GetPublicParams(ctx context.Context,
 
 func (s *Server) GetAcceptableCreds(ctx context.Context,
 	msg *pb.Empty) (*pb.AcceptableCreds, error) {
-	return nil, nil
+	if !s.config.IsSet("acceptable_creds") {
+		// FIXME server error
+		return nil, fmt.Errorf("acceptable creds were not specified")
+	}
+
+	acceptable := s.config.GetStringMapStringSlice("acceptable_creds")
+	ac := make([]*pb.AcceptableCred, 0)
+	for k, v := range acceptable {
+		ac = append(ac, &pb.AcceptableCred{
+			OrgName:       k,
+			RevealedAttrs: v,
+		})
+	}
+
+	return &pb.AcceptableCreds{
+		Creds: ac,
+	}, nil
 }
 
 func (s *Server) GetCredStructure(ctx context.Context,
 	msg *pb.Empty) (*pb.CredStructure, error) {
-	return nil, nil
+	attrs, err := ParseAttributes(s.config) // add to config field
+	if err != nil {
+		return nil, err // FIXME return internal server error
+	}
+
+	credAttrs := make([]*pb.CredAttribute, len(attrs))
+	for i, a := range attrs {
+		switch a.(type) {
+		case *StringAttribute:
+			credAttrs[i] = &pb.CredAttribute{
+				Type: &pb.CredAttribute_StringAttr{
+					StringAttr: &pb.StringAttribute{
+						Attr: &pb.Attribute{
+							Index: 0, // FIXME
+							Name:  a.name(),
+							Known: a.isKnown(),
+						},
+					},
+				},
+			}
+		case *IntAttribute:
+			credAttrs[i] = &pb.CredAttribute{
+				Type: &pb.CredAttribute_IntAttr{
+					IntAttr: &pb.IntAttribute{
+						Attr: &pb.Attribute{
+							Index: 0, // FIXME
+							Name:  a.name(),
+							Known: a.isKnown(),
+						},
+					},
+				},
+			}
+		}
+	}
+
+	return &pb.CredStructure{
+		Attributes: credAttrs,
+	}, nil
 }
 
 func (s *Server) Issue(stream pb.AnonCreds_IssueServer) error {

@@ -85,16 +85,17 @@ func (c *CLClient) ProveCred(cm *CLCredManager, cred *CLCred,
 	error) {
 
 	sessKey, err := c.Client.ProveCredential(cm.CredManager,
-		cred.getNativeType(),
-		known.toBigintSlice(),
-		nil,
-		nil) // FIXME
+		cred.getNativeType(), nil) // FIXME
 
 	if err != nil {
 		return "<INVALID>", err
 	}
 
 	return *sessKey, nil
+}
+
+type CLRawCred struct {
+	*cl.RawCred
 }
 
 type CLCred struct {
@@ -201,13 +202,13 @@ func (cm *CLCredManager) GetState() *CLCredManagerState {
 // configuration), server's public key, user's secret and attributes to
 // manage.
 func NewCLCredManager(params *CLParams, pk *CLPubKey,
-	secret []byte, attrs *CLAttrs) (*CLCredManager,
+	secret []byte, cred *CLRawCred) (*CLCredManager,
 	error) {
 
 	cm, err := cl.NewCredManager(params.Params,
 		pk.PubKey,
 		new(big.Int).SetBytes(secret),
-		attrs.getNativeType())
+		cred.RawCred)
 	if err != nil {
 		return nil, err
 	}
@@ -220,7 +221,8 @@ func NewCLCredManager(params *CLParams, pk *CLPubKey,
 // RestoreCLCredManager establishes credential manager for the CL scheme.
 // It is meant to be used to re-establish the credential manager after it
 // has been previously created with NewCLCredManager.
-func RestoreCLCredManager(state *CLCredManagerState, secret []byte, attrs *CLAttrs) (*CLCredManager, error) {
+func RestoreCLCredManager(state *CLCredManagerState, secret []byte,
+	cred *CLRawCred) (*CLCredManager, error) {
 	coa := make([]*big.Int, len(state.CommitmentsOfAttrs))
 	for i, a := range state.CommitmentsOfAttrs {
 		coa[i].SetBytes(a.data)
@@ -233,7 +235,7 @@ func RestoreCLCredManager(state *CLCredManagerState, secret []byte, attrs *CLAtt
 		state.Params.Params,
 		state.PubKey.PubKey,
 		new(big.Int).SetBytes(secret),
-		attrs.getNativeType(),
+		cred.RawCred,
 		coa,
 	)
 	if err != nil {

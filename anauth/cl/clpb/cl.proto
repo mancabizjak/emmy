@@ -160,7 +160,7 @@ message FiatShamirAlsoNeg {
 
 message AcceptableCred {
 	string orgName = 1;
-	repeated int32 revealedAttrs = 2;
+	repeated string revealedAttrs = 2;
 }
 
 message AcceptableCreds {

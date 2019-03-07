@@ -1,13 +1,17 @@
 package cl
 
 import (
+	"fmt"
 	"math/big"
+	"strconv"
+
+	"github.com/spf13/viper"
 )
 
 // CredAttribute represents an attribute for the CL scheme.
 type CredAttribute interface {
 	getValue() interface{}
-	updateValue(interface{}) error
+	UpdateValue(interface{}) error
 	internalValue() *big.Int
 	setInternalValue() error
 	isKnown() bool
@@ -71,7 +75,7 @@ func (a *IntAttribute) getValue() interface{} {
 	return a.val
 }
 
-func (a *IntAttribute) updateValue(n interface{}) error {
+func (a *IntAttribute) UpdateValue(n interface{}) error {
 	a.val = n.(int)
 	return a.setInternalValue()
 }
@@ -103,7 +107,56 @@ func (a *StringAttribute) getValue() interface{} {
 	return a.val
 }
 
-func (a *StringAttribute) updateValue(s interface{}) error {
+func (a *StringAttribute) UpdateValue(s interface{}) error {
 	a.val = s.(string)
 	return a.setInternalValue()
+}
+
+// FIXME make nicer
+func ParseAttributes(v *viper.Viper) ([]CredAttribute, error) {
+	if !v.IsSet("attributes") {
+		return nil, fmt.Errorf("missing attributes declaration")
+	}
+
+	attrs := make([]CredAttribute, 0)
+
+	specs := v.GetStringMap("attributes")
+	for name, val := range specs { // TODO use value
+		data := val.(map[string]string)
+
+		t, ok := data["type"]
+		if !ok {
+			return nil, fmt.Errorf("missing type specifier")
+		}
+
+		known := true
+		k, ok := data["known"]
+		if ok {
+			res, err := strconv.ParseBool(k)
+			if err != nil {
+				return nil, fmt.Errorf("known must be true or false")
+			}
+			known = res
+		}
+
+		switch t {
+		case "string":
+			a, err := NewStringAttribute(name, "", known) // FIXME
+			if err != nil {
+				return nil, err
+			}
+			attrs = append(attrs, a)
+		case "int":
+			a, err := NewIntAttribute(name, 0, known) // FIXME
+			if err != nil {
+				return nil, err
+			}
+			attrs = append(attrs, a)
+		default:
+			return nil, fmt.Errorf("unsupported attribute type: %s", t)
+		}
+
+	}
+
+	return attrs, nil
 }

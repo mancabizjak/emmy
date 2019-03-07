@@ -27,7 +27,7 @@ func (c *RawCred) GetAttribute(name string) (CredAttribute, error) {
 	return c.attrs[i], nil
 }
 
-func (c *RawCred) InsertAttribute(i int, a CredAttribute) {
+func (c *RawCred) insertAttribute(i int, a CredAttribute) {
 	c.attrNameToIndex[a.name()] = i
 	c.attrs[i] = a
 }
@@ -41,7 +41,7 @@ func (c *RawCred) AddStringAttribute(name, val string, known bool) error {
 	if err != nil {
 		return err
 	}
-	c.InsertAttribute(i, a)
+	c.insertAttribute(i, a)
 	return nil
 }
 
@@ -54,7 +54,7 @@ func (c *RawCred) AddIntAttribute(name string, val int, known bool) error {
 	if err != nil {
 		return err
 	}
-	c.InsertAttribute(i, a)
+	c.insertAttribute(i, a)
 	return nil
 }
 
