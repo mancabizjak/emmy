@@ -25,23 +25,20 @@ import (
 
 func TestCredentialIssue(t *testing.T) {
 	params := GetDefaultParamSizes()
+	attrCount := NewAttrCount(3, 1, 0)
 
-	params.KnownAttrsNum = 3
-	params.CommittedAttrsNum = 1
-	params.HiddenAttrsNum = 0
-
-	org, err := NewOrg(params)
+	org, err := NewOrg(params, attrCount)
 	if err != nil {
 		t.Errorf("error when generating CL org: %v", err)
 	}
 
 	masterSecret := org.Keys.Pub.GenerateUserMasterSecret()
 
-	cred := NewRawCred()
-	_ = cred.AddStringAttribute("Name", "Jack", true)
-	_ = cred.AddStringAttribute("Gender", "M", true)
-	_ = cred.AddStringAttribute("Graduated", "true", true)
-	_ = cred.AddIntAttribute("Age", 25, false)
+	cred := NewRawCred(attrCount)
+	_ = cred.AddStrAttr("Name", "Jack", true)
+	_ = cred.AddStrAttr("Gender", "M", true)
+	_ = cred.AddStrAttr("Graduated", "true", true)
+	_ = cred.AddInt64Attr("Age", 25, false)
 
 	credMgr, err := NewCredManager(params, org.Keys.Pub, masterSecret, cred)
 	if err != nil {
@@ -89,7 +86,7 @@ func TestCredentialIssue(t *testing.T) {
 	}
 
 	// TODO: update to rawcred
-	a, _ := cred.GetAttribute("Name")
+	a, _ := cred.GetAttr("Name")
 	_ = a.UpdateValue("John")
 	credMgr.Update(cred)
 
@@ -98,7 +95,7 @@ func TestCredentialIssue(t *testing.T) {
 		t.Errorf("error saving record to db: %v", err)
 	}
 
-	newKnownAttrs := cred.GetKnownValues()
+	newKnownAttrs := cred.GetKnownVals()
 	res1, err := org.UpdateCred(credMgr.Nym, rec, credReq.Nonce, newKnownAttrs)
 	if err != nil {
 		t.Errorf("error when updating credential: %v", err)

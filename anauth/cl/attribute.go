@@ -8,56 +8,80 @@ import (
 	"github.com/spf13/viper"
 )
 
-// CredAttribute represents an attribute for the CL scheme.
-type CredAttribute interface {
+// AttrCount holds the number of known, committed and
+// hidden parameters.
+type AttrCount struct {
+	known     int
+	committed int
+	hidden    int
+}
+
+func NewAttrCount(known, committed, hidden int) *AttrCount {
+	return &AttrCount{
+		known:     known,
+		committed: committed,
+		hidden:    hidden,
+	}
+}
+
+// CredAttr represents an attribute for the CL scheme.
+type CredAttr interface {
 	getValue() interface{}
 	UpdateValue(interface{}) error
 	internalValue() *big.Int
 	setInternalValue() error
 	isKnown() bool
 	name() string
+	String() string
 }
 
-// Attribute is part of a credential (RawCredential). In the case of digital identity credential,
+// attr is part of a credential (RawCredential). In the case of digital identity credential,
 // attributes could be for example Name, Gender, Date of Birth. In the case of a credential allowing
 // access to some internet service (like electronic newspaper), attributes could be
 // Type (for example only news related to politics) of the service and Date of Expiration.
-type Attribute struct {
-	//Index int
+type attr struct {
 	Name  string
 	Known bool
 	val   *big.Int
 }
 
-func newAttribute(name string, known bool) *Attribute { //index int,
-	return &Attribute{
+func newAttr(name string, known bool) *attr {
+	return &attr{
 		Name:  name,
 		Known: known,
 	}
 }
 
-func (a *Attribute) isKnown() bool {
+func (a *attr) isKnown() bool {
 	return a.Known
 }
 
-func (a *Attribute) internalValue() *big.Int {
+func (a *attr) internalValue() *big.Int {
 	return a.val
 }
 
-func (a *Attribute) name() string {
+func (a *attr) name() string {
 	return a.Name
 }
 
-type IntAttribute struct {
-	val int
-	*Attribute
+func (a *attr) String() string {
+	tag := "known"
+	if !a.isKnown() {
+		tag = "revealed"
+	}
+	return fmt.Sprintf("%s (%s)", a.Name, tag)
 }
 
-func NewIntAttribute(name string, val int, known bool) (*IntAttribute,
+type Int64Attr struct {
+	val int64
+	*attr
+}
+
+func NewInt64Attr(name string, val int64, known bool) (*Int64Attr,
 	error) {
-	a := &IntAttribute{
-		val:       val,
-		Attribute: newAttribute(name, known),
+	a := &Int64Attr{
+		val:  val,
+		attr: newAttr(name, known),
 	}
 	if err := a.setInternalValue(); err != nil {
 		return nil, err
@@ -66,30 +90,34 @@ func NewIntAttribute(name string, val int, known bool) (*IntAttribute,
 	return a, nil
 }
 
-func (a *IntAttribute) setInternalValue() error {
-	a.Attribute.val = big.NewInt(int64(a.val)) // FIXME
+func (a *Int64Attr) setInternalValue() error {
+	a.attr.val = big.NewInt(int64(a.val)) // FIXME
 	return nil
 }
 
-func (a *IntAttribute) getValue() interface{} {
+func (a *Int64Attr) getValue() interface{} {
 	return a.val
 }
 
-func (a *IntAttribute) UpdateValue(n interface{}) error {
-	a.val = n.(int)
+func (a *Int64Attr) UpdateValue(n interface{}) error {
+	a.val = int64(n.(int))
 	return a.setInternalValue()
 }
 
-type StringAttribute struct {
-	val string
-	*Attribute
+func (a *Int64Attr) String() string {
+	return fmt.Sprintf("%s, type = %T", a.attr.String(), a.val)
 }
 
-func NewStringAttribute(name, val string, known bool) (*StringAttribute,
+type StrAttr struct {
+	val string
+	*attr
+}
+
+func NewStrAttr(name, val string, known bool) (*StrAttr,
 	error) {
-	a := &StringAttribute{
-		val:       val,
-		Attribute: newAttribute(name, known),
+	a := &StrAttr{
+		val:  val,
+		attr: newAttr(name, known),
 	}
 	if err := a.setInternalValue(); err != nil {
 		return nil, err
@@ -98,65 +126,81 @@ func NewStringAttribute(name, val string, known bool) (*StringAttribute,
 	return a, nil
 }
 
-func (a *StringAttribute) setInternalValue() error {
-	a.Attribute.val = new(big.Int).SetBytes([]byte(a.val)) // FIXME
+func (a *StrAttr) setInternalValue() error {
+	a.attr.val = new(big.Int).SetBytes([]byte(a.val)) // FIXME
 	return nil
 }
 
-func (a *StringAttribute) getValue() interface{} {
+func (a *StrAttr) getValue() interface{} {
 	return a.val
 }
 
-func (a *StringAttribute) UpdateValue(s interface{}) error {
+func (a *StrAttr) UpdateValue(s interface{}) error {
 	a.val = s.(string)
 	return a.setInternalValue()
 }
 
+func (a *StrAttr) String() string {
+	return fmt.Sprintf("%s, type = %T", a.attr.String(), a.val)
+}
+
 // FIXME make nicer
-func ParseAttributes(v *viper.Viper) ([]CredAttribute, error) {
+// Hook to organization?
+func ParseAttrs(v *viper.Viper) ([]CredAttr, *AttrCount, error) {
 	if !v.IsSet("attributes") {
-		return nil, fmt.Errorf("missing attributes declaration")
+		return nil, nil, fmt.Errorf("missing attributes declaration")
 	}
 
-	attrs := make([]CredAttribute, 0)
+	attrs := make([]CredAttr, 0)
+	var nKnown, nCommitted int
 
 	specs := v.GetStringMap("attributes")
-	for name, val := range specs { // TODO use value
-		data := val.(map[string]string)
+	for name, val := range specs {
+		data, ok := val.(map[string]interface{})
+		if !ok {
+			return nil, nil, fmt.Errorf("invalid configuration")
+		}
 
 		t, ok := data["type"]
 		if !ok {
-			return nil, fmt.Errorf("missing type specifier")
+			return nil, nil, fmt.Errorf("missing type specifier")
 		}
 
 		known := true
 		k, ok := data["known"]
 		if ok {
-			res, err := strconv.ParseBool(k)
+			res, err := strconv.ParseBool(k.(string))
 			if err != nil {
-				return nil, fmt.Errorf("known must be true or false")
+				return nil, nil, fmt.Errorf("known must be true or false")
 			}
 			known = res
 		}
 
+		if known {
+			nKnown++
+		} else {
+			nCommitted++
+		}
+
 		switch t {
 		case "string":
-			a, err := NewStringAttribute(name, "", known) // FIXME
+			a, err := NewStrAttr(name, "", known) // FIXME
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			attrs = append(attrs, a)
-		case "int":
-			a, err := NewIntAttribute(name, 0, known) // FIXME
+		case "int64":
+			a, err := NewInt64Attr(name, 0, known) // FIXME
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			attrs = append(attrs, a)
 		default:
-			return nil, fmt.Errorf("unsupported attribute type: %s", t)
+			return nil, nil, fmt.Errorf("unsupported attribute type: %s", t)
 		}
 
 	}
 
-	return attrs, nil
+	// TODO hidden params
+	return attrs, NewAttrCount(nKnown, nCommitted, 0), nil
 }

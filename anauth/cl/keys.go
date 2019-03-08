@@ -1,7 +1,6 @@
 package cl
 
 import (
-	"fmt"
 	"math/big"
 
 	"github.com/emmyzkp/crypto/common"
@@ -50,11 +49,11 @@ type PubKey struct {
 
 // NewPubKey accepts group g, parameters p and commitment receiver recv,
 // and returns a public key for the CL scheme.
-func NewPubKey(g *qr.RSASpecial, p *pb.Params, recv *df.Receiver) (*PubKey,
+func NewPubKey(g *qr.RSASpecial, p *pb.Params,
+	attrs *AttrCount, recv *df.Receiver) (*PubKey,
 	error) {
 	S, Z, RsKnown, RsCommitted, RsHidden, err := generateQuadraticResidues(
-		g, int(p.KnownAttrsNum), int(p.CommittedAttrsNum),
-		int(p.HiddenAttrsNum))
+		g, attrs.known, attrs.committed, attrs.hidden)
 	if err != nil {
 		return nil, errors.Wrap(err, "error creating quadratic residues")
 	}
@@ -96,7 +95,7 @@ func (k *PubKey) GetContext() *big.Int {
 
 // GenerateKeyPair takes and constructs a keypair containing public and
 // secret key for the CL scheme.
-func GenerateKeyPair(p *pb.Params) (*KeyPair, error) {
+func GenerateKeyPair(p *pb.Params, attrs *AttrCount) (*KeyPair, error) {
 	g, err := qr.NewRSASpecial(int(p.NLength) / 2)
 	if err != nil {
 		return nil, errors.Wrap(err, "error creating RSASpecial group")
@@ -110,12 +109,10 @@ func GenerateKeyPair(p *pb.Params) (*KeyPair, error) {
 
 	sk := NewSecKey(g, commRecv)
 
-	pk, err := NewPubKey(g, p, commRecv)
+	pk, err := NewPubKey(g, p, attrs, commRecv)
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println("PubKey RsHidden", len(pk.RsHidden))
 
 	return &KeyPair{
 		Sec: sk,

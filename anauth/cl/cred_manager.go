@@ -92,8 +92,8 @@ func checkBitLen(s []*big.Int, len int) bool {
 func NewCredManager(params *clpb.Params, pubKey *PubKey,
 	masterSecret *big.Int, rawCred *RawCred) (*CredManager, error) {
 
-	known := rawCred.GetKnownValues()
-	committed := rawCred.GetCommittedValues()
+	known := rawCred.GetKnownVals()
+	committed := rawCred.GetCommittedVals()
 	hidden := []*big.Int{} // currently not used
 
 	attrs := NewAttrs(known, committed, hidden)
@@ -141,8 +141,8 @@ func NewCredManagerFromExisting(nym, v1, credReqNonce *big.Int,
 	// nymCommitter is needed only for IssueCred (when proving that nym can be opened), so we do not need it here
 	// the same for attrsCommitters
 
-	known := rawCred.GetKnownValues()
-	committed := rawCred.GetCommittedValues()
+	known := rawCred.GetKnownVals()
+	committed := rawCred.GetCommittedVals()
 	hidden := []*big.Int{} // currently not used
 	attrs := NewAttrs(known, committed, hidden)
 
@@ -267,7 +267,7 @@ func (m *CredManager) Verify(cred *Cred, AProof *qr.RepresentationProof) (bool, 
 // Update updates credential.
 func (m *CredManager) Update(c *RawCred) {
 	m.RawCred = c
-	m.Attrs.Known = m.RawCred.GetKnownValues()
+	m.Attrs.Known = m.RawCred.GetKnownVals()
 }
 
 // FilterAttributes returns only attributes to be revealed to the verifier.

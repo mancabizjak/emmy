@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewIntAttribute(t *testing.T) {
-	a, err := NewIntAttribute("a", 100, true)
+	a, err := NewInt64Attr("a", 100, true)
 	assert.NoError(t, err)
 	assert.Equal(t, big.NewInt(100).Cmp(a.internalValue()), 0)
 	assert.True(t, a.isKnown())
@@ -16,7 +16,7 @@ func TestNewIntAttribute(t *testing.T) {
 
 /*
 func TestNewStringAttribute(t *testing.T) {
-	a, err := NewStringAttribute("b", "c", false)
+	a, err := NewStrAttr("b", "c", false)
 	//assert.Equal(t, big.NewInt(100).Cmp(a.internalValue()), 0)
 	assert.NoError(t, err)
 }*/

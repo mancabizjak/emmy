@@ -43,6 +43,9 @@ type Server struct {
 	ReceiverRecordManager
 	*Org
 
+	attrs     []CredAttr
+	attrCount *AttrCount
+
 	config *viper.Viper
 
 	SessMgr anauth.SessManager
@@ -57,10 +60,22 @@ func NewServer(recMgr ReceiverRecordManager, keys *KeyPair,
 		return nil, errors.Wrap(err, "error creating orgnization")
 	}
 
+	attrs, attrCount, err := ParseAttrs(v)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot parse attributes specification")
+	}
+
+	fmt.Println("server accepts the following attributes:")
+	for _, a := range attrs {
+		fmt.Printf(" %s\n", a)
+	}
+
 	return &Server{
 		ReceiverRecordManager: recMgr,
-		Org:    org,
-		config: v,
+		Org:       org,
+		config:    v,
+		attrs:     attrs,
+		attrCount: attrCount,
 	}, nil
 }
 
@@ -100,8 +115,8 @@ func (s *Server) GetPublicParams(ctx context.Context,
 func (s *Server) GetAcceptableCreds(ctx context.Context,
 	msg *pb.Empty) (*pb.AcceptableCreds, error) {
 	if !s.config.IsSet("acceptable_creds") {
-		// FIXME server error
-		return nil, fmt.Errorf("acceptable creds were not specified")
+		return nil, status.Error(codes.Internal,
+			"unable to provide acceptable credentials info")
 	}
 
 	acceptable := s.config.GetStringMapStringSlice("acceptable_creds")
@@ -120,35 +135,27 @@ func (s *Server) GetAcceptableCreds(ctx context.Context,
 
 func (s *Server) GetCredStructure(ctx context.Context,
 	msg *pb.Empty) (*pb.CredStructure, error) {
-	attrs, err := ParseAttributes(s.config) // add to config field
-	if err != nil {
-		return nil, err // FIXME return internal server error
-	}
+	credAttrs := make([]*pb.CredAttribute, len(s.attrs))
 
-	credAttrs := make([]*pb.CredAttribute, len(attrs))
-	for i, a := range attrs {
+	for i, a := range s.attrs {
+		attr := &pb.Attribute{
+			Name:  a.name(),
+			Known: a.isKnown(),
+		}
 		switch a.(type) {
-		case *StringAttribute:
+		case *StrAttr:
 			credAttrs[i] = &pb.CredAttribute{
 				Type: &pb.CredAttribute_StringAttr{
 					StringAttr: &pb.StringAttribute{
-						Attr: &pb.Attribute{
-							Index: 0, // FIXME
-							Name:  a.name(),
-							Known: a.isKnown(),
-						},
+						Attr: attr,
 					},
 				},
 			}
-		case *IntAttribute:
+		case *Int64Attr:
 			credAttrs[i] = &pb.CredAttribute{
 				Type: &pb.CredAttribute_IntAttr{
 					IntAttr: &pb.IntAttribute{
-						Attr: &pb.Attribute{
-							Index: 0, // FIXME
-							Name:  a.name(),
-							Known: a.isKnown(),
-						},
+						Attr: attr,
 					},
 				},
 			}
@@ -156,6 +163,9 @@ func (s *Server) GetCredStructure(ctx context.Context,
 	}
 
 	return &pb.CredStructure{
+		NKnown:     int32(s.attrCount.known),
+		NCommitted: int32(s.attrCount.committed),
+		NHidden:    int32(s.attrCount.hidden),
 		Attributes: credAttrs,
 	}, nil
 }

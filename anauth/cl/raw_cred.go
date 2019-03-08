@@ -5,62 +5,61 @@ import (
 	"math/big"
 )
 
-// RawCredential represents a credential to be used by application that
+// RawCred represents a credential to be used by application that
 // executes the scheme to prove possesion of an anonymous credential.
 type RawCred struct {
-	attrs           map[int]CredAttribute
-	attrNameToIndex map[string]int
+	attrs       map[int]CredAttr
+	attrIndices map[string]int
+	attrCount   *AttrCount
 }
 
-func NewRawCred() *RawCred {
+func NewRawCred(c *AttrCount) *RawCred {
 	return &RawCred{
-		attrs:           make(map[int]CredAttribute),
-		attrNameToIndex: make(map[string]int),
+		attrs:       make(map[int]CredAttr),
+		attrIndices: make(map[string]int),
+		attrCount:   c,
 	}
 }
 
-func (c *RawCred) GetAttribute(name string) (CredAttribute, error) {
-	i, ok := c.attrNameToIndex[name]
+func (c *RawCred) GetAttr(name string) (CredAttr, error) {
+	i, ok := c.attrIndices[name]
 	if !ok {
 		return nil, fmt.Errorf("no attribute %s in this credential", name)
 	}
 	return c.attrs[i], nil
 }
 
-func (c *RawCred) insertAttribute(i int, a CredAttribute) {
-	c.attrNameToIndex[a.name()] = i
-	c.attrs[i] = a
-}
-
-func (c *RawCred) AddStringAttribute(name, val string, known bool) error {
-	if c.attrAlreadyPresent(name) {
-		return fmt.Errorf("duplicate attribute, ignoring")
+func (c *RawCred) AddStrAttr(name, val string, known bool) error {
+	if err := c.validateAttr(name, known); err != nil {
+		return err
 	}
+
 	i := len(c.attrs)
-	a, err := NewStringAttribute(name, val, known)
+	a, err := NewStrAttr(name, val, known)
 	if err != nil {
 		return err
 	}
-	c.insertAttribute(i, a)
+	c.insertAttr(i, a)
 	return nil
 }
 
-func (c *RawCred) AddIntAttribute(name string, val int, known bool) error {
-	if c.attrAlreadyPresent(name) {
-		return fmt.Errorf("duplicate attribute, ignoring")
+func (c *RawCred) AddInt64Attr(name string, val int64, known bool) error {
+	if err := c.validateAttr(name, known); err != nil {
+		return err
 	}
+
 	i := len(c.attrs)
-	a, err := NewIntAttribute(name, val, known)
+	a, err := NewInt64Attr(name, val, known)
 	if err != nil {
 		return err
 	}
-	c.insertAttribute(i, a)
+	c.insertAttr(i, a)
 	return nil
 }
 
-// GetKnownValues returns *big.Int values of known attributes.
+// GetKnownVals returns *big.Int values of known attributes.
 // The returned elements are ordered by attribute's index.
-func (c *RawCred) GetKnownValues() []*big.Int {
+func (c *RawCred) GetKnownVals() []*big.Int {
 	var values []*big.Int
 	for i := 0; i < len(c.attrs); i++ { // avoid range to have attributes in proper order
 		attr := c.attrs[i]
@@ -72,9 +71,9 @@ func (c *RawCred) GetKnownValues() []*big.Int {
 	return values
 }
 
-// GetCommittedValues returns *big.Int values of committed attributes.
+// GetCommittedVals returns *big.Int values of committed attributes.
 // The returned elements are ordered by attribute's index.
-func (c *RawCred) GetCommittedValues() []*big.Int {
+func (c *RawCred) GetCommittedVals() []*big.Int {
 	var values []*big.Int
 	for i := 0; i < len(c.attrs); i++ { // avoid range to have attributes in
 		// proper order
@@ -87,11 +86,36 @@ func (c *RawCred) GetCommittedValues() []*big.Int {
 	return values
 }
 
-func (c *RawCred) GetAttributes() map[int]CredAttribute {
+func (c *RawCred) GetAttrs() map[int]CredAttr {
 	return c.attrs
 }
 
-func (c *RawCred) attrAlreadyPresent(name string) bool {
+func (c *RawCred) insertAttr(i int, a CredAttr) {
+	c.attrIndices[a.name()] = i
+	c.attrs[i] = a
+}
+
+func (c *RawCred) validateAttr(name string, known bool) error {
+	if known && len(c.GetKnownVals()) >= c.attrCount.known {
+		return fmt.Errorf("known attributes exhausted")
+	}
+
+	if !known && len(c.GetCommittedVals()) >= c.attrCount.committed {
+		return fmt.Errorf("committed attributes exhausted")
+	}
+
+	if name == "" {
+		return fmt.Errorf("attribute's name cannot be empty")
+	}
+
+	if c.hasAttr(name) {
+		return fmt.Errorf("duplicate attribute, ignoring")
+	}
+
+	return nil
+}
+
+func (c *RawCred) hasAttr(name string) bool {
 	for _, a := range c.attrs {
 		if name == a.name() {
 			return true

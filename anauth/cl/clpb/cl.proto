@@ -80,11 +80,6 @@ message Params {
 	// bit length is 2048
 	int32 RhoBitLen = 1;          // bit length of order of the commitment group
 	int32 NLength = 2;           // bit length of RSA modulus
-	int32 KnownAttrsNum = 3;     // number of attributes known to both credential issuer and receiver
-	int32 CommittedAttrsNum = 4;  // number of attributes for which the issuer
-	//knows only commitments
-	int32 HiddenAttrsNum = 5;    // number of attributes known only to the
-	//receiver
 	int32 AttrBitLen = 6;        // bit length of attribute
 	int32 HashBitLen = 7;         // bit length of hash output used for
 	//Fiat-Shamir
@@ -189,5 +184,8 @@ message CredAttribute {
 }
 
 message CredStructure {
-	repeated CredAttribute attributes = 1;
+	int32 nKnown = 1;
+	int32 nCommitted = 2;
+	int32 nHidden = 3;
+	repeated CredAttribute attributes = 4;
 }

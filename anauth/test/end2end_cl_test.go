@@ -18,7 +18,6 @@
 package test
 
 import (
-	"fmt"
 	"math/big"
 	"testing"
 
@@ -42,35 +41,19 @@ func TestEndToEnd_CL(t *testing.T) {
 		params          *pb.Params
 		acceptableCreds map[string][]string
 		attributes      map[string]interface{}
-		//attrs  *cl.Attrs
-		//attrs []cl.CredAttribute
-		//rawCred *cl.RawCred
 	}{
 		{"Defaults",
-			&pb.Params{
-				RhoBitLen:         256,
-				NLength:           256, // should be at least 2048 when not testing
-				KnownAttrsNum:     3,   // FIXME
-				CommittedAttrsNum: 1,   // FIXME
-				HiddenAttrsNum:    0,   // FIXME
-				AttrBitLen:        256,
-				HashBitLen:        512,
-				SecParam:          80,
-				EBitLen:           597,
-				E1BitLen:          120,
-				VBitLen:           2724,
-				ChallengeSpace:    80,
-			},
+			cl.GetDefaultParamSizes(),
 			map[string][]string{
 				"org1": {"name", "age"},
 				"org2": {"gender"},
 			},
 			map[string]interface{}{
-				"name":      map[string]string{"type": "string"},
-				"gender":    map[string]string{"type": "string"},
-				"graduated": map[string]string{"type": "string"},
-				"age": map[string]string{
-					"type":  "int",
+				"name":      map[string]interface{}{"type": "string"},
+				"gender":    map[string]interface{}{"type": "string"},
+				"graduated": map[string]interface{}{"type": "string"},
+				"age": map[string]interface{}{
+					"type":  "int64",
 					"known": "false",
 				},
 			},
@@ -78,7 +61,7 @@ func TestEndToEnd_CL(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		keys, err := cl.GenerateKeyPair(tt.params)
+		keys, err := cl.GenerateKeyPair(tt.params, cl.NewAttrCount(3, 1, 0))
 		if err != nil {
 			t.Errorf("error creating keypair: %v", err)
 		}
@@ -124,16 +107,16 @@ func testEndToEndCL(t *testing.T, conn *grpc.ClientConn) {
 	cs, err := client.GetCredStructure()
 	require.NoError(t, err)
 
-	name, _ := cs.GetAttribute("name")
+	name, _ := cs.GetAttr("name")
 	err = name.UpdateValue("Jack")
 	assert.NoError(t, err)
-	gender, _ := cs.GetAttribute("gender")
+	gender, _ := cs.GetAttr("gender")
 	err = gender.UpdateValue("M")
 	assert.NoError(t, err)
-	graduated, _ := cs.GetAttribute("graduated")
+	graduated, _ := cs.GetAttr("graduated")
 	err = graduated.UpdateValue("true")
 	assert.NoError(t, err)
-	age, _ := cs.GetAttribute("age")
+	age, _ := cs.GetAttr("age")
 	err = age.UpdateValue(50)
 	assert.NoError(t, err)
 
@@ -141,8 +124,7 @@ func testEndToEndCL(t *testing.T, conn *grpc.ClientConn) {
 	if err != nil {
 		t.Errorf("error when retrieving acceptable creds: %v", err)
 	}
-	revealedAttrs := acceptableCreds["org1"]
-	fmt.Println("RevealdAttrs", revealedAttrs)
+	revealedAttrs := acceptableCreds["org1"] // FIXME
 
 	masterSecret := pubKey.GenerateUserMasterSecret()
 	cm, err := cl.NewCredManager(params, pubKey, masterSecret, cs)
@@ -172,7 +154,7 @@ func testEndToEndCL(t *testing.T, conn *grpc.ClientConn) {
 	assert.NotNil(t, sessKey, "possesion of a credential proof failed")
 
 	// modify some attributes and get updated credential
-	name, err = cs.GetAttribute("name")
+	name, err = cs.GetAttr("name")
 	err = name.UpdateValue("Jim")
 	assert.NoError(t, err)
 
@@ -181,7 +163,7 @@ func testEndToEndCL(t *testing.T, conn *grpc.ClientConn) {
 		t.Errorf("error when updating credential: %v", err)
 	}
 
-	sessKey, err = client.ProveCredential(cm, cred1, revealedAttrs)
+	sessKey, err = client.ProveCredential(cm, cred1, []string{"name", "dog"})
 	if err != nil {
 		t.Errorf("error when proving possession of an updated credential: %v", err)
 	}

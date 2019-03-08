@@ -79,13 +79,24 @@ type Commitment struct {
 	data []byte
 }
 
-// FIXME ignores revealedI, revealedCommI []int
-func (c *CLClient) ProveCred(cm *CLCredManager, cred *CLCred,
-	known *Attrs) (string,
-	error) {
+type CLRevealedAttrs struct {
+	attrs []string
+}
 
+func NewCLRevealedAttrs() *CLRevealedAttrs {
+	return &CLRevealedAttrs{
+		attrs: make([]string, 0),
+	}
+}
+
+func (a *CLRevealedAttrs) Add(attr string) {
+	a.attrs = append(a.attrs, attr)
+}
+
+func (c *CLClient) ProveCred(cm *CLCredManager, cred *CLCred,
+	revealed *CLRevealedAttrs) (string, error) {
 	sessKey, err := c.Client.ProveCredential(cm.CredManager,
-		cred.getNativeType(), nil) // FIXME
+		cred.getNativeType(), revealed.attrs)
 
 	if err != nil {
 		return "<INVALID>", err
@@ -94,8 +105,46 @@ func (c *CLClient) ProveCred(cm *CLCredManager, cred *CLCred,
 	return *sessKey, nil
 }
 
+type CLStringAttribute struct {
+	*cl.StrAttr
+}
+
+type CLLongAttribute struct {
+	*cl.Int64Attr
+}
+
 type CLRawCred struct {
-	*cl.RawCred
+	cred *cl.RawCred
+}
+
+func (c *CLRawCred) SetStringAttribute(name, val string) (*CLStringAttribute, error) {
+	attr, err := c.cred.GetAttr(name)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := attr.UpdateValue(val); err != nil {
+		return nil, err
+	}
+
+	return &CLStringAttribute{
+		StrAttr: attr.(*cl.StrAttr),
+	}, nil
+}
+
+func (c *CLRawCred) SetLongAttribute(name string, val int) (*CLLongAttribute, error) {
+	attr, err := c.cred.GetAttr(name)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := attr.UpdateValue(val); err != nil {
+		return nil, err
+	}
+
+	return &CLLongAttribute{
+		Int64Attr: attr.(*cl.Int64Attr),
+	}, nil
 }
 
 type CLCred struct {
@@ -208,7 +257,7 @@ func NewCLCredManager(params *CLParams, pk *CLPubKey,
 	cm, err := cl.NewCredManager(params.Params,
 		pk.PubKey,
 		new(big.Int).SetBytes(secret),
-		cred.RawCred)
+		cred.cred)
 	if err != nil {
 		return nil, err
 	}
@@ -235,7 +284,7 @@ func RestoreCLCredManager(state *CLCredManagerState, secret []byte,
 		state.Params.Params,
 		state.PubKey.PubKey,
 		new(big.Int).SetBytes(secret),
-		cred.RawCred,
+		cred.cred,
 		coa,
 	)
 	if err != nil {
@@ -259,6 +308,17 @@ func (c *CLClient) GetPublicParams() (*CLPublicParams, error) {
 	}, nil
 }
 
+func (c *CLClient) GetCredStructure() (*CLRawCred, error) {
+	rc, err := c.Client.GetCredStructure()
+	if err != nil {
+		return nil, err
+	}
+
+	return &CLRawCred{
+		cred: rc,
+	}, nil
+}
+
 func (c *CLClient) IssueCred(cm *CLCredManager, regKey string) (*CLCred,
 	error) {
 	cred, err := c.Client.IssueCredential(cm.CredManager, regKey)
@@ -272,37 +332,3 @@ func (c *CLClient) IssueCred(cm *CLCredManager, regKey string) (*CLCred,
 		V11: cred.V11.Bytes(),
 	}, nil
 }
-
-/*
-type Attrs struct {
-	//data [][]byte
-	data map[string][]byte
-}
-
-func NewAttrs() *Attrs {
-	return &Attrs{
-		//data: make([][]byte, 0),
-		data: map[string][]byte{},
-	}
-}
-
-func (a *Attrs) Add(key string, val []byte) {
-	fmt.Println("adding", key, "with value", val)
-	fmt.Println("DATA BEFORE:", a.data)
-	//tmp := append(a.data, val)
-	a.data[key] = val
-	fmt.Println("DATA AFTER:", a.data)
-}
-
-func (a *Attrs) toBigintSlice() []*big.Int {
-	bigintAttrs := make([]*big.Int, 0)
-	if a.data != nil {
-		for k, v := range a.data {
-			i := new(big.Int).SetBytes(v)
-			bigintAttrs = append(bigintAttrs, i)
-			fmt.Println(k, i)
-		}
-	}
-
-	return bigintAttrs
-}*/

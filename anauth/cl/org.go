@@ -50,8 +50,8 @@ type Org struct {
 	proveCredNonceOrg  *big.Int
 }
 
-func NewOrg(params *pb.Params) (*Org, error) {
-	keys, err := GenerateKeyPair(params)
+func NewOrg(params *pb.Params, attrCount *AttrCount) (*Org, error) {
+	keys, err := GenerateKeyPair(params, attrCount)
 	if err != nil {
 		return nil, err
 	}
