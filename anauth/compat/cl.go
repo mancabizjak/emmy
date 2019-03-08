@@ -20,9 +20,8 @@ package compat
 import (
 	"math/big"
 
-	"github.com/emmyzkp/emmy/anauth/cl/clpb"
-
 	"github.com/emmyzkp/emmy/anauth/cl"
+	"github.com/emmyzkp/emmy/anauth/cl/clpb"
 )
 
 type CLClient struct {
@@ -38,41 +37,6 @@ func NewCLClient(conn *Connection) *CLClient {
 type CLPublicParams struct {
 	PubKey *CLPubKey
 	Config *CLParams
-}
-
-type Attr struct {
-	key string
-	val *big.Int
-}
-
-func NewAttr(key string, val []byte) *Attr {
-	return &Attr{
-		key: key,
-		val: new(big.Int).SetBytes(val),
-	}
-}
-
-type Attrs struct {
-	attrs []*Attr
-}
-
-func NewAttrs() *Attrs {
-	return &Attrs{
-		attrs: make([]*Attr, 0),
-	}
-}
-
-func (a *Attrs) toBigintSlice() []*big.Int {
-	out := make([]*big.Int, len(a.attrs))
-	for i, a := range a.attrs {
-		out[i] = new(big.Int).Set(a.val)
-	}
-
-	return out
-}
-
-func (a *Attrs) Add(attr *Attr) {
-	a.attrs = append(a.attrs, attr)
 }
 
 type Commitment struct {
@@ -177,40 +141,6 @@ type CLPubKey struct {
 
 func (k *CLPubKey) GenerateMasterSecret() []byte {
 	return k.PubKey.GenerateUserMasterSecret().Bytes()
-}
-
-type CLAttrs struct {
-	Known     *Attrs
-	Hidden    *Attrs
-	Committed *Attrs
-}
-
-func NewCLAttrs(known, hidden, committed *Attrs) *CLAttrs {
-	return &CLAttrs{
-		Known:     known,
-		Hidden:    hidden,
-		Committed: committed,
-	}
-}
-
-func (a *CLAttrs) getNativeType() *cl.Attrs {
-	var known = make([]*big.Int, 0)
-	var hidden = make([]*big.Int, 0)
-	var committed = make([]*big.Int, 0)
-
-	if a.Known != nil {
-		known = a.Known.toBigintSlice()
-	}
-
-	if a.Hidden != nil {
-		hidden = a.Hidden.toBigintSlice()
-	}
-
-	if a.Committed != nil {
-		committed = a.Committed.toBigintSlice()
-	}
-
-	return cl.NewAttrs(known, hidden, committed)
 }
 
 type CLCredManager struct {
