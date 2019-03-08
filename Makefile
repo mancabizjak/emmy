@@ -1,4 +1,4 @@
-.PHONY: setup setup_dep setup_test setup_mobile setup_linter deps install test fmt lint android proto clean clean_deps run
+.PHONY: setup setup_test setup_mobile setup_linter install test fmt lint android proto clean run
 
 ALL = ./...
 
@@ -8,10 +8,7 @@ ALL_GO := $(shell find . -type f -name '*.go' -not -path "./vendor/*")
 all: install
 
 # Setup and update all the required tools
-setup: setup_dep setup_test setup_linter setup_mobile
-
-setup_dep:
-	go get -u github.com/golang/dep/cmd/dep
+setup: setup_test setup_linter setup_mobile
 
 setup_test:
 	go get -u github.com/stretchr/testify/assert
@@ -23,11 +20,6 @@ setup_mobile:
 setup_linter:
 	go get -u github.com/alecthomas/gometalinter
 	gometalinter --install --update
-
-# Runs dep ensure to populate the vendor directory with
-# the required dependencies and potentially modify Gopkg.lock.
-deps:
-	dep ensure -v
 
 # Install go package to produce emmy binaries
 install:
@@ -81,9 +73,6 @@ proto:
 # Removes temporary files produced by the targets
 clean:
 	-rm emmy emmy.aar emmy-sources.jar
-
-clean_deps:
-	-rm -rf vendor
 
 # Rebuilds emmy server and starts emmy server and redis instance
 run:

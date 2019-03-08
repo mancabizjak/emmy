@@ -14,24 +14,33 @@
 # limitations under the License.
 #
 
-FROM golang:latest
+FROM golang:1.11
 
 LABEL maintainer="XLAB d.o.o" \
       description="This image starts the core Emmy server"
 
 # Create appropriate directory structure
-RUN mkdir -p $GOPATH/src/github.com/emmyzkp/emmy
+RUN mkdir -p $HOME/emmy $HOME/.emmy
 
 # Run subsequent commands from the project root
-WORKDIR $GOPATH/src/github.com/emmyzkp/emmy
+WORKDIR $HOME/emmy
 
 # Copy project from host to project directory in container
 COPY ./ ./
 
 # Install dependencies and compile the project
-RUN make setup_dep && \
-    dep ensure && \
-    go install
+RUN go install
+
+# Number of parameters for the CL scheme
+ENV N_ATTRS_KNOWN 0
+ENV N_ATTRS_REVEALED 0
+ENV N_ATTRS_HIDDEN 0
+
+# Creates keys for the organization
+RUN emmy server cl \
+    --known ${N_ATTRS_KNOWN} \
+    --revealed ${N_ATTRS_REVEALED} \
+    --hidden ${N_ATTRS_HIDDEN}
 
 # Start emmy server
 ENTRYPOINT ["emmy", "server", "cl"]
