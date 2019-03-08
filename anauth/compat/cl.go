@@ -153,7 +153,6 @@ type CLCredManagerState struct {
 	CredReqNonce       []byte
 	PubKey             *CLPubKey
 	Params             *CLParams
-	Attrs              *CLAttrs
 	CommitmentsOfAttrs []Commitment
 }
 
@@ -166,6 +165,7 @@ func (cm *CLCredManager) GetState() *CLCredManagerState {
 		coa[i] = Commitment{c.Bytes()}
 	}
 
+	// FIXME missing cred? Previously attrs, now nothing
 	return &CLCredManagerState{
 		Nym:                cm.Nym.Bytes(),
 		V1:                 cm.V1.Bytes(),

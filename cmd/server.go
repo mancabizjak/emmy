@@ -164,10 +164,6 @@ var serverCLCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		//keys, _ := cl.GenerateKeyPair(cl.GetDefaultParamSizes())
-		// FIXME this is to match with the client.
-		//  We then announce the pubkey via a RPC service
-		// TODO STORE SECRET AND PUBLIC KEYS UPON GENERATION!
 		clService, _ := cl.NewServer(
 			cl.NewMockRecordManager(), // TODO redis
 			&cl.KeyPair{
