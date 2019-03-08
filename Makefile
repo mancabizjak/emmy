@@ -80,7 +80,7 @@ proto:
 
 # Removes temporary files produced by the targets
 clean:
-	-rm emmy.aar emmy-sources.jar
+	-rm emmy emmy.aar emmy-sources.jar
 
 clean_deps:
 	-rm -rf vendor
