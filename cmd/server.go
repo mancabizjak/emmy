@@ -19,16 +19,14 @@ import (
 	"os"
 	"path"
 
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+
 	"github.com/go-redis/redis"
 
-	"github.com/mitchellh/go-homedir"
-
-	"github.com/emmyzkp/emmy/anauth/cl"
-
 	"github.com/emmyzkp/emmy/anauth"
+	"github.com/emmyzkp/emmy/anauth/cl"
 	"github.com/emmyzkp/emmy/log"
-
-	"github.com/spf13/cobra"
 )
 
 var srv *anauth.GrpcServer
@@ -36,6 +34,12 @@ var port int
 var keyPath string
 var certPath string
 var redisAddr string
+
+var (
+	clNKnownAttrs     int
+	clNCommittedAttrs int
+	clNHiddenAttrs    int
+)
 
 func init() {
 	rootCmd.AddCommand(serverCmd, genCmd)
@@ -57,6 +61,15 @@ func init() {
 		"Path to the file where server logs will be written ("+
 			"created if it doesn't exist)")
 
+	//genCLCmd.Flags().StringVar(&clKeysDir, "out", emmyDir, )
+	genCLCmd.Flags().IntVar(&clNKnownAttrs, "known", 0,
+		"Number of known attributes")
+	genCLCmd.Flags().IntVar(&clNKnownAttrs, "committed", 0,
+		"Number of known attributes")
+	genCLCmd.Flags().IntVar(&clNKnownAttrs, "hidden", 0,
+		"Number of known attributes")
+	_ = genCLCmd.MarkFlagRequired("known")
+
 	// add subcommands tied to various anonymous authentication schemes
 	genCmd.AddCommand(genCLCmd)
 	serverCmd.AddCommand(serverCLCmd, serverPsysCmd, serverECPsysCmd)
@@ -73,25 +86,26 @@ var genCLCmd = &cobra.Command{
 	Short:      "Generates and stores keypair for the scheme.",
 	SuggestFor: []string{"cl"},
 	Run: func(cmd *cobra.Command, args []string) {
-		keys, err := cl.GenerateKeyPair(cl.GetDefaultParamSizes())
+		keys, err := cl.GenerateKeyPair(cl.GetDefaultParamSizes(),
+			cl.NewAttrCount(clNKnownAttrs, clNCommittedAttrs, clNHiddenAttrs))
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
 
-		err = cl.WriteGob("./anauth/test/testdata/clSecKey.gob", keys.Sec)
+		err = cl.WriteGob(path.Join(emmyDir, "cl_seckey"), keys.Sec)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
 
-		err = cl.WriteGob("./anauth/test/testdata/clPubKey.gob", keys.Pub)
+		err = cl.WriteGob(path.Join(emmyDir, "cl_pubkey"), keys.Pub)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
 
-		fmt.Println("successfully generated keypair")
+		fmt.Println("Successfully generated keypair")
 	},
 }
 
@@ -116,22 +130,11 @@ clients (provers).`,
 		}
 	},
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
-		srv.Start(port)
+		if err := srv.Start(port); err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 	},
-}
-
-// checkEmmyDir checks whether emmy configuration folder
-// exists on the filesystem.
-func emmyDirExists() bool {
-	home, err := homedir.Dir()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
-	emmyPath := path.Join(home, ".emmy")
-	_, err = os.Stat(emmyPath)
-	return !os.IsNotExist(err)
 }
 
 var serverCLCmd = &cobra.Command{
@@ -141,16 +144,26 @@ var serverCLCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		sk := &cl.SecKey{}
 		pk := &cl.PubKey{}
-		err := cl.ReadGob("anauth/test/testdata/clSecKey.gob", sk)
+
+		err := cl.ReadGob(path.Join(emmyDir, "cl_seckey"), sk)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		err = cl.ReadGob("anauth/test/testdata/clPubKey.gob", pk)
+		err = cl.ReadGob(path.Join(emmyDir, "cl_pubkey"), pk)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
+
+		redis := anauth.NewRedisClient(redis.NewClient(&redis.Options{
+			Addr: redisAddr,
+		}))
+		if err := redis.Ping().Err(); err != nil {
+			fmt.Println("cannot connect to redis:", err)
+			os.Exit(1)
+		}
+
 		//keys, _ := cl.GenerateKeyPair(cl.GetDefaultParamSizes())
 		// FIXME this is to match with the client.
 		//  We then announce the pubkey via a RPC service
@@ -160,11 +173,7 @@ var serverCLCmd = &cobra.Command{
 			&cl.KeyPair{
 				Sec: sk,
 				Pub: pk,
-			})
-
-		redis := anauth.NewRedisClient(redis.NewClient(&redis.Options{
-			Addr: redisAddr,
-		})) // TODO ping
+			}, viper.GetViper())
 
 		clService.RegMgr = redis
 		clService.SessMgr, _ = anauth.NewRandSessionKeyGen(32)

@@ -17,15 +17,14 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path"
 
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-const DEFAULT_EMMY_DIR = ".emmy"
-
-var emmyDir = DEFAULT_EMMY_DIR
+var emmyDir string
 var cfgFile string
 
 // rootCmd represents the base command when called without any subcommands
@@ -52,21 +51,11 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "",
-		"config file (default is $HOME/.emmy.yaml)")
-	//	viper.BindPFlag("config", rootCmd.PersistentFlags().Lookup("config"))
-
+		"config file (default is $HOME/.emmy/config.yaml)")
 	rootCmd.PersistentFlags().StringP("loglevel", "l",
 		"info",
 		"One of debug|info|notice|error|critical")
-
-	/*rootCmd.PersistentFlags().StringP("scheme", "",
-		"",
-		"Anonymous authentication scheme. One of cl|pseudsys|ecpseudsys")
-	rootCmd.MarkPersistentFlagRequired("scheme")*/
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -75,16 +64,20 @@ func initConfig() {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
 	} else {
-		// Find home directory.
-		home, err := homedir.Dir()
+		dir, err := emmyDirectory()
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
 
-		// Search config in home directory with name ".emmy" (without extension).
-		viper.AddConfigPath(home)
-		viper.SetConfigName(".emmy")
+		emmyDir = dir
+
+		// Search config in emmy directory
+		viper.AddConfigPath(emmyDir)
+		viper.SetConfigType("yaml")
+		viper.SetConfigName("config")
+
+		fmt.Printf("Using configuration directory '%s'\n", emmyDir)
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match
@@ -93,4 +86,28 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
 	}
+}
+
+// emmyDirectory checks whether emmy configuration directory
+// exists on the filesystem. If it doesn't exist, it attemts
+// to create it.
+// It returns the path to emmy directory, or error in case
+// of failure.
+func emmyDirectory() (string, error) {
+	home, err := homedir.Dir()
+	if err != nil {
+		return "", err
+	}
+
+	emmyPath := path.Join(home, ".emmy")
+	if _, err = os.Stat(emmyPath); !os.IsNotExist(err) {
+		return emmyPath, nil
+	}
+
+	fmt.Println("Emmy directory doesn't exist, creating...")
+	if err := os.Mkdir(emmyPath, 0744); err != nil {
+		return "", err
+	}
+
+	return emmyPath, nil
 }
